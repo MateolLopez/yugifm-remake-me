@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://qh13x66ithux"]
+
+[ext_resource type="Script" uid="uid://d0wu4j0b3tbaf" path="res://Scripts/monster_card_slot.gd" id="1_cypty"]
+[ext_resource type="Texture2D" uid="uid://bmhg77lnj7nbp" path="res://assets/CardSlot.png" id="2_hrxt0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cypty"]
+
+[node name="CardSlot" type="Node2D"]
+light_mask = 2
+visibility_layer = 2
+script = ExtResource("1_cypty")
+
+[node name="CardSlotImage" type="Sprite2D" parent="."]
+texture = ExtResource("2_hrxt0")
+
+[node name="Area2D" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+scale = Vector2(8.8, 13)
+shape = SubResource("RectangleShape2D_cypty")
+
+[node name="Anchor" type="Marker2D" parent="."]

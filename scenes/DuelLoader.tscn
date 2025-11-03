@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://bx2l7m6pb7y8p"]
+
+[ext_resource type="Script" uid="uid://dmqxpngrucdhy" path="res://Scripts/duel_loader.gd" id="1_h0lqg"]
+[ext_resource type="PackedScene" uid="uid://cv3psty7bf6sh" path="res://scenes/duel_scene.tscn" id="2_q0m13"]
+
+[node name="DuelLoader" type="Node"]
+script = ExtResource("1_h0lqg")
+battle_scene = ExtResource("2_q0m13")
