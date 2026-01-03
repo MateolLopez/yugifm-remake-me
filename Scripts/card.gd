@@ -21,7 +21,7 @@ var type := ""             # "warrior","dragon","equip?", etc.
 var guardian_star := []
 var guardian_primary_index := 0
 var description := ""
-var effect := []
+var effects := []
 var tags := []
 @export var passcode: String = ""
 var defeated := false
@@ -38,20 +38,45 @@ var _temp_bonus_def: int = 0
 const ART_TARGET_SIZE := Vector2i(258, 258)
 static var _ART_CACHE: Dictionary = {}
 
+# ----- Weas de fusión -----
+enum FusionMarker { NONE, GENERIC, SPECIFIC }
+
+const RAISE_PX   := 30.0
+const RAISE_TIME := 0.08
+@onready var fusion_spiral: Sprite2D = $"fusionSpiral"
+@onready var anim: AnimationPlayer = $"AnimationPlayer"
+var _fusion_selected := false
+var _rest_pos: Vector2
+var _raise_tween: Tween
+
 func _load_and_resize_texture(path: String) -> Texture2D:
 	if not ResourceLoader.exists(path):
+		print("Resource not found: ", path)
 		return null
+	
 	if _ART_CACHE.has(path):
 		return _ART_CACHE[path]
-	var img := Image.new()
-	var err := img.load(path)
-	if err != OK:
+	
+	var original_texture = load(path)
+	if not original_texture or not (original_texture is Texture2D):
+		print("Failed to load texture: ", path)
 		return null
-	if img.get_width() != ART_TARGET_SIZE.x or img.get_height() != ART_TARGET_SIZE.y:
-		img.resize(ART_TARGET_SIZE.x, ART_TARGET_SIZE.y, Image.INTERPOLATE_LANCZOS)
-	var tex := ImageTexture.create_from_image(img)
-	_ART_CACHE[path] = tex
-	return tex
+	
+	if original_texture.get_width() == ART_TARGET_SIZE.x and original_texture.get_height() == ART_TARGET_SIZE.y:
+		_ART_CACHE[path] = original_texture
+		return original_texture
+	
+	var image = original_texture.get_image()
+	if not image:
+		print("Could not get image from texture: ", path)
+		return original_texture
+	
+	image.resize(ART_TARGET_SIZE.x, ART_TARGET_SIZE.y, Image.INTERPOLATE_LANCZOS)
+	
+	var resized_texture = ImageTexture.create_from_image(image)
+	_ART_CACHE[path] = resized_texture
+	
+	return resized_texture
 
 # ----- Rutas de assets -----
 const ATR_ICON := {
@@ -93,6 +118,41 @@ func _hide_node(p: String) -> void:
 
 func _overlay_node() -> CanvasItem:
 	return N("BackOverlay") as CanvasItem
+
+func set_fusion_marker(state: int):
+	var selected := (state != FusionMarker.NONE)
+	
+	_apply_raise(selected)
+	
+	match state:
+		FusionMarker.NONE:
+			fusion_spiral.visible = false
+		
+		FusionMarker.GENERIC:
+			fusion_spiral.visible = true
+			if fusion_spiral.material is ShaderMaterial:
+				(fusion_spiral.material as ShaderMaterial).set_shader_parameter("enabled", false)
+		
+		FusionMarker.SPECIFIC:
+			fusion_spiral.visible = true
+			if fusion_spiral.material is ShaderMaterial:
+				(fusion_spiral.material as ShaderMaterial).set_shader_parameter("enabled", true)
+
+func _apply_raise(selected:bool):
+	if is_instance_valid(_raise_tween):
+		_raise_tween.kill()
+	
+	if selected and not _fusion_selected:
+		_fusion_selected = true
+		_rest_pos = position
+		_raise_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_raise_tween.tween_property(self, "position:y", _rest_pos.y - RAISE_PX, RAISE_TIME)
+	
+	elif not selected and _fusion_selected:
+		_fusion_selected = false
+		_raise_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_raise_tween.tween_property(self, "position", _rest_pos, RAISE_TIME)
+	
 
 func play_guardian_star_bonus_animation(guardian_star_name: String) -> void:
 	var bonus_sprite = get_node_or_null("guardian_star_bonus") as AnimatedSprite2D
@@ -183,7 +243,7 @@ func update_card_visuals() -> void:
 			bg.texture  = load(TEX_TRAP)
 		else:
 			frm.texture = load(FRAME_MONSTER)
-			var is_eff := (effect is Array and effect.size() > 0)
+			var is_eff := (effects is Array and effects.size() > 0)
 			if is_eff:
 				bg.texture = load(TEX_MONSTER_EFFECT)
 			else:
@@ -238,13 +298,13 @@ func update_card_visuals() -> void:
 
 #Effect
 func has_effect_type(effect_type:String):
-	if effect == null:
+	if effects == null:
 		return false
-	if typeof(effect) != TYPE_ARRAY:
+	if typeof(effects) != TYPE_ARRAY:
 		return false
-	if effect.size() == 0:
+	if effects.size() == 0:
 		return false
-	return effect[0] == effect_type
+	return effects[0] == effect_type
 
 #Guardian Star
 func ensure_guardian_initialized():
@@ -326,13 +386,15 @@ func apply_db(db: Dictionary) -> void:
 	Atk   = _to_int(db.get("atk",   null), 0)
 	Def   = _to_int(db.get("def",   null), 0)
 
-	effect = db.get("effect", [])
+	effects = db.get("effects", [])
 	description = db.get("description","")
 	tags   = db.get("tags", [])
 	passcode = str(db.get("passcode",""))
 	
 	guardian_star = db.get("guardian_star", [])
 	fusion_result = (type == "fusion") or (tags is Array and tags.has("fusion"))
+	if attribute == "trap":
+		card_type = "Trap"
 
 	update_card_visuals()
 
@@ -407,3 +469,49 @@ func _update_back_overlay_visibility():
 	var overlay := _overlay_node()
 	if overlay:
 		overlay.visible = (show_back_only or is_facedown)
+
+func activate_trap_effects():
+	if card_type != "Trap":
+		return
+	
+	print(">>> Activando efectos de trampa para: ", card_name)
+	
+	var em = get_node_or_null("/root/EffectManager")
+	if em == null:
+		print(">>> ERROR: EffectManager no encontrado")
+		return
+	
+	for effect in effects:
+		if effect.get("type") == "triggered":
+			var trigger_str = effect.get("trigger", "")
+			var condition = _convert_trigger_string_to_enum(trigger_str)
+			if condition != -1:
+				print(">>> Registrando trampa: ", card_name, " - Condición: ", trigger_str, " (", condition, ")")
+				em.register_trap_effect(self, condition, effect)
+			else:
+				print(">>> ERROR: Trigger no válido: ", trigger_str)
+
+func _convert_trigger_string_to_enum(trigger_str: String) -> int:
+	match trigger_str:
+		"opponent_attack_declared":
+			return 0 # EffectManager.TriggerCondition.OPPONENT_ATTACK_DECLARED
+		"opponent_monster_played":
+			return 1 # EffectManager.TriggerCondition.OPPONENT_MONSTER_PLAYED
+		"opponent_spell_activated":
+			return 2 # EffectManager.TriggerCondition.OPPONENT_SPELL_ACTIVATED
+		"opponent_trap_activated":
+			return 3 # EffectManager.TriggerCondition.OPPONENT_TRAP_ACTIVATED
+		"monster_destroyed":
+			return 4 # EffectManager.TriggerCondition.MONSTER_DESTROYED
+		"damage_received":
+			return 5 # EffectManager.TriggerCondition.DAMAGE_RECEIVED
+		"turn_start":
+			return 6 # EffectManager.TriggerCondition.TURN_START
+		"turn_end":
+			return 7 # EffectManager.TriggerCondition.TURN_END
+		"battle_step":
+			return 8 # EffectManager.TriggerCondition.BATTLE_STEP
+		"direct_attack_declared":
+			return 9 # EffectManager.TriggerCondition.DIRECT_ATTACK_DECLARED
+		_:
+			return -1

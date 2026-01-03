@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ff6ed0t5f16"]
+
+[ext_resource type="Script" uid="uid://cyqkc2vih87wq" path="res://scenes/card_exporter.gd" id="1_w3wuc"]
+
+[node name="CardExporter" type="Node2D"]
+script = ExtResource("1_w3wuc")

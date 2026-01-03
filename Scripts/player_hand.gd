@@ -1,7 +1,7 @@
 extends Node2D
 
 const CARD_WIDTH  = 160
-const HAND_Y_POSITION = 950
+const HAND_Y_POSITION = 920
 const DEFAULT_CARD_MOVE_SPEED = 0.2
 
 var player_hand: Array = []
@@ -40,16 +40,37 @@ func calculate_card_position(index: int) -> float:
 	return x_offset
 
 func animate_card_to_position(card: Node2D, new_position: Vector2, speed: float) -> void:
+	if not is_instance_valid(card):
+		return
 	var tween = get_tree().create_tween()
 	tween.tween_property(card, "global_position", new_position, speed)
 
 func remove_card_from_hand(card: Node2D) -> void:
 	if card in player_hand:
 		player_hand.erase(card)
+		if card.has_method("set_in_hand_mask"):
+			card.set_in_hand_mask(false)
+		var area := card.get_node_or_null("Area2D") as Area2D
+		if area:
+			area.monitoring = false
+			area.input_pickable = false
 		update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
 
+func cleanup_invalid_cards() -> void:
+	var valid_cards = []
+	for card in player_hand:
+		if is_instance_valid(card):
+			valid_cards.append(card)
+	player_hand = valid_cards
+	update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
+
 func _disable_card_interaction_in_hand(card: Node2D, on: bool) -> void:
+	if not is_instance_valid(card):
+		return
 	var area := card.get_node("Area2D") as Area2D
 	if area:
 		area.monitoring = not on
 		area.input_pickable = not on
+
+func has_card(card) -> bool:
+	return player_hand.has(card)

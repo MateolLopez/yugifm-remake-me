@@ -107,16 +107,21 @@ func _place_card_in_slot(card: Node2D, slot: Node2D) -> void:
 	card.card_slot_card_is_in = slot
 	slot.card_in_slot = true
 	card.set_show_back_only(false)
-	card.set_facedown(true) # Cartas player y oponente entran boca abajo siempre
-	if card.get("fusion_result"): #Excepto cuando son resultado de fusiones o rituales
+	
+	# Cartas boca abajo excepto fusiones/rituales
+	if card.get("fusion_result"):
 		card.set_facedown(false)
 	else:
 		card.set_facedown(true)
+		
 	card.scale = Vector2(FIELD_SCALE, FIELD_SCALE)
 	_snap_card_to_slot_center(card, slot)
 	card.z_index = -4
+	
+	# ACTIVAR TRAMPA SI ES UNA CARTA TRAMPA
+	if card.card_type == "Trap":
+		card.activate_trap_effects()
 
-# En finish_drag(), verificar el owner de la carta
 func finish_drag():
 	if card_being_dragged == null:
 		return
@@ -138,7 +143,8 @@ func finish_drag():
 			return
 	
 	if slot and not slot.card_in_slot:
-		if card.card_type == slot.card_slot_type:
+		# ACEPTAR TANTO SPELL COMO TRAP EN SLOTS DE SPELL
+		if (card.card_type == "Spell" or card.card_type == "Trap") and slot.card_slot_type == "Spell":
 			# VERIFICAR LÍMITES POR TURNO
 			if card.card_type == "Monster" and played_monster_card_this_turn:
 				_restore_visual_and_return_to_hand()
@@ -156,11 +162,11 @@ func finish_drag():
 
 			if card.card_type == "Monster":
 				$"../BattleManager".player_cards_on_battlefield.append(card)
-				played_monster_card_this_turn = true  # Marcar que se jugó un monstruo
+				played_monster_card_this_turn = true
 				if card.has_method("ensure_guardian_initialized"):
 					card.ensure_guardian_initialized()
 			elif card.card_type == "Spell" or card.card_type == "Trap":
-				played_spellortrap_card_this_turn = true  # Marcar que se jugó un hechizo/trampa
+				played_spellortrap_card_this_turn = true
 
 			card_being_dragged = null
 			return

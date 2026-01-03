@@ -17,22 +17,22 @@ func make_turn_decisions():
 	reset_played_cards()
 	
 	if fusion_manager.has_pending_fusion():
-		await place_pending_fusion()
+		place_pending_fusion()
 		if played_monster_card_this_turn:
-			await adjust_all_battle_positions()
+			adjust_all_battle_positions()
 			await execute_intelligent_attacks()
 			return
 	
-	var should_fuse = await evaluate_fusion_vs_normal_play()
+	var should_fuse = evaluate_fusion_vs_normal_play()
 	if should_fuse:
 		var fusion_done = await try_generic_fusion()
 		if fusion_done and fusion_manager.has_pending_fusion():
-			await place_pending_fusion()
+			place_pending_fusion()
 	
 	if not fusion_manager.has_pending_fusion():
 		await play_optimal_monsters()
 	
-	await adjust_all_battle_positions()
+	adjust_all_battle_positions()
 	await execute_intelligent_attacks()
 
 func reset_played_cards():
@@ -45,8 +45,8 @@ func evaluate_fusion_vs_normal_play() -> bool:
 	if played_monster_card_this_turn:
 		return false
 	
-	var available_monsters = opponent_hand.opponent_hand.filter(func(card): 
-		return card.card_type == "Monster"
+	var available_monsters = opponent_hand.opponent_hand.filter(func(card):
+		return is_instance_valid(card) and card.card_type == "Monster"
 	)
 	
 	if available_monsters.size() < 2:
@@ -109,7 +109,7 @@ func try_generic_fusion() -> bool:
 		return false
 
 	var available_monsters = opponent_hand.opponent_hand.filter(func(card): 
-		return card.card_type == "Monster"
+		return is_instance_valid(card) and card.card_type == "Monster"
 	)
 	
 	if available_monsters.size() < 2:
@@ -123,7 +123,7 @@ func try_generic_fusion() -> bool:
 	fusion_manager.add_material(best_combination[0], "generic")
 	fusion_manager.add_material(best_combination[1], "generic")
 
-	var fusion_result = fusion_manager.try_fusion("Opponent")
+	var fusion_result = await fusion_manager.try_fusion("Opponent")
 	if fusion_result.success:
 		played_monster_card_this_turn = true
 		return true
@@ -152,12 +152,9 @@ func find_best_fusion_combination(monsters: Array):
 func try_fusions() -> bool:
 	if fusion_manager.fusion_performed_this_turn:
 		return false
-	var available_cards = opponent_hand.opponent_hand.duplicate()
-	if try_specific_fusion(available_cards):
-		return true
-	return false
+	return try_specific_fusion()
 
-func try_specific_fusion(available_cards: Array) -> bool:
+func try_specific_fusion() -> bool:
 	return false
 
 func _pick_opponent_monster_slot():
@@ -191,7 +188,7 @@ func play_optimal_monsters():
 		return
 	
 	var available_monsters = opponent_hand.opponent_hand.filter(func(card):
-		return card.card_type == "Monster"
+		return is_instance_valid(card) and card.card_type == "Monster"
 	)
 	if available_monsters.size() == 0:
 		return

@@ -3,12 +3,11 @@ extends Node
 const BATTLE_POSS_OFFSET = 25
 const CARD_MOVE_SPEED = 0.2
 const MAX_HAND_SIZE = 5
-
 const STARTING_HP = 8000
 
 signal duel_over(result: String)
-var duel_finished = false
 
+var duel_finished = false
 var battle_timer
 var empty_monster_card_slots = []
 var opponent_cards_on_battlefield = []
@@ -16,27 +15,27 @@ var player_cards_on_battlefield = []
 var player_cards_that_attacked_this_turn = []
 var player_graveyard = []
 var opponent_graveyard = []
-
 var player_hp
 var opponent_hp
-
-#SPELLS/MONSTER EFFECTS PROPERTIES
 var spell_targeting := false
 var pending_spell = null
+var pending_effects = []
 var pending_effect: Array = []
 var pending_caster := ""
 var pending_required_targets := 0
 var pending_targets: Array = []
-
 var suppress_on_attack = false
-
-#Multi attack handle:
 var multi_mode = {}
 var multi_remaining = {}
 var multi_already_attacked = {}
-
 var is_opponent_turn = false
 
+signal attack_declared(attacker, defender, attacker_owner)
+signal monster_played(monster, owner)
+signal spell_activated(spell, owner)
+signal trap_activated(trap, owner)
+signal turn_started(turn_owner)
+signal turn_ended(turn_owner)
 
 func _ready() -> void:
 	battle_timer = $"../BattleTimer"
@@ -53,6 +52,26 @@ func _ready() -> void:
 	$"../PlayerHP".text = str(player_hp)
 	opponent_hp = STARTING_HP
 	$"../OpponentHP".text = str(opponent_hp)
+	
+	# Verificar conexión de señales
+	print(">>> BATTLE_MANAGER: Conectando señales...")
+	print(">>> attack_declared conectado: ", attack_declared.get_connections().size(), " conexiones")
+	print(">>> monster_played conectado: ", monster_played.get_connections().size(), " conexiones")
+	print(">>> spell_activated conectado: ", spell_activated.get_connections().size(), " conexiones")
+	print(">>> trap_activated conectado: ", trap_activated.get_connections().size(), " conexiones")
+	await get_tree().create_timer(5.0).timeout
+	_test_trap_system()
+
+func _test_trap_system():
+	print("\n=== TEST DEL SISTEMA DE TRAMPAS ===")
+	print(">>> Emitiendo señal de prueba...")
+	
+	# Crear un contexto de prueba real
+	if opponent_cards_on_battlefield.size() > 0:
+		var test_attacker = opponent_cards_on_battlefield[0]
+		emit_signal("attack_declared", test_attacker, null, "Opponent")
+	else:
+		print(">>> No hay monstruos del oponente para probar")
 
 func _clear_multi_for(card):
 	multi_mode.erase(card)
@@ -81,7 +100,6 @@ func opponent_turn():
 	$"../EndTurnButton".disabled = true
 	$"../EndTurnButton".visible = false
 	
-	# Decisiones de IA ahora las metimo en su respectivo manager
 	await yield_to_refill_opponent_hand()
 	await action_waiter()
 	var opponent_ia = $"../OpponentIA"
@@ -103,21 +121,25 @@ func can_attack_directly(attacker_card):
 	return defenders.size() == 0
 
 func trigger_on_play_effects(card, who: String) -> void:
-	if not is_instance_valid(card) or card.effect == null:
+	if not is_instance_valid(card) or card.effects == null:
 		return
 		
-	var eff = card.effect
-	if typeof(eff) != TYPE_ARRAY or eff.size() == 0:
-		return
-		
-	if typeof(eff[0]) == TYPE_STRING and eff[0] == "on_play":
-		$"../Effects".execute(card.effect, who, {"card": card})
-
+	for effect in card.effects:
+		if effect is Dictionary and effect.get("type") == "on_play":
+			await $"../Effect_Manager".execute_effect(effect, card, who, {"card": card})
 
 func attack(atk_card, defending, attacker):
+	if(atk_card.card_type != "Monster"):
+		return
 	if duel_finished: return
 	if not is_instance_valid(atk_card):
 		return
+	print(">>> BATTLE_MANAGER: Emitiendo attack_declared")
+	print(">>>   Atacante: ", atk_card.card_name)
+	print(">>>   Defensor: ", defending.card_name if defending else "DIRECT_ATTACK")
+	print(">>>   Owner atacante: ", attacker)
+	
+	emit_signal("attack_declared", atk_card, defending, attacker)
 	
 	if atk_card.has_meta("only_direct_attack") and atk_card.get_meta("only_direct_attack"):
 		if is_instance_valid(defending):
@@ -125,7 +147,6 @@ func attack(atk_card, defending, attacker):
 		else:
 			await direct_attack(atk_card, attacker)
 			return
-	
 	
 	if not is_instance_valid(defending):
 		if attacker == "Opponent":
@@ -145,14 +166,12 @@ func attack(atk_card, defending, attacker):
 		enable_end_turn_button(false)
 		$"../CardManager".selected_monster = null
 
-	# Hook de declaración para efectos (multi-attack, etc. se manejan en effects.gd)
-	await _trigger_on_attack(atk_card, attacker, {
+	await _trigger_on_attack_effects(atk_card, attacker, {
 		"phase": "declare",
 		"attacker": atk_card,
 		"defender": defending
 	})
 
-	# Revalidar tras efectos de declaración
 	if not is_instance_valid(atk_card):
 		if attacker == "Player":
 			$"../InputManager".inputs_disabled = false
@@ -170,7 +189,6 @@ func attack(atk_card, defending, attacker):
 	if duel_finished:
 		return
 
-	# ===================== GUARDIAN STAR: bonos temporales (+500) =====================
 	var gsm = $"../GuardianStarManager"
 	var atk_star = (atk_card.current_guardian_star() if atk_card.has_method("current_guardian_star") else "")
 	var def_star = (defending.current_guardian_star() if defending.has_method("current_guardian_star") else "")
@@ -178,7 +196,6 @@ func attack(atk_card, defending, attacker):
 		"attacker_atk":0, "attacker_def":0, "defender_atk":0, "defender_def":0
 	})
 	
-	# Activar animaciones ANTES del movimiento de ataque
 	if gs_bonus.attacker_atk > 0 or gs_bonus.attacker_def > 0:
 		if is_instance_valid(atk_card) and atk_card.has_method("play_guardian_star_bonus_animation"):
 			await atk_card.play_guardian_star_bonus_animation(atk_star)
@@ -187,104 +204,177 @@ func attack(atk_card, defending, attacker):
 		if is_instance_valid(defending) and defending.has_method("play_guardian_star_bonus_animation"):
 			await defending.play_guardian_star_bonus_animation(def_star)
 
-	# Pequeña pausa adicional para efecto dramático (opcional)
 	await action_waiter()
 
-	# Stats temporales (no persisten)
-	var temp_attacker_atk = atk_card.Atk + int(gs_bonus.attacker_atk)
-	var temp_attacker_def = atk_card.Def + int(gs_bonus.attacker_def)
-	var temp_defender_atk = defending.Atk + int(gs_bonus.defender_atk)
-	var temp_defender_def = defending.Def + int(gs_bonus.defender_def)
-	# ================================================================================
+	var temp_atk_atk = atk_card.Atk + int(gs_bonus.attacker_atk)
+	var temp_def_atk = defending.Atk + int(gs_bonus.defender_atk)
+	var temp_def_def = defending.Def + int(gs_bonus.defender_def)
 
-	# Animación de ataque (dash) - DESPUÉS de mostrar las animaciones de Guardian Star
 	atk_card.z_index = 5
 	var target_pos: Vector2 = _anchored_target_position(atk_card, defending, BATTLE_POSS_OFFSET)
 	var t := get_tree().create_tween()
 	t.tween_property(atk_card, "global_position", target_pos, CARD_MOVE_SPEED)
 	await action_waiter()
 
-	# --- DEFENSA ---
 	if defending.in_defense:
-		var attacker_atk_val = temp_attacker_atk
-		var defender_def_val = temp_defender_def
-		var defender_owner := ("Opponent" if attacker == "Player" else "Player")
+		await _handle_defense_attack(atk_card, defending, attacker, temp_atk_atk, temp_def_def)
+	else:
+		await _handle_attack_attack(atk_card, defending, attacker, temp_atk_atk, temp_def_atk)
 
-		var result_str = "lose"
-		if attacker_atk_val > defender_def_val:
-			destroy_card(defending, defender_owner)
-			result_str = "win"
-		elif attacker_atk_val == defender_def_val:
-			result_str = "tie"
-		else:
-			# ATK < DEF: daño a LP del controlador del ATACANTE = DEF - ATK (atacante NO se destruye)
-			var diff = defender_def_val - attacker_atk_val
-			if attacker == "Opponent":
-				opponent_hp = max(0, opponent_hp - diff)
-				$"../OpponentHP".text = str(opponent_hp)
-			else:
-				player_hp = max(0, player_hp - diff)
-				$"../PlayerHP".text = str(player_hp)
-			_check_end_duel()
-
-		# Si el atacante murió, cortar acá limpiando bonus
-		if not is_instance_valid(atk_card) or (
-			atk_card not in player_cards_on_battlefield and
-			atk_card not in opponent_cards_on_battlefield
-		):
-			if is_instance_valid(atk_card) and atk_card.has_method("clear_temporary_display_bonus"):
-				atk_card.clear_temporary_display_bonus()
-			if is_instance_valid(defending) and defending.has_method("clear_temporary_display_bonus"):
-				defending.clear_temporary_display_bonus()
-
-			if attacker == "Player":
-				$"../InputManager".inputs_disabled = false
-				enable_end_turn_button(true)
-			return
-
-		# Volver a su slot
-		var home_pos: Vector2 = _anchored_slot_position(atk_card)
-		var t2 := get_tree().create_tween()
-		t2.tween_property(atk_card, "global_position", home_pos, CARD_MOVE_SPEED)
-		await t2.finished
-		if is_instance_valid(atk_card) and (
-			atk_card in player_cards_on_battlefield or
-			atk_card in opponent_cards_on_battlefield
-		):
-			atk_card.z_index = 0
-
-		var defender_ref = null
-		if is_instance_valid(defending):
-			defender_ref = defending
-
-		await _trigger_on_attack(atk_card, attacker, {
-			"phase": "after_damage",
-			"attacker": atk_card,
-			"defender": defender_ref,
-			"result": result_str
-		})
-
-		# Limpiar bonus visual tras resolver el daño
-		if is_instance_valid(atk_card) and atk_card.has_method("clear_temporary_display_bonus"):
-			atk_card.clear_temporary_display_bonus()
-		if is_instance_valid(defending) and defending.has_method("clear_temporary_display_bonus"):
-			defending.clear_temporary_display_bonus()
-
-		# Marcar que el jugador ya atacó (bloquea toggle de GS)
-		if attacker == "Player" and not (atk_card in player_cards_that_attacked_this_turn):
-			player_cards_that_attacked_this_turn.append(atk_card)
-
-		if attacker == "Player":
-			$"../InputManager".inputs_disabled = false
-			enable_end_turn_button(true)
+func _trigger_on_attack_effects(card, who: String, ctx: Dictionary) -> void:
+	if not card.get("effects"):
 		return
-	# --- FIN DEFENSA ---
+	
+	for effect_data in card.effects:
+		if effect_data.get("type") == "on_attack":
+			await $"../Effect_Manager".execute_effect(effect_data, card, who, ctx)
 
-	# --- ATAQUE vs ATAQUE ---
-	var attacker_atk_val = temp_attacker_atk
-	var defender_atk_val = temp_defender_atk
+func _place_card_in_slot(card: Node2D, slot: Node2D) -> void:
+	card.card_slot_card_is_in = slot
+	slot.card_in_slot = true
+	
+	var should_reveal = false
+	
+	# Cartas de trampa siempre boca abajo
+	if card.attribute == "trap":
+		card.set_facedown(true)
+		should_reveal = false
+		# IMPORTANTE: Activar efectos de trampa inmediatamente al colocarla
+		if card.has_method("activate_trap_effects"):
+			print(">>> Colocando trampa - activando efectos: ", card.card_name)
+			card.activate_trap_effects()
+	
+	if card.card_type == "Monster":
+		print(">>> BATTLE_MANAGER: Emitiendo monster_played - ", card.card_name, " - Owner: ", card.card_owner)
+		emit_signal("monster_played", card, card.card_owner)
+	elif card.attribute == "spell":
+		print(">>> BATTLE_MANAGER: Emitiendo spell_activated - ", card.card_name, " - Owner: ", card.card_owner)
+		emit_signal("spell_activated", card, card.card_owner)
+	elif card.attribute == "trap":
+		print(">>> BATTLE_MANAGER: Emitiendo trap_activated - ", card.card_name, " - Owner: ", card.card_owner)
+		emit_signal("trap_activated", card, card.card_owner)
+	# Cartas de hechizo: boca abajo a menos que tengan efecto inmediato
+	elif card.attribute == "spell":
+		if _has_immediate_effect(card):
+			card.set_facedown(false)
+			should_reveal = true
+		else:
+			card.set_facedown(true)
+			should_reveal = false
+	# Monstruos: boca abajo a menos que tengan efecto inmediato o sean fusión/ritual
+	elif card.card_type == "Monster":
+		if card.fusion_result or _has_immediate_effect(card):
+			card.set_facedown(false)
+			should_reveal = true
+		else:
+			card.set_facedown(true)
+			should_reveal = false
+	
+	card.set_show_back_only(false)
+	card.scale = Vector2($"../CardManager".FIELD_SCALE, $"../CardManager".FIELD_SCALE)
+	$"../CardManager"._snap_card_to_slot_center(card, slot)
+	card.z_index = -4
+	
+	# EMITIR SEÑAL para trampas - después de colocar
+	if card.card_type == "Monster":
+		print(">>> BATTLE_MANAGER: Emitiendo monster_played - ", card.card_name, " - Owner: ", card.card_owner)
+		emit_signal("monster_played", card, card.card_owner)
+	elif card.attribute == "spell":
+		print(">>> BATTLE_MANAGER: Emitiendo spell_activated - ", card.card_name, " - Owner: ", card.card_owner)
+		emit_signal("spell_activated", card, card.card_owner)
+	elif card.attribute == "trap":
+		print(">>> BATTLE_MANAGER: Emitiendo trap_activated - ", card.card_name, " - Owner: ", card.card_owner)
+		emit_signal("trap_activated", card, card.card_owner)
+	
+	# Si la carta se revela, activar efectos on_play inmediatos
+	if should_reveal:
+		reveal_card(card)
+		# Activar efectos on_play si los tiene
+		_trigger_on_play_effects(card, card.card_owner)
 
-	if attacker_atk_val == defender_atk_val:
+func _has_immediate_effect(card) -> bool:
+	if not card.get("effects"):
+		return false
+	
+	for effects in card.effects:
+		if effects.get("type") == "on_play":
+			return true
+		if effects.get("type") == "spell_activation" and effects.get("immediate", false):
+			return true
+	
+	return false
+
+func _trigger_on_play_effects(card, card_owner: String) -> void:
+	if not card.get("effects"):
+		return
+	
+	for effect_data in card.effects:
+		if effect_data.get("type") == "on_play":
+			$"../Effect_Manager".execute_effect(effect_data, card, card_owner, {"card": card})
+
+func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power):
+	var defender_owner := ("Opponent" if attacker == "Player" else "Player")
+	var result_str = "lose"
+	
+	var has_piercing = atk_card.get_meta("piercing_damage", false)
+	
+	if atk_power > def_power:
+		destroy_card(defending, defender_owner)
+		result_str = "win"
+	elif atk_power == def_power:
+		result_str = "tie"
+	else:
+		var diff = def_power - atk_power
+		if attacker == "Opponent":
+			opponent_hp = max(0, opponent_hp - diff)
+			$"../OpponentHP".text = str(opponent_hp)
+		else:
+			player_hp = max(0, player_hp - diff)
+			$"../PlayerHP".text = str(player_hp)
+		_check_end_duel()
+	
+	if has_piercing and atk_power > def_power:
+		var piercing_damage = atk_power - def_power
+		if attacker == "Opponent":
+			player_hp = max(0, player_hp - piercing_damage)
+			$"../PlayerHP".text = str(player_hp)
+		else:
+			opponent_hp = max(0, opponent_hp - piercing_damage)
+			$"../OpponentHP".text = str(opponent_hp)
+		_check_end_duel()
+
+	if not _is_card_alive(atk_card):
+		_clear_bonuses([atk_card, defending])
+		if attacker == "Player":
+			_enable_player_input()
+		return
+
+	var return_pos: Vector2 = _anchored_slot_position(atk_card)
+	var t2 := get_tree().create_tween()
+	t2.tween_property(atk_card, "global_position", return_pos, CARD_MOVE_SPEED)
+	await t2.finished
+	
+	if _is_card_alive(atk_card):
+		atk_card.z_index = 0
+
+	var defender_ref = defending if is_instance_valid(defending) else null
+	await _trigger_on_attack(atk_card, attacker, {
+		"phase": "after_damage",
+		"attacker": atk_card,
+		"defender": defender_ref,
+		"result": result_str
+	})
+
+	_clear_bonuses([atk_card, defending])
+	
+	if attacker == "Player" and not (atk_card in player_cards_that_attacked_this_turn):
+		player_cards_that_attacked_this_turn.append(atk_card)
+
+	if attacker == "Player":
+		_enable_player_input()
+
+func _handle_attack_attack(atk_card, defending, attacker, atk_power, def_power):
+	if atk_power == def_power:
 		destroy_card_tie(atk_card, defending)
 		await _trigger_on_attack(atk_card, attacker, {
 			"phase": "after_damage",
@@ -292,96 +382,79 @@ func attack(atk_card, defending, attacker):
 			"defender": defending,
 			"result": "tie"
 		})
-
-		# Limpiar bonus visual (empate)
-		if is_instance_valid(atk_card) and atk_card.has_method("clear_temporary_display_bonus"):
-			atk_card.clear_temporary_display_bonus()
-		if is_instance_valid(defending) and defending.has_method("clear_temporary_display_bonus"):
-			defending.clear_temporary_display_bonus()
-
-		# Marcar que el jugador ya atacó (bloquea toggle de GS)
+		_clear_bonuses([atk_card, defending])
 		if attacker == "Player" and not (atk_card in player_cards_that_attacked_this_turn):
 			player_cards_that_attacked_this_turn.append(atk_card)
-
-		$"../InputManager".inputs_disabled = false
-		enable_end_turn_button(true)
+		_enable_player_input()
 		return
 
-	elif attacker_atk_val > defender_atk_val:
-		var dmg: int = attacker_atk_val - defender_atk_val
+	var attacker_won = atk_power > def_power
+	var damage = abs(atk_power - def_power)
+	
+	if attacker_won:
 		if attacker == "Opponent":
-			player_hp = max(0, player_hp - dmg)
+			player_hp = max(0, player_hp - damage)
 			$"../PlayerHP".text = str(player_hp)
 			_check_end_duel()
 			destroy_card(defending, "Player")
 		else:
-			opponent_hp = max(0, opponent_hp - dmg)
+			opponent_hp = max(0, opponent_hp - damage)
 			$"../OpponentHP".text = str(opponent_hp)
 			_check_end_duel()
 			destroy_card(defending, "Opponent")
 	else:
-		var dmg2: int = defender_atk_val - attacker_atk_val
 		if attacker == "Opponent":
-			opponent_hp = max(0, opponent_hp - dmg2)
+			opponent_hp = max(0, opponent_hp - damage)
 			$"../OpponentHP".text = str(opponent_hp)
 			_check_end_duel()
 			destroy_card(atk_card, "Opponent")
 		else:
-			player_hp = max(0, player_hp - dmg2)
+			player_hp = max(0, player_hp - damage)
 			$"../PlayerHP".text = str(player_hp)
 			_check_end_duel()
 			destroy_card(atk_card, "Player")
 
-	# Si el atacante murió, cortar acá, limpiando bonus
-	if not is_instance_valid(atk_card) or (
-		atk_card not in player_cards_on_battlefield and
-		atk_card not in opponent_cards_on_battlefield
-	):
-		if is_instance_valid(atk_card) and atk_card.has_method("clear_temporary_display_bonus"):
-			atk_card.clear_temporary_display_bonus()
-		if is_instance_valid(defending) and defending.has_method("clear_temporary_display_bonus"):
-			defending.clear_temporary_display_bonus()
-
+	if not _is_card_alive(atk_card):
+		_clear_bonuses([atk_card, defending])
 		if attacker == "Player":
-			$"../InputManager".inputs_disabled = false
-			enable_end_turn_button(true)
+			_enable_player_input()
 		return
 
-	# Volver atacante a su slot
-	var home_pos: Vector2 = _anchored_slot_position(atk_card)
+	var return_pos2: Vector2 = _anchored_slot_position(atk_card)
 	var t2b := get_tree().create_tween()
-	t2b.tween_property(atk_card, "global_position", home_pos, CARD_MOVE_SPEED)
+	t2b.tween_property(atk_card, "global_position", return_pos2, CARD_MOVE_SPEED)
 	await t2b.finished
-	if is_instance_valid(atk_card) and (
-		atk_card in player_cards_on_battlefield or
-		atk_card in opponent_cards_on_battlefield
-	):
+	
+	if _is_card_alive(atk_card):
 		atk_card.z_index = 0
 
-	var defender_ref2 = null
-	if is_instance_valid(defending):
-		defender_ref2 = defending
-
+	var defender_ref2 = defending if is_instance_valid(defending) else null
 	await _trigger_on_attack(atk_card, attacker, {
 		"phase": "after_damage",
 		"attacker": atk_card,
 		"defender": defender_ref2,
-		"result": ("win" if attacker_atk_val > defender_atk_val else "lose")
+		"result": ("win" if attacker_won else "lose")
 	})
 
-	# Limpiar bonus visual tras after_damage
-	if is_instance_valid(atk_card) and atk_card.has_method("clear_temporary_display_bonus"):
-		atk_card.clear_temporary_display_bonus()
-	if is_instance_valid(defending) and defending.has_method("clear_temporary_display_bonus"):
-		defending.clear_temporary_display_bonus()
-
-	# Marcar que el jugador ya atacó (bloquea toggle de GS)
+	_clear_bonuses([atk_card, defending])
+	
 	if attacker == "Player" and not (atk_card in player_cards_that_attacked_this_turn):
 		player_cards_that_attacked_this_turn.append(atk_card)
 
 	if attacker == "Player":
-		$"../InputManager".inputs_disabled = false
-		enable_end_turn_button(true)
+		_enable_player_input()
+
+func _is_card_alive(card) -> bool:
+	return is_instance_valid(card) and (card in player_cards_on_battlefield or card in opponent_cards_on_battlefield)
+
+func _clear_bonuses(cards: Array):
+	for card in cards:
+		if is_instance_valid(card) and card.has_method("clear_temporary_display_bonus"):
+			card.clear_temporary_display_bonus()
+
+func _enable_player_input():
+	$"../InputManager".inputs_disabled = false
+	enable_end_turn_button(true)
 
 func _owner_of(card) -> String:
 	if card in player_cards_on_battlefield:
@@ -390,7 +463,7 @@ func _owner_of(card) -> String:
 		return "Opponent"
 	return ""
 
-func destroy_card_tie(card_a, card_b) -> void: #Por alguna razon en empate destroy no funciona, no quitar esto
+func destroy_card_tie(card_a, card_b):
 	if is_instance_valid(card_a):
 		var owner_a := _owner_of(card_a)
 		if owner_a != "":
@@ -446,11 +519,16 @@ func _clean_battlefield_lists():
 
 func _has_on_attack(card) -> bool:
 	if card == null: return false
-	if card.effect == null : return false
-	var eff = card.effect
-	if typeof(eff) != TYPE_ARRAY: return false
-	if eff.size() == 0: return false
-	return typeof(eff[0]) == TYPE_STRING and eff[0] == "on_attack"
+	if card.effects == null: return false
+	var eff_list = card.effects
+	if typeof(eff_list) != TYPE_ARRAY: return false
+	if eff_list.size() == 0: return false
+	
+	for effect in eff_list:
+		if effect is Dictionary and effect.get("type") == "on_attack":
+			return true
+	
+	return false
 
 func _trigger_on_attack(card, who: String, ctx: Dictionary) -> void:
 	if suppress_on_attack: 
@@ -459,8 +537,14 @@ func _trigger_on_attack(card, who: String, ctx: Dictionary) -> void:
 		return
 	if not _has_on_attack(card):
 		return
+	
 	suppress_on_attack = true
-	await $"../Effects".execute(card.effect, who, ctx)
+	
+	# Ejecutar todos los efectos "on_attack" de la carta
+	for effect in card.effects:
+		if effect is Dictionary and effect.get("type") == "on_attack":
+			await $"../Effect_Manager".execute_effect(effect, card, who, ctx)
+	
 	suppress_on_attack = false
 
 func _live_defenders_for(attacker_side: String):
@@ -480,35 +564,57 @@ func _targets_required_for(effect_list: Array) -> int:
 	for e in effect_list:
 		if e == "target_enemy_monster":
 			n += 1
-		# futuro: sumar aquí otros "target_*"
 	return n
 
 func start_spell_activation(spell_card, who: String) -> void:
-	var eff: Array = spell_card.effect
-	var need := _targets_required_for(eff)
-
-	if spell_card.has_method("get_node"):
-		# acá volteamos cartón
-		pass
-
-	if need == 0:
-		# Efecto inmediato
-		$"../Effects".execute(eff, who, {})
+	emit_signal("spell_activated", spell_card, who)
+	# Revelar la carta si está boca abajo
+	if spell_card.is_facedown:
+		reveal_card(spell_card)
+	
+	# EMITIR SEÑAL para trampas que respondan a activación de hechizos
+	emit_signal("spell_activated", spell_card, who)
+	
+	# Verificar si tiene efectos
+	if not spell_card.get("effects"):
+		_send_spell_to_graveyard(spell_card, who)
+		return
+	
+	# Buscar efectos de activación de hechizo
+	var activation_effects = []
+	for effects in spell_card.effects:
+		if effects.get("type") == "spell_activation":
+			activation_effects.append(effects)
+	
+	if activation_effects.is_empty():
+		_send_spell_to_graveyard(spell_card, who)
+		return
+	
+	# Verificar si necesita targets
+	var need_targets = false
+	for effects in activation_effects:
+		if effects.get("requires_target", false):
+			need_targets = true
+			break
+	
+	if not need_targets:
+		# Ejecutar todos los efectos sin targets
+		for effects in activation_effects:
+			await $"../Effect_Manager".execute_effect(effects, spell_card, who, {})
 		_send_spell_to_graveyard(spell_card, who)
 	else:
-		# Entrar en modo selección de objetivos
+		# Configurar targeting
 		spell_targeting = true
 		pending_spell = spell_card
-		pending_effect = eff
+		pending_effects = activation_effects  # Ahora puede tener múltiples efectos
 		pending_caster = who
-		pending_required_targets = need
+		pending_required_targets = 1  # Por simplicidad, asumimos 1 target por ahora
 		pending_targets = []
-		$"../EndTurnButton".disabled = true  # evita terminar turno en medio del targeting
+		$"../EndTurnButton".disabled = true
 
 func receive_spell_target(card) -> void:
 	if not spell_targeting: return
 
-	# Validar que el target sea del bando correcto para "target_enemy_monster"
 	var is_enemy = (pending_caster == "Player" and card in opponent_cards_on_battlefield) \
 		or (pending_caster == "Opponent" and card in player_cards_on_battlefield)
 	if not is_enemy:
@@ -526,19 +632,17 @@ func receive_spell_target(card) -> void:
 func _clear_spell_targeting() -> void:
 	spell_targeting = false
 	pending_spell = null
-	pending_effect = []
+	pending_effects = []
 	pending_caster = ""
 	pending_required_targets = 0
 	pending_targets = []
 	$"../EndTurnButton".disabled = false
 
 func _send_spell_to_graveyard(spell_card, who: String) -> void:
-	# liberar slot
 	if spell_card.card_slot_card_is_in:
 		spell_card.card_slot_card_is_in.card_in_slot = false
 		if "card_ref" in spell_card.card_slot_card_is_in:
 			spell_card.card_slot_card_is_in.card_ref = null
-	# mandar a cementerio
 	if who == "Player":
 		player_graveyard.append(spell_card)
 	else:
@@ -566,7 +670,6 @@ func destroy_card(card, card_owner):
 		if slot.get_parent() == $"../CardSlotsRival":
 			if not empty_monster_card_slots.has(slot):
 				empty_monster_card_slots.append(slot)
-	#Añadir llamada a efectito visual de destrucción.
 	if multi_mode.has(card): multi_mode.erase(card)
 	if multi_remaining.has(card): multi_remaining.erase(card)
 	if multi_already_attacked.has(card): multi_already_attacked.erase(card)
@@ -661,7 +764,7 @@ func reveal_card(card: Node):
 		if card.has_method("_update_guardian_star_label"):
 			card._update_guardian_star_label()
 
-func enable_end_turn_button(is_enabled): #Será reemplazado por una especie de "enable_actions_user" oa algo así
+func enable_end_turn_button(is_enabled):
 	if is_enabled:
 		$"../EndTurnButton".disabled = false
 		$"../EndTurnButton".visible = true
@@ -700,7 +803,6 @@ func _anchored_slot_position(card: Node2D):
 func _anchored_target_position(attacker: Node2D, defender: Node2D, y_offset := 0.0) -> Vector2:
 	var def_anchor := defender.get_node_or_null("AnchorCenter") as Node2D
 	var def_center := (def_anchor if def_anchor else defender) as Node2D
-	# Mantener el atacante “mirado” con su mismo delta de anchor
 	var atk_anchor := attacker.get_node_or_null("AnchorCenter") as Node2D
 	var atk_delta := atk_anchor.to_global(Vector2.ZERO) - attacker.to_global(Vector2.ZERO)
 	return def_center.global_position - atk_delta + Vector2(0, y_offset)

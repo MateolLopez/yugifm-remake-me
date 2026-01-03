@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://terlwd0wtt47"]
+[gd_scene load_steps=43 format=3 uid="uid://terlwd0wtt47"]
 
 [ext_resource type="Script" uid="uid://bo2w3sr75lwiu" path="res://Scripts/card.gd" id="1_tgmmg"]
 [ext_resource type="Texture2D" uid="uid://ra55qxy2rgeg" path="res://_resources/card_design/texture_orange.png" id="2_4dx8l"]
@@ -9,6 +9,8 @@
 [ext_resource type="Texture2D" uid="uid://dtsotqyekgca0" path="res://_resources/_attributes/dark.png" id="5_5273u"]
 [ext_resource type="Texture2D" uid="uid://n065ruvaj0qb" path="res://_resources/card_design/texture_back.png" id="8_dqwud"]
 [ext_resource type="Texture2D" uid="uid://d2twpfjadcfy7" path="res://_resources/animationiguess/guardianstarTemporary.png" id="10_50dou"]
+[ext_resource type="Shader" uid="uid://bvgt7o8x8wamb" path="res://shaders/GenericFusion.gdshader" id="10_ulcbd"]
+[ext_resource type="Texture2D" uid="uid://lh0bvihtk75j" path="res://_resources/animationiguess/pngegg.png" id="11_ulcbd"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_qbjcq"]
 size = Vector2(329, 479)
@@ -916,6 +918,48 @@ animations = [{
 "speed": 60.0
 }]
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_50dou"]
+shader = ExtResource("10_ulcbd")
+shader_parameter/enabled = true
+
+[sub_resource type="Animation" id="Animation_ulcbd"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("fusionSpiral:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="Animation" id="Animation_50dou"]
+resource_name = "spiral_rotate"
+length = 2.3
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("fusionSpiral:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 2.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 6.370452]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ulcbd"]
+_data = {
+&"RESET": SubResource("Animation_ulcbd"),
+&"spiral_rotate": SubResource("Animation_50dou")
+}
+
 [node name="Card" type="Node2D"]
 script = ExtResource("1_tgmmg")
 
@@ -1133,3 +1177,15 @@ sprite_frames = SubResource("SpriteFrames_ftgo6")
 animation = &"guardian_star_Jupiter"
 frame = 24
 frame_progress = 1.0
+
+[node name="fusionSpiral" type="Sprite2D" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_50dou")
+position = Vector2(164.5, 239.5)
+texture = ExtResource("11_ulcbd")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_ulcbd")
+}
+autoplay = "spiral_rotate"

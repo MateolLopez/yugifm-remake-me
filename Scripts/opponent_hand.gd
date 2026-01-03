@@ -40,6 +40,8 @@ func _calc_x(index: int) -> float:
 	return center_screen_x + index * CARD_WIDTH - total_width / 2.0
 
 func animate_card_to_position(card: Node2D, new_position: Vector2, speed: float) -> void:
+	if not is_instance_valid(card):
+		return
 	var tw := get_tree().create_tween()
 	tw.tween_property(card, "global_position", new_position, speed)
 
@@ -47,4 +49,19 @@ func remove_card_from_hand(card: Node2D) -> void:
 	if card in opponent_hand:
 		opponent_hand.erase(card)
 		update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
-		card.set_in_hand_mask(false)      
+		if is_instance_valid(card):
+			card.set_in_hand_mask(false)
+
+func cleanup_invalid_cards() -> void:
+	var valid_cards = []
+	for card in opponent_hand:
+		if is_instance_valid(card) and card.get_parent() != null:
+			valid_cards.append(card)
+		else:
+			if card in opponent_hand:
+				opponent_hand.erase(card)
+	opponent_hand = valid_cards
+	update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
+
+func has_card(card) -> bool:
+	return opponent_hand.has(card)

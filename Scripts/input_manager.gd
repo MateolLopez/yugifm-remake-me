@@ -88,6 +88,8 @@ func _input(event: InputEvent) -> void:
 		var hovered_card = _get_hovered_card()
 		if hovered_card:
 			var fusion_manager = $"../FusionManager"
+			if fusion_manager and fusion_manager.is_animating_fusion:
+				return
 			if fusion_manager.can_select_material("generic"):
 				fusion_manager.add_material(hovered_card, "generic")
 				

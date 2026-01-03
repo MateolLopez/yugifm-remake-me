@@ -19,9 +19,9 @@ var active_player_deck_key := "main"
 var collection := {}
 var unlocks := { "opponents": {}, "cards": {} }
 
-func set_duel_route(next_timeline: String, return_to_story = true, reward_scene_id = "") -> void:
+func set_duel_route(timeline_next: String, return_to_story = true, reward_scene_id = "") -> void:
 	current_rules = {
-		"next": next_timeline,
+		"next": timeline_next,
 		"return_to_story": return_to_story,
 		"reward_scene_id": reward_scene_id
 	}

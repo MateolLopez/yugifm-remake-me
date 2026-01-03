@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://cv3psty7bf6sh"]
+[gd_scene load_steps=31 format=3 uid="uid://cv3psty7bf6sh"]
 
 [ext_resource type="Script" uid="uid://ddwrxhfr5nnlw" path="res://Scripts/card_manager.gd" id="1_sooux"]
 [ext_resource type="Script" uid="uid://c2bwtc3j72nmj" path="res://Scripts/player_hand.gd" id="2_qattd"]
@@ -13,16 +13,63 @@
 [ext_resource type="PackedScene" uid="uid://kqebt535l1q6" path="res://scenes/Opponent_deck.tscn" id="9_h8wu8"]
 [ext_resource type="Script" uid="uid://c3cq8iq62h58f" path="res://Scripts/opponent_deck.gd" id="10_sjiiy"]
 [ext_resource type="Script" uid="uid://q3kdx072n7j6" path="res://Scripts/battle_manager.gd" id="11_flypn"]
-[ext_resource type="Script" uid="uid://b3a205v21jh1r" path="res://Scripts/effects.gd" id="12_5q81d"]
+[ext_resource type="Script" uid="uid://b3a205v21jh1r" path="res://Scripts/effect_manager.gd" id="12_5q81d"]
 [ext_resource type="Texture2D" uid="uid://x5bxsg0ni8wq" path="res://assets/placeholders/bgduel.jpg" id="13_jmg8l"]
 [ext_resource type="Texture2D" uid="uid://dypaf1l8b8p0" path="res://assets/Deck.png" id="15_h1aux"]
 [ext_resource type="Script" uid="uid://r727c8vuvmas" path="res://Scripts/duel_flow.gd" id="16_qattd"]
 [ext_resource type="Script" uid="uid://7pswykviq5ol" path="res://Scripts/guardian_star_manager.gd" id="19_5r5qm"]
 [ext_resource type="Script" uid="uid://u8cf3ha250wd" path="res://Scripts/fusion_manager.gd" id="19_gatq4"]
 [ext_resource type="Script" uid="uid://gxyjvmaxr58m" path="res://Scripts/OpponentIA.gd" id="20_gatq4"]
+[ext_resource type="Script" uid="uid://cghynuk8yhf5v" path="res://Scripts/fusion_point.gd" id="21_h8wu8"]
+[ext_resource type="Shader" uid="uid://bvgt7o8x8wamb" path="res://shaders/GenericFusion.gdshader" id="21_v5elv"]
+[ext_resource type="Texture2D" uid="uid://lh0bvihtk75j" path="res://_resources/animationiguess/pngegg.png" id="21_vhs7o"]
+[ext_resource type="Script" uid="uid://c410jp4q3rui6" path="res://Scripts/trap_manager.gd" id="24_sjiiy"]
+[ext_resource type="Script" uid="uid://1nsx8otcvjt6" path="res://Scripts/trap_test.gd" id="25_flypn"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_t45xh"]
 load_path = "res://.godot/imported/756652.jpg-ac6c3d5ebd245cf2e8902e5d9ae068ff.ctex"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_h8wu8"]
+shader = ExtResource("21_v5elv")
+shader_parameter/enabled = true
+
+[sub_resource type="Animation" id="Animation_h8wu8"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("fusionSpiral:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="Animation" id="Animation_v5elv"]
+resource_name = "animationSpiral"
+length = 2.3
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("fusionSpiral:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 2.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 6.2831855]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_sjiiy"]
+_data = {
+&"RESET": SubResource("Animation_h8wu8"),
+&"animationSpiral": SubResource("Animation_v5elv")
+}
 
 [node name="Duel_scene" type="Node2D"]
 
@@ -202,7 +249,7 @@ offset_bottom = 455.0
 scale = Vector2(2, 2)
 text = "0"
 
-[node name="Effects" type="Node" parent="."]
+[node name="Effect_Manager" type="Node" parent="."]
 script = ExtResource("12_5q81d")
 
 [node name="Bgduel" type="Sprite2D" parent="."]
@@ -237,5 +284,35 @@ script = ExtResource("19_gatq4")
 
 [node name="OpponentIA" type="Node" parent="."]
 script = ExtResource("20_gatq4")
+
+[node name="FusionPoint" type="Node2D" parent="."]
+visible = false
+position = Vector2(1040, 520)
+script = ExtResource("21_h8wu8")
+
+[node name="FusionDarker" type="ColorRect" parent="FusionPoint"]
+z_index = -1
+offset_left = -1136.0
+offset_top = -644.0
+offset_right = 979.0
+offset_bottom = 657.0
+color = Color(0, 0, 0, 0.45882353)
+
+[node name="fusionSpiral" type="Sprite2D" parent="FusionPoint"]
+material = SubResource("ShaderMaterial_h8wu8")
+scale = Vector2(2, 2)
+texture = ExtResource("21_vhs7o")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="FusionPoint"]
+libraries = {
+&"": SubResource("AnimationLibrary_sjiiy")
+}
+autoplay = "animationSpiral"
+
+[node name="TrapManager" type="Node" parent="."]
+script = ExtResource("24_sjiiy")
+
+[node name="TrapTest" type="Node" parent="."]
+script = ExtResource("25_flypn")
 
 [connection signal="pressed" from="EndTurnButton" to="BattleManager" method="_on_end_turn_button_pressed"]
