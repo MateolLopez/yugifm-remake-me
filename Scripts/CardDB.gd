@@ -2728,7 +2728,7 @@ const CARDS = {
 	"description": "Una serpiente con un solo ojo que exhala un aliento helado para congelar a sus oponentes.",
 	"effects": [],
 	"tags": ["reptile","snake","earth"],
-	"passcode": "86100785"
+	"passcode": "82742611"
 },
 	"000172": {
 	"card_id": "000172",

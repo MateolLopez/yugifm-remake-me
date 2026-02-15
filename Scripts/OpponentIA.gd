@@ -176,6 +176,9 @@ func place_pending_fusion() -> bool:
 		played_monster_card_this_turn = true
 		if battle_manager.empty_monster_card_slots.has(slot):
 			battle_manager.empty_monster_card_slots.erase(slot)
+		var fusion_card = fusion_manager.pending_fusion_card
+		if is_instance_valid(fusion_card):
+			battle_manager.emit_signal("monster_played", fusion_card, "Opponent")
 		return true
 	return false
 
@@ -221,6 +224,7 @@ func play_monster_to_field(monster):
 	tw.tween_property(monster, "global_position", final_pos, battle_manager.CARD_MOVE_SPEED)
 	await tw.finished
 	battle_manager.opponent_cards_on_battlefield.append(monster)
+	battle_manager.emit_signal("monster_played", monster, "Opponent")
 	played_monster_card_this_turn = true
 	await battle_manager.action_waiter()
 

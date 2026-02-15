@@ -38,6 +38,7 @@ signal turn_started(turn_owner)
 signal turn_ended(turn_owner)
 
 func _ready() -> void:
+	add_to_group("battle_manager")
 	battle_timer = $"../BattleTimer"
 	battle_timer.one_shot = true
 	battle_timer.wait_time = 0.5
@@ -735,6 +736,7 @@ func try_play_highest_atk_card():
 	await tw.finished
 
 	opponent_cards_on_battlefield.append(card_highestAtk)
+	emit_signal("monster_played", card_highestAtk, "Opponent")
 	await action_waiter()
 
 func end_opponent_turn():

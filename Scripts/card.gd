@@ -476,7 +476,14 @@ func activate_trap_effects():
 	
 	print(">>> Activando efectos de trampa para: ", card_name)
 	
-	var em = get_node_or_null("/root/EffectManager")
+	var em = get_tree().get_first_node_in_group("effect_manager")
+	if em == null:
+		em = get_node_or_null("../Effect_Manager")
+
+	if em == null:
+		print(">>> ERROR: EffectManager no encontrado (grupo effect_manager / ../Effect_Manager)")
+		return
+
 	if em == null:
 		print(">>> ERROR: EffectManager no encontrado")
 		return

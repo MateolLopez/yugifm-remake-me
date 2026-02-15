@@ -26,9 +26,11 @@ enum TriggerCondition {
 # Registro de efectos
 var _effect_handlers := {}
 var _active_traps := []  # Trampas esperando activación
-@onready var battle_manager = get_node("res://Scripts/battle_manager.gd")
+@onready var battle_manager: Node = null
 
 func _ready():
+	add_to_group("effect_manager")
+	battle_manager = get_tree().get_first_node_in_group("battle_manager")
 	_register_effect_handlers()
 
 func _register_effect_handlers():
@@ -68,9 +70,6 @@ func _register_effect_handlers():
 	_effect_handlers["recover_hp"] = _handle_recover_hp_on_attack
 	_effect_handlers["destroy_defense_monsters"] = _handle_destroy_defense_monsters
 	_effect_handlers["immune"] = _handle_immune 
-	
-	await get_tree().create_timer(3.0).timeout
-	get_node("/root/EffectManager").test_trap_activation()
 
 func execute_effect(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary = {}) -> void:
 	var effect_key = _effect_data.get("action", "")
@@ -153,7 +152,12 @@ func _check_trap_conditions(trap, context):
 
 # Efectos de destrucción
 func _handle_destroy_enemy_monsters(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var enemy_list = _bm.opponent_cards_on_battlefield if _card_owner == "Player" else _bm.player_cards_on_battlefield
 	
 	for card in enemy_list.duplicate():
@@ -161,7 +165,12 @@ func _handle_destroy_enemy_monsters(_effect_data: Dictionary, _source_card, _car
 			_bm.destroy_card(card, "Opponent" if _card_owner == "Player" else "Player")
 
 func _handle_destroy_all_monsters(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	
 	# Destruir monstruos del jugador
 	for card in _bm.player_cards_on_battlefield.duplicate():
@@ -174,8 +183,11 @@ func _handle_destroy_all_monsters(_effect_data: Dictionary, _source_card, _card_
 			_bm.destroy_card(card, "Opponent")
 
 func _handle_destroy_target_enemy(_effect_data: Dictionary, _source_card, _card_owner: String, context: Dictionary):
-	var bm = $"../BattleManager"
-	var target = context.get("monster")  # Cambiado de "target" a "monster" para coincidir con el contexto
+	var bm = get_tree().get_first_node_in_group("battle_manager")
+	if bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
+	var target = context.get("monster")  
 	
 	print(">>> Ejecutando Trap Hole - destruyendo objetivo")
 	print(">>> Target recibido: ", target.card_name if target else "null")
@@ -188,7 +200,12 @@ func _handle_destroy_target_enemy(_effect_data: Dictionary, _source_card, _card_
 		print(">>> Target no válido o inmune")
 
 func _handle_destroy_lowest_atk(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var enemy_list = _bm.opponent_cards_on_battlefield if _card_owner == "Player" else _bm.player_cards_on_battlefield
 	
 	if enemy_list.is_empty():
@@ -205,7 +222,12 @@ func _handle_destroy_lowest_atk(_effect_data: Dictionary, _source_card, _card_ow
 		_bm.destroy_card(lowest_atk_card, target__card_owner)
 
 func _handle_destroy_spell_trap(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	# Esto requiere lógica específica para identificar cartas de hechizo/trampa
 	# Por ahora, asumimos que se destruye una carta aleatoria del campo oponente
 	var enemy_field = _bm.opponent_cards_on_battlefield if _card_owner == "Player" else _bm.player_cards_on_battlefield
@@ -217,7 +239,12 @@ func _handle_destroy_spell_trap(_effect_data: Dictionary, _source_card, _card_ow
 			_bm.destroy_card(random_card, target__card_owner)
 
 func _handle_destroy_all_spell_trap(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	# Similar al anterior pero para todas las cartas de hechizo/trampa
 	var enemy_field = _bm.opponent_cards_on_battlefield if _card_owner == "Player" else _bm.player_cards_on_battlefield
 	
@@ -251,7 +278,12 @@ func _handle_destroy_attackers_in_attack_position(_effect_data: Dictionary, _sou
 
 func _handle_inflict_damage(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
 	var damage = _effect_data.get("amount", 0)
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	
 	if _effect_data.get("target") == "opponent":
 		if _card_owner == "Player":
@@ -270,7 +302,12 @@ func _handle_inflict_damage(_effect_data: Dictionary, _source_card, _card_owner:
 
 func _handle_recover_lp(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
 	var amount = _effect_data.get("amount", 0)
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	
 	if _card_owner == "Player":
 		_bm.player_hp += amount
@@ -282,7 +319,12 @@ func _handle_recover_lp(_effect_data: Dictionary, _source_card, _card_owner: Str
 
 # Efectos de control
 func _handle_take_control(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var target = _context.get("target")
 	
 	if is_instance_valid(target):
@@ -435,7 +477,12 @@ func _handle_invert_stats(_effect_data: Dictionary, _source_card, _card_owner: S
 
 # Efectos especiales
 func _handle_summon_monster(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var monster_type = _effect_data.get("monster_type", "random")
 	var level = _effect_data.get("level", 3)
 	
@@ -445,7 +492,12 @@ func _handle_summon_monster(_effect_data: Dictionary, _source_card, _card_owner:
 	print("Summon monster effect - Tipo: ", monster_type, " Nivel: ", level)
 
 func _handle_reborn_from_grave(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var grave = _bm.player_graveyard if _card_owner == "Player" else _bm.opponent_graveyard
 	
 	if not grave.is_empty():
@@ -473,7 +525,12 @@ func _handle_reborn_from_grave(_effect_data: Dictionary, _source_card, _card_own
 				_bm.opponent_cards_on_battlefield.append(reborn_card)
 
 func _handle_multi_attack(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var mode = _effect_data.get("mode", "times")
 	var value = _effect_data.get("value", 1)
 	
@@ -487,7 +544,12 @@ func _handle_multi_attack(_effect_data: Dictionary, _source_card, _card_owner: S
 		_bm.multi_already_attacked[_source_card] = []
 
 func _handle_kill_destroyer_next_ep(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var destroyer = _context.get("destroyer")
 	
 	if is_instance_valid(destroyer):
@@ -509,7 +571,12 @@ func _handle_can_direct_attack(_effect_data: Dictionary, _source_card, _card_own
 # FUNCIONES AUXILIARES
 
 func _on_turn_ended_check_destruction(turn__card_owner: String):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var field = _bm.player_cards_on_battlefield if turn__card_owner == "Opponent" else _bm.opponent_cards_on_battlefield
 	
 	for card in field.duplicate():
@@ -528,7 +595,12 @@ func _is_immune_to(card, effect_type: String) -> bool:
 	return false
 
 func _send_to_graveyard(card, _card_owner: String):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	if _card_owner == "Player":
 		_bm.player_graveyard.append(card)
 	else:
@@ -539,13 +611,23 @@ func _send_to_graveyard(card, _card_owner: String):
 	card.queue_free()
 
 func _handle_piercing_damage(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var phase = _context.get("phase", "")
 	if phase == "declare":
 		_source_card.set_meta("piercing_damage", true)
 
 func _handle_inflict_destroyed_atk(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var destroyed_card = _context.get("destroyed_card")
 	
 	if is_instance_valid(destroyed_card) and destroyed_card.Atk > 0:
@@ -560,7 +642,12 @@ func _handle_inflict_destroyed_atk(_effect_data: Dictionary, _source_card, _card
 		$"../OpponentHP".text = str(_bm.opponent_hp)
 
 func _handle_recover_hp_on_attack(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var amount = _effect_data.get("amount", 500)
 	
 	if _card_owner == "Player":
@@ -573,7 +660,12 @@ func _handle_recover_hp_on_attack(_effect_data: Dictionary, _source_card, _card_
 
 # Efecto de destruir monstruos en defensa (para E. HERO Rampart Blaster)
 func _handle_destroy_defense_monsters(_effect_data: Dictionary, _source_card, _card_owner: String, _context: Dictionary):
-	var _bm = $"../BattleManager"
+	var _bm = battle_manager
+	if _bm == null:
+		_bm = get_tree().get_first_node_in_group("battle_manager")
+	if _bm == null:
+		push_warning("EffectManager: BattleManager no encontrado")
+		return
 	var enemy_list = _bm.opponent_cards_on_battlefield if _card_owner == "Player" else _bm.player_cards_on_battlefield
 	
 	for card in enemy_list.duplicate():

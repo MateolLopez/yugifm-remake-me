@@ -1,25 +1,21 @@
 extends Node
 
-@onready var effect_manager = get_node("/root/EffectManager")
-@onready var battle_manager = $"../BattleManager"
+@onready var effect_manager = null
+@onready var battle_manager = null
 
 var _signals_connected = false
 
 func _ready():
-	# Esperar un frame para asegurar que todos los nodos estén listos
 	await get_tree().process_frame
 	_initialize()
 
 func _initialize():
-	print(">>> TRAP_MANAGER: Inicializando...")
-	print(">>> BattleManager encontrado: ", battle_manager != null)
-	print(">>> EffectManager encontrado: ", effect_manager != null)
+	battle_manager = get_tree().get_first_node_in_group("battle_manager")
+	effect_manager = get_tree().get_first_node_in_group("effect_manager")
 	
 	if battle_manager and effect_manager:
 		_connect_signals()
 	else:
-		print(">>> ERROR: No se pudo encontrar BattleManager o EffectManager")
-		# Reintentar después de un tiempo
 		await get_tree().create_timer(1.0).timeout
 		_initialize()
 
@@ -94,7 +90,7 @@ func _on_spell_activated(spell, card_owner):
 	print(">>> TRAP_MANAGER: Señal spell_activated recibida")
 	var context = {
 		"spell": spell,
-		"spell_owner": card_owner
+		"spell_card_owner": card_owner
 	}
 	effect_manager.check_trap_triggers(
 		effect_manager.TriggerCondition.OPPONENT_SPELL_ACTIVATED,
@@ -104,7 +100,7 @@ func _on_spell_activated(spell, card_owner):
 func _on_turn_started(turn_owner):
 	print(">>> TRAP_MANAGER: Señal turn_started recibida")
 	var context = {
-		"turn_owner": turn_owner
+		"turn_card_owner": turn_owner
 	}
 	effect_manager.check_trap_triggers(
 		effect_manager.TriggerCondition.TURN_START,
