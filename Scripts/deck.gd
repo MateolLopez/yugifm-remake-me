@@ -63,7 +63,7 @@ func draw_card():
 	var c = preload(CARD_SCENE_PATH).instantiate()
 	c.apply_db(db)
 
-	c.card_owner = "Player"
+	c.owner_side = "Player"
 	c.apply_owner_collision_layers()
 	c.set_facedown(false)
 	c.set_show_back_only(false)
