@@ -25,6 +25,7 @@ StoryDB="*res://Scripts/storyDB.gd"
 GenericFusionDB="*res://Scripts/GenericFusionDB.gd"
 SpecificFusionDB="*res://Scripts/SpecificFusionDB.gd"
 EffectManager="*res://Scripts/effect_manager.gd"
+CardDb="*res://Scripts/CardDB.gd"
 
 [dialogic]
 

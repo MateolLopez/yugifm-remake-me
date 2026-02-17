@@ -2,7 +2,7 @@
   {
 	"id": "86988864",
 	"kind": "MONSTER",
-	"name": "3-Hump Lacooda",
+	"cardname": "3-Hump Lacooda",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -29,7 +29,7 @@
   {
 	"id": "83994646",
 	"kind": "MONSTER",
-	"name": "4-Starred Ladybug of Doom",
+	"cardname": "4-Starred Ladybug of Doom",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -53,7 +53,7 @@
   {
 	"id": "14261867",
 	"kind": "MONSTER",
-	"name": "8-Claws Scorpion",
+	"cardname": "8-Claws Scorpion",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -76,7 +76,7 @@
   {
 	"id": "24140059",
 	"kind": "MONSTER",
-	"name": "A Cat of Ill Omen",
+	"cardname": "A Cat of Ill Omen",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -97,7 +97,7 @@
   {
 	"id": "51351302",
 	"kind": "MONSTER",
-	"name": "A Man with Wdjat",
+	"cardname": "A Man with Wdjat",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -118,7 +118,7 @@
   {
 	"id": "13026402",
 	"kind": "MONSTER",
-	"name": "A-Team: Trap Disposal Unit",
+	"cardname": "A-Team: Trap Disposal Unit",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -141,7 +141,7 @@
   {
 	"id": "89718302",
 	"kind": "MONSTER",
-	"name": "Abare Ushioni",
+	"cardname": "Abare Ushioni",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -165,7 +165,7 @@
   {
 	"id": "49771608",
 	"kind": "MONSTER",
-	"name": "Absorbing Kid from the Sky",
+	"cardname": "Absorbing Kid from the Sky",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -189,7 +189,7 @@
   {
 	"id": "18318842",
 	"kind": "MONSTER",
-	"name": "Abyss Soldier",
+	"cardname": "Abyss Soldier",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -214,7 +214,7 @@
   {
 	"id": "53828396",
 	"kind": "MONSTER",
-	"name": "Adhesive Explosive",
+	"cardname": "Adhesive Explosive",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -237,7 +237,7 @@
   {
 	"id": "16135253",
 	"kind": "MONSTER",
-	"name": "Agido",
+	"cardname": "Agido",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -262,7 +262,7 @@
   {
 	"id": "18036057",
 	"kind": "MONSTER",
-	"name": "Airknight Parshath",
+	"cardname": "Airknight Parshath",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -292,7 +292,7 @@
   {
 	"id": "91869203",
 	"kind": "MONSTER",
-	"name": "Amazoness Archer",
+	"cardname": "Amazoness Archer",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -316,7 +316,7 @@
   {
 	"id": "73574678",
 	"kind": "MONSTER",
-	"name": "Amazoness Blowpiper",
+	"cardname": "Amazoness Blowpiper",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -340,7 +340,7 @@
   {
 	"id": "29654737",
 	"kind": "MONSTER",
-	"name": "Amazoness Chain Master",
+	"cardname": "Amazoness Chain Master",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -361,7 +361,7 @@
   {
 	"id": "55821894",
 	"kind": "MONSTER",
-	"name": "Amazoness Fighter",
+	"cardname": "Amazoness Fighter",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -384,7 +384,7 @@
   {
 	"id": "47480070",
 	"kind": "MONSTER",
-	"name": "Amazoness Paladin",
+	"cardname": "Amazoness Paladin",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -409,7 +409,7 @@
   {
 	"id": "94004268",
 	"kind": "MONSTER",
-	"name": "Amazoness Swords Woman",
+	"cardname": "Amazoness Swords Woman",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -430,7 +430,7 @@
   {
 	"id": "10979723",
 	"kind": "MONSTER",
-	"name": "Amazoness Tiger",
+	"cardname": "Amazoness Tiger",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -455,7 +455,7 @@
   {
 	"id": "95174353",
 	"kind": "MONSTER",
-	"name": "Ameba",
+	"cardname": "Ameba",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -478,7 +478,7 @@
   {
 	"id": "64342551",
 	"kind": "MONSTER",
-	"name": "Amphibious Bugroth MK-3",
+	"cardname": "Amphibious Bugroth MK-3",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -495,7 +495,7 @@
 		"trigger": "PASSIVE",
 		"template": "conditional_keyword_while_field_active",
 		"params": {
-		  "field_name": "Umi",
+		  "field_cardname": "Umi",
 		  "keyword": "DIRECT_ATTACK"
 		}
 	  }
@@ -504,7 +504,7 @@
   {
 	"id": "23927567",
 	"kind": "MONSTER",
-	"name": "An Owl of Luck",
+	"cardname": "An Owl of Luck",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -525,7 +525,7 @@
   {
 	"id": "31557782",
 	"kind": "MONSTER",
-	"name": "Ancient Gear",
+	"cardname": "Ancient Gear",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -552,7 +552,7 @@
   {
 	"id": "10509340",
 	"kind": "MONSTER",
-	"name": "Ancient Gear Beast",
+	"cardname": "Ancient Gear Beast",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -578,7 +578,7 @@
   {
 	"id": "80045583",
 	"kind": "MONSTER",
-	"name": "Ancient Gear Cannon",
+	"cardname": "Ancient Gear Cannon",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -603,7 +603,7 @@
   {
 	"id": "83104731",
 	"kind": "MONSTER",
-	"name": "Ancient Gear Golem",
+	"cardname": "Ancient Gear Golem",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -631,7 +631,7 @@
   {
 	"id": "56094445",
 	"kind": "MONSTER",
-	"name": "Ancient Gear Soldier",
+	"cardname": "Ancient Gear Soldier",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -652,7 +652,7 @@
   {
 	"id": "54912977",
 	"kind": "MONSTER",
-	"name": "Ancient Lamp",
+	"cardname": "Ancient Lamp",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -673,7 +673,7 @@
   {
 	"id": "15013468",
 	"kind": "MONSTER",
-	"name": "Andro Sphinx",
+	"cardname": "Andro Sphinx",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -697,7 +697,7 @@
   {
 	"id": "13250922",
 	"kind": "MONSTER",
-	"name": "Anteatereatingant",
+	"cardname": "Anteatereatingant",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -720,7 +720,7 @@
   {
 	"id": "65064143",
 	"kind": "MONSTER",
-	"name": "Anti-Aircraft Flower",
+	"cardname": "Anti-Aircraft Flower",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -745,7 +745,7 @@
   {
 	"id": "09156135",
 	"kind": "MONSTER",
-	"name": "Apprentice Magician",
+	"cardname": "Apprentice Magician",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -774,7 +774,7 @@
   {
 	"id": "40916023",
 	"kind": "MONSTER",
-	"name": "Aqua Spirit",
+	"cardname": "Aqua Spirit",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -799,7 +799,7 @@
   {
 	"id": "55001420",
 	"kind": "MONSTER",
-	"name": "Arcane Archer of the Forest",
+	"cardname": "Arcane Archer of the Forest",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -822,9 +822,9 @@
 	  },
 	  {
 		"trigger": "ON_PLAY",
-		"template": "set_field_spell_by_name",
+		"template": "set_field_spell_by_cardname",
 		"params": {
-		  "field_name": "'Forest' field spell card"
+		  "field_cardname": "'Forest' field spell card"
 		}
 	  }
 	]
@@ -832,7 +832,7 @@
   {
 	"id": "50287060",
 	"kind": "MONSTER",
-	"name": "Archfiend of Gilfer",
+	"cardname": "Archfiend of Gilfer",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -858,7 +858,7 @@
   {
 	"id": "18378582",
 	"kind": "MONSTER",
-	"name": "Archlord Zerato",
+	"cardname": "Archlord Zerato",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -880,7 +880,7 @@
 		  },
 		  "destroy_mode": "ALL_OTHER_MONSTERS",
 		  "if_field_active_then_destroy_mode": {
-			"field_name": "sanctuary in the sky",
+			"field_cardname": "sanctuary in the sky",
 			"destroy_mode": "OPPONENT_MONSTERS_ONLY"
 		  }
 		}
@@ -890,7 +890,7 @@
   {
 	"id": "59464593",
 	"kind": "MONSTER",
-	"name": "Armed Dragon LV10",
+	"cardname": "Armed Dragon LV10",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -913,7 +913,7 @@
   {
 	"id": "00980973",
 	"kind": "MONSTER",
-	"name": "Armed Dragon LV3",
+	"cardname": "Armed Dragon LV3",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -936,7 +936,7 @@
   {
 	"id": "46384672",
 	"kind": "MONSTER",
-	"name": "Armed Dragon LV5",
+	"cardname": "Armed Dragon LV5",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -957,7 +957,7 @@
   {
 	"id": "73879377",
 	"kind": "MONSTER",
-	"name": "Armed Dragon LV7",
+	"cardname": "Armed Dragon LV7",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -980,7 +980,7 @@
   {
 	"id": "09076207",
 	"kind": "MONSTER",
-	"name": "Armed Ninja",
+	"cardname": "Armed Ninja",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -1004,7 +1004,7 @@
   {
 	"id": "84430950",
 	"kind": "MONSTER",
-	"name": "Armed Samurai - Ben Kei",
+	"cardname": "Armed Samurai - Ben Kei",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -1025,7 +1025,7 @@
   {
 	"id": "07180418",
 	"kind": "MONSTER",
-	"name": "Armor Exe",
+	"cardname": "Armor Exe",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -1048,7 +1048,7 @@
   {
 	"id": "42364374",
 	"kind": "MONSTER",
-	"name": "Arsenal Bug",
+	"cardname": "Arsenal Bug",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -1073,7 +1073,7 @@
   {
 	"id": "85489096",
 	"kind": "MONSTER",
-	"name": "Arsenal Summoner",
+	"cardname": "Arsenal Summoner",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -1100,7 +1100,7 @@
   {
 	"id": "02134346",
 	"kind": "MONSTER",
-	"name": "Asura Priest",
+	"cardname": "Asura Priest",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -1117,7 +1117,7 @@
   {
 	"id": "88236094",
 	"kind": "MONSTER",
-	"name": "Aswan Apparition",
+	"cardname": "Aswan Apparition",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -1141,7 +1141,7 @@
   {
 	"id": "87340664",
 	"kind": "MONSTER",
-	"name": "Atomic Firefly",
+	"cardname": "Atomic Firefly",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -1172,7 +1172,7 @@
   {
 	"id": "37970940",
 	"kind": "MONSTER",
-	"name": "Aussa the Earth Charmer",
+	"cardname": "Aussa the Earth Charmer",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -1197,7 +1197,7 @@
   {
 	"id": "14148099",
 	"kind": "MONSTER",
-	"name": "B.E.S. Big Core",
+	"cardname": "B.E.S. Big Core",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -1223,7 +1223,7 @@
   {
 	"id": "15317640",
 	"kind": "MONSTER",
-	"name": "B.E.S. Covered Core",
+	"cardname": "B.E.S. Covered Core",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -1246,7 +1246,7 @@
   {
 	"id": "22790789",
 	"kind": "MONSTER",
-	"name": "B.E.S. Crystal Core",
+	"cardname": "B.E.S. Crystal Core",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -1279,7 +1279,7 @@
   {
 	"id": "44954628",
 	"kind": "MONSTER",
-	"name": "B.E.S. Tetran",
+	"cardname": "B.E.S. Tetran",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -1312,7 +1312,7 @@
   {
 	"id": "39892082",
 	"kind": "MONSTER",
-	"name": "Balloon Lizard",
+	"cardname": "Balloon Lizard",
 	"attribute": null,
 	"race": "REPTILE",
 	"level": null,
@@ -1335,7 +1335,7 @@
   {
 	"id": "61528025",
 	"kind": "MONSTER",
-	"name": "Banisher of the Light",
+	"cardname": "Banisher of the Light",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -1356,7 +1356,7 @@
   {
 	"id": "81480461",
 	"kind": "MONSTER",
-	"name": "Barrel Dragon",
+	"cardname": "Barrel Dragon",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -1381,7 +1381,7 @@
   {
 	"id": "63142001",
 	"kind": "MONSTER",
-	"name": "Batteryman AA",
+	"cardname": "Batteryman AA",
 	"attribute": null,
 	"race": "THUNDER",
 	"level": null,
@@ -1394,9 +1394,9 @@
 	"effects": [
 	  {
 		"trigger": "PASSIVE",
-		"template": "self_stats_bonus_per_card_name_on_field",
+		"template": "self_stats_bonus_per_card_cardname_on_field",
 		"params": {
-		  "name": "Batteryman AA",
+		  "cardname": "Batteryman AA",
 		  "atk_per": 1000,
 		  "def_per": 1000
 		}
@@ -1406,7 +1406,7 @@
   {
 	"id": "19733961",
 	"kind": "MONSTER",
-	"name": "Batteryman C",
+	"cardname": "Batteryman C",
 	"attribute": null,
 	"race": "THUNDER",
 	"level": null,
@@ -1419,9 +1419,9 @@
 	"effects": [
 	  {
 		"trigger": "PASSIVE",
-		"template": "self_stats_bonus_per_card_name_on_field",
+		"template": "self_stats_bonus_per_card_cardname_on_field",
 		"params": {
-		  "name": "Batteryman C",
+		  "cardname": "Batteryman C",
 		  "atk_per": 500,
 		  "def_per": 500
 		}
@@ -1431,7 +1431,7 @@
   {
 	"id": "40133511",
 	"kind": "MONSTER",
-	"name": "Bazoo the Soul-Eater",
+	"cardname": "Bazoo the Soul-Eater",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -1455,7 +1455,7 @@
   {
 	"id": "99426834",
 	"kind": "MONSTER",
-	"name": "Beastking of the Swamps",
+	"cardname": "Beastking of the Swamps",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -1478,7 +1478,7 @@
   {
 	"id": "49522489",
 	"kind": "MONSTER",
-	"name": "Beelze Frog",
+	"cardname": "Beelze Frog",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -1491,9 +1491,9 @@
 	"effects": [
 	  {
 		"trigger": "PASSIVE",
-		"template": "self_atk_bonus_per_card_name_in_graves",
+		"template": "self_atk_bonus_per_card_cardname_in_graves",
 		"params": {
-		  "name": "T.A.D.P.O.L.E.",
+		  "cardname": "T.A.D.P.O.L.E.",
 		  "atk_per": 100
 		}
 	  }
@@ -1502,7 +1502,7 @@
   {
 	"id": "22996376",
 	"kind": "MONSTER",
-	"name": "Behemoth the King of All Animals",
+	"cardname": "Behemoth the King of All Animals",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -1541,7 +1541,7 @@
   {
 	"id": "33731070",
 	"kind": "MONSTER",
-	"name": "Beiige, Vanguard of Dark World",
+	"cardname": "Beiige, Vanguard of Dark World",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -1562,7 +1562,7 @@
   {
 	"id": "85605684",
 	"kind": "MONSTER",
-	"name": "Berserk Dragon",
+	"cardname": "Berserk Dragon",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -1588,7 +1588,7 @@
   {
 	"id": "39168895",
 	"kind": "MONSTER",
-	"name": "Berserk Gorilla",
+	"cardname": "Berserk Gorilla",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -1611,7 +1611,7 @@
   {
 	"id": "16768387",
 	"kind": "MONSTER",
-	"name": "Big Eye",
+	"cardname": "Big Eye",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -1634,7 +1634,7 @@
   {
 	"id": "65240384",
 	"kind": "MONSTER",
-	"name": "Big Shield Gardna",
+	"cardname": "Big Shield Gardna",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -1657,7 +1657,7 @@
   {
 	"id": "59380081",
 	"kind": "MONSTER",
-	"name": "Big-Tusked Mammoth",
+	"cardname": "Big-Tusked Mammoth",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -1680,7 +1680,7 @@
   {
 	"id": "45547649",
 	"kind": "MONSTER",
-	"name": "Birdface",
+	"cardname": "Birdface",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -1703,7 +1703,7 @@
   {
 	"id": "50122883",
 	"kind": "MONSTER",
-	"name": "Bite Shoes",
+	"cardname": "Bite Shoes",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -1726,7 +1726,7 @@
   {
 	"id": "36262024",
 	"kind": "MONSTER",
-	"name": "Black Dragon's Chick",
+	"cardname": "Black Dragon's Chick",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -1749,7 +1749,7 @@
   {
 	"id": "72989439",
 	"kind": "MONSTER",
-	"name": "Black Luster Soldier - Envoy of the Beginning",
+	"cardname": "Black Luster Soldier - Envoy of the Beginning",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -1774,7 +1774,7 @@
   {
 	"id": "38670435",
 	"kind": "MONSTER",
-	"name": "Black Tyranno",
+	"cardname": "Black Tyranno",
 	"attribute": null,
 	"race": "DINOSAUR",
 	"level": null,
@@ -1795,7 +1795,7 @@
   {
 	"id": "39507162",
 	"kind": "MONSTER",
-	"name": "Blade Knight",
+	"cardname": "Blade Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -1818,7 +1818,7 @@
   {
 	"id": "58268433",
 	"kind": "MONSTER",
-	"name": "Blade Rabbit",
+	"cardname": "Blade Rabbit",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -1841,7 +1841,7 @@
   {
 	"id": "28470714",
 	"kind": "MONSTER",
-	"name": "Bladefly",
+	"cardname": "Bladefly",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -1864,7 +1864,7 @@
   {
 	"id": "70138455",
 	"kind": "MONSTER",
-	"name": "Blast Juggler",
+	"cardname": "Blast Juggler",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -1887,7 +1887,7 @@
   {
 	"id": "21051146",
 	"kind": "MONSTER",
-	"name": "Blast Magician",
+	"cardname": "Blast Magician",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -1910,7 +1910,7 @@
   {
 	"id": "35215622",
 	"kind": "MONSTER",
-	"name": "Blindly Loyal Goblin",
+	"cardname": "Blindly Loyal Goblin",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -1933,7 +1933,7 @@
   {
 	"id": "25551951",
 	"kind": "MONSTER",
-	"name": "Blowback Dragon",
+	"cardname": "Blowback Dragon",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -1956,7 +1956,7 @@
   {
 	"id": "53347303",
 	"kind": "MONSTER",
-	"name": "Blue-Eyes Shining Dragon",
+	"cardname": "Blue-Eyes Shining Dragon",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -1986,7 +1986,7 @@
   {
 	"id": "53183600",
 	"kind": "MONSTER",
-	"name": "Blue-Eyes Toon Dragon",
+	"cardname": "Blue-Eyes Toon Dragon",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -2009,7 +2009,7 @@
   {
 	"id": "21340051",
 	"kind": "MONSTER",
-	"name": "Boar Soldier",
+	"cardname": "Boar Soldier",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -2032,7 +2032,7 @@
   {
 	"id": "57409948",
 	"kind": "MONSTER",
-	"name": "Bombardment Beetle",
+	"cardname": "Bombardment Beetle",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -2055,7 +2055,7 @@
   {
 	"id": "52090844",
 	"kind": "MONSTER",
-	"name": "Bowganian",
+	"cardname": "Bowganian",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -2078,7 +2078,7 @@
   {
 	"id": "40267580",
 	"kind": "MONSTER",
-	"name": "Brain Jacker",
+	"cardname": "Brain Jacker",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -2101,7 +2101,7 @@
   {
 	"id": "71413901",
 	"kind": "MONSTER",
-	"name": "Breaker the Magical Warrior",
+	"cardname": "Breaker the Magical Warrior",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -2131,7 +2131,7 @@
   {
 	"id": "79126789",
 	"kind": "MONSTER",
-	"name": "Broww, Huntsman of Dark World",
+	"cardname": "Broww, Huntsman of Dark World",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -2154,7 +2154,7 @@
   {
 	"id": "06214884",
 	"kind": "MONSTER",
-	"name": "Brron, Mad King of Dark World",
+	"cardname": "Brron, Mad King of Dark World",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -2177,7 +2177,7 @@
   {
 	"id": "06104968",
 	"kind": "MONSTER",
-	"name": "Bubonic Vermin",
+	"cardname": "Bubonic Vermin",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -2200,7 +2200,7 @@
   {
 	"id": "41859700",
 	"kind": "MONSTER",
-	"name": "Burning Algae",
+	"cardname": "Burning Algae",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -2230,7 +2230,7 @@
   {
 	"id": "59364406",
 	"kind": "MONSTER",
-	"name": "Burning Beast",
+	"cardname": "Burning Beast",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -2260,7 +2260,7 @@
   {
 	"id": "78193831",
 	"kind": "MONSTER",
-	"name": "Buster Blader",
+	"cardname": "Buster Blader",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -2283,7 +2283,7 @@
   {
 	"id": "17597059",
 	"kind": "MONSTER",
-	"name": "Byser Shock",
+	"cardname": "Byser Shock",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -2306,7 +2306,7 @@
   {
 	"id": "11384280",
 	"kind": "MONSTER",
-	"name": "Cannon Soldier",
+	"cardname": "Cannon Soldier",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -2329,7 +2329,7 @@
   {
 	"id": "95614612",
 	"kind": "MONSTER",
-	"name": "Cannonball Spear Shellfish",
+	"cardname": "Cannonball Spear Shellfish",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -2352,7 +2352,7 @@
   {
 	"id": "00062121",
 	"kind": "MONSTER",
-	"name": "Castle of Dark Illusions",
+	"cardname": "Castle of Dark Illusions",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -2389,7 +2389,7 @@
   {
 	"id": "95841282",
 	"kind": "MONSTER",
-	"name": "Cat's Ear Tribe",
+	"cardname": "Cat's Ear Tribe",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -2412,7 +2412,7 @@
   {
 	"id": "95727991",
 	"kind": "MONSTER",
-	"name": "Catapult Turtle",
+	"cardname": "Catapult Turtle",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -2435,7 +2435,7 @@
   {
 	"id": "96501677",
 	"kind": "MONSTER",
-	"name": "Catnipped Kitty",
+	"cardname": "Catnipped Kitty",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -2458,7 +2458,7 @@
   {
 	"id": "93220472",
 	"kind": "MONSTER",
-	"name": "Cave Dragon",
+	"cardname": "Cave Dragon",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -2488,7 +2488,7 @@
   {
 	"id": "20228463",
 	"kind": "MONSTER",
-	"name": "Ceremonial Bell",
+	"cardname": "Ceremonial Bell",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -2511,7 +2511,7 @@
   {
 	"id": "88190453",
 	"kind": "MONSTER",
-	"name": "Chain Thrasher",
+	"cardname": "Chain Thrasher",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -2534,7 +2534,7 @@
   {
 	"id": "77252217",
 	"kind": "MONSTER",
-	"name": "Chainsaw Insect",
+	"cardname": "Chainsaw Insect",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -2557,7 +2557,7 @@
   {
 	"id": "72630549",
 	"kind": "MONSTER",
-	"name": "Chaos Command Magician",
+	"cardname": "Chaos Command Magician",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -2580,7 +2580,7 @@
   {
 	"id": "82301904",
 	"kind": "MONSTER",
-	"name": "Chaos Emperor Dragon - Envoy of the End",
+	"cardname": "Chaos Emperor Dragon - Envoy of the End",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -2603,7 +2603,7 @@
   {
 	"id": "01434352",
 	"kind": "MONSTER",
-	"name": "Chaos Necromancer",
+	"cardname": "Chaos Necromancer",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -2626,7 +2626,7 @@
   {
 	"id": "09596126",
 	"kind": "MONSTER",
-	"name": "Chaos Sorcerer",
+	"cardname": "Chaos Sorcerer",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -2649,7 +2649,7 @@
   {
 	"id": "47829960",
 	"kind": "MONSTER",
-	"name": "Chaosrider Gustaph",
+	"cardname": "Chaosrider Gustaph",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -2672,7 +2672,7 @@
   {
 	"id": "50412166",
 	"kind": "MONSTER",
-	"name": "Charm of Shabti",
+	"cardname": "Charm of Shabti",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -2695,7 +2695,7 @@
   {
 	"id": "16956455",
 	"kind": "MONSTER",
-	"name": "Chiron the Mage",
+	"cardname": "Chiron the Mage",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -2718,7 +2718,7 @@
   {
 	"id": "40884383",
 	"kind": "MONSTER",
-	"name": "Chopman the Desperate Outlaw",
+	"cardname": "Chopman the Desperate Outlaw",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -2741,7 +2741,7 @@
   {
 	"id": "50916353",
 	"kind": "MONSTER",
-	"name": "Chthonian Soldier",
+	"cardname": "Chthonian Soldier",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -2764,7 +2764,7 @@
   {
 	"id": "79853073",
 	"kind": "MONSTER",
-	"name": "Cipher Soldier",
+	"cardname": "Cipher Soldier",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -2787,7 +2787,7 @@
   {
 	"id": "42541548",
 	"kind": "MONSTER",
-	"name": "Coach Goblin",
+	"cardname": "Coach Goblin",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -2810,7 +2810,7 @@
   {
 	"id": "86801871",
 	"kind": "MONSTER",
-	"name": "Cobra Jar",
+	"cardname": "Cobra Jar",
 	"attribute": null,
 	"race": "REPTILE",
 	"level": null,
@@ -2833,7 +2833,7 @@
   {
 	"id": "75109441",
 	"kind": "MONSTER",
-	"name": "Cobraman Sakuzy",
+	"cardname": "Cobraman Sakuzy",
 	"attribute": null,
 	"race": "REPTILE",
 	"level": null,
@@ -2856,7 +2856,7 @@
   {
 	"id": "33413638",
 	"kind": "MONSTER",
-	"name": "Cockroach Knight",
+	"cardname": "Cockroach Knight",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -2879,7 +2879,7 @@
   {
 	"id": "10375182",
 	"kind": "MONSTER",
-	"name": "Command Knight",
+	"cardname": "Command Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -2909,7 +2909,7 @@
   {
 	"id": "93889755",
 	"kind": "MONSTER",
-	"name": "Crass Clown",
+	"cardname": "Crass Clown",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -2932,7 +2932,7 @@
   {
 	"id": "52571838",
 	"kind": "MONSTER",
-	"name": "Creeping Doom Manta",
+	"cardname": "Creeping Doom Manta",
 	"attribute": null,
 	"race": "FISH",
 	"level": null,
@@ -2955,7 +2955,7 @@
   {
 	"id": "14618326",
 	"kind": "MONSTER",
-	"name": "Crimson Ninja",
+	"cardname": "Crimson Ninja",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -2978,7 +2978,7 @@
   {
 	"id": "28358902",
 	"kind": "MONSTER",
-	"name": "Crimson Sentry",
+	"cardname": "Crimson Sentry",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3001,7 +3001,7 @@
   {
 	"id": "18654201",
 	"kind": "MONSTER",
-	"name": "Criosphinx",
+	"cardname": "Criosphinx",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -3024,7 +3024,7 @@
   {
 	"id": "85802526",
 	"kind": "MONSTER",
-	"name": "Cure Mermaid",
+	"cardname": "Cure Mermaid",
 	"attribute": null,
 	"race": "FISH",
 	"level": null,
@@ -3047,7 +3047,7 @@
   {
 	"id": "59907935",
 	"kind": "MONSTER",
-	"name": "Cyber Archfiend",
+	"cardname": "Cyber Archfiend",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -3070,7 +3070,7 @@
   {
 	"id": "68774379",
 	"kind": "MONSTER",
-	"name": "Cyber Barrier Dragon",
+	"cardname": "Cyber Barrier Dragon",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -3100,7 +3100,7 @@
   {
 	"id": "10248389",
 	"kind": "MONSTER",
-	"name": "Cyber Blader",
+	"cardname": "Cyber Blader",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3130,7 +3130,7 @@
   {
 	"id": "01546123",
 	"kind": "MONSTER",
-	"name": "Cyber End Dragon",
+	"cardname": "Cyber End Dragon",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -3155,7 +3155,7 @@
   {
 	"id": "80316585",
 	"kind": "MONSTER",
-	"name": "Cyber Harpie Lady",
+	"cardname": "Cyber Harpie Lady",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -3172,7 +3172,7 @@
   {
 	"id": "34124316",
 	"kind": "MONSTER",
-	"name": "Cyber Jar",
+	"cardname": "Cyber Jar",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -3195,7 +3195,7 @@
   {
 	"id": "04162088",
 	"kind": "MONSTER",
-	"name": "Cyber Laser Dragon",
+	"cardname": "Cyber Laser Dragon",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -3218,7 +3218,7 @@
   {
 	"id": "39978267",
 	"kind": "MONSTER",
-	"name": "Cyber Raider",
+	"cardname": "Cyber Raider",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -3241,7 +3241,7 @@
   {
 	"id": "74157028",
 	"kind": "MONSTER",
-	"name": "Cyber Twin Dragon",
+	"cardname": "Cyber Twin Dragon",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -3258,7 +3258,7 @@
   {
 	"id": "69015963",
 	"kind": "MONSTER",
-	"name": "Cyber-Stein",
+	"cardname": "Cyber-Stein",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -3281,7 +3281,7 @@
   {
 	"id": "96428622",
 	"kind": "MONSTER",
-	"name": "Cybernetic Cyclopean",
+	"cardname": "Cybernetic Cyclopean",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -3304,7 +3304,7 @@
   {
 	"id": "59023523",
 	"kind": "MONSTER",
-	"name": "Cybernetic Magician",
+	"cardname": "Cybernetic Magician",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -3327,7 +3327,7 @@
   {
 	"id": "09910360",
 	"kind": "MONSTER",
-	"name": "D.3.S. Frog",
+	"cardname": "D.3.S. Frog",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -3357,7 +3357,7 @@
   {
 	"id": "70074904",
 	"kind": "MONSTER",
-	"name": "D.D. Assailant",
+	"cardname": "D.D. Assailant",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3378,7 +3378,7 @@
   {
 	"id": "48148828",
 	"kind": "MONSTER",
-	"name": "D.D. Crazy Beast",
+	"cardname": "D.D. Crazy Beast",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -3401,7 +3401,7 @@
   {
 	"id": "52702748",
 	"kind": "MONSTER",
-	"name": "D.D. Guide",
+	"cardname": "D.D. Guide",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3424,7 +3424,7 @@
   {
 	"id": "03773196",
 	"kind": "MONSTER",
-	"name": "D.D. Scout Plane",
+	"cardname": "D.D. Scout Plane",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -3447,7 +3447,7 @@
   {
 	"id": "48092532",
 	"kind": "MONSTER",
-	"name": "D.D. Survivor",
+	"cardname": "D.D. Survivor",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3470,7 +3470,7 @@
   {
 	"id": "86498013",
 	"kind": "MONSTER",
-	"name": "D.D. Trainer",
+	"cardname": "D.D. Trainer",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -3493,7 +3493,7 @@
   {
 	"id": "37043180",
 	"kind": "MONSTER",
-	"name": "D.D. Warrior",
+	"cardname": "D.D. Warrior",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3514,7 +3514,7 @@
   {
 	"id": "07572887",
 	"kind": "MONSTER",
-	"name": "D.D. Warrior Lady",
+	"cardname": "D.D. Warrior Lady",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3537,7 +3537,7 @@
   {
 	"id": "82112775",
 	"kind": "MONSTER",
-	"name": "D.D.M. - Different Dimension Master",
+	"cardname": "D.D.M. - Different Dimension Master",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -3560,7 +3560,7 @@
   {
 	"id": "90925163",
 	"kind": "MONSTER",
-	"name": "Dancing Fairy",
+	"cardname": "Dancing Fairy",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -3583,7 +3583,7 @@
   {
 	"id": "80071763",
 	"kind": "MONSTER",
-	"name": "Dark Balter the Terrible",
+	"cardname": "Dark Balter the Terrible",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -3613,7 +3613,7 @@
   {
 	"id": "86805855",
 	"kind": "MONSTER",
-	"name": "Dark Blade the Dragon Knight",
+	"cardname": "Dark Blade the Dragon Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3636,7 +3636,7 @@
   {
 	"id": "08634636",
 	"kind": "MONSTER",
-	"name": "Dark Cat with White Tail",
+	"cardname": "Dark Cat with White Tail",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -3659,7 +3659,7 @@
   {
 	"id": "33875961",
 	"kind": "MONSTER",
-	"name": "Dark Catapulter",
+	"cardname": "Dark Catapulter",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -3682,7 +3682,7 @@
   {
 	"id": "65287621",
 	"kind": "MONSTER",
-	"name": "Dark Driceratops",
+	"cardname": "Dark Driceratops",
 	"attribute": null,
 	"race": "DINOSAUR",
 	"level": null,
@@ -3705,7 +3705,7 @@
   {
 	"id": "89111398",
 	"kind": "MONSTER",
-	"name": "Dark Dust Spirit",
+	"cardname": "Dark Dust Spirit",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -3735,7 +3735,7 @@
   {
 	"id": "21417692",
 	"kind": "MONSTER",
-	"name": "Dark Elf",
+	"cardname": "Dark Elf",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -3758,7 +3758,7 @@
   {
 	"id": "29436665",
 	"kind": "MONSTER",
-	"name": "Dark Eradicator Warlock",
+	"cardname": "Dark Eradicator Warlock",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -3781,7 +3781,7 @@
   {
 	"id": "13722870",
 	"kind": "MONSTER",
-	"name": "Dark Flare Knight",
+	"cardname": "Dark Flare Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3811,7 +3811,7 @@
   {
 	"id": "90980792",
 	"kind": "MONSTER",
-	"name": "Dark Jeroid",
+	"cardname": "Dark Jeroid",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -3834,7 +3834,7 @@
   {
 	"id": "38033121",
 	"kind": "MONSTER",
-	"name": "Dark Magician Girl",
+	"cardname": "Dark Magician Girl",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -3857,7 +3857,7 @@
   {
 	"id": "50725996",
 	"kind": "MONSTER",
-	"name": "Dark Magician Knight",
+	"cardname": "Dark Magician Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -3887,7 +3887,7 @@
   {
 	"id": "97642679",
 	"kind": "MONSTER",
-	"name": "Dark Master - Zorc",
+	"cardname": "Dark Master - Zorc",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -3910,7 +3910,7 @@
   {
 	"id": "74713516",
 	"kind": "MONSTER",
-	"name": "Dark Mimic LV1",
+	"cardname": "Dark Mimic LV1",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -3933,7 +3933,7 @@
   {
 	"id": "01102515",
 	"kind": "MONSTER",
-	"name": "Dark Mimic LV3",
+	"cardname": "Dark Mimic LV3",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -3956,7 +3956,7 @@
   {
 	"id": "31829185",
 	"kind": "MONSTER",
-	"name": "Dark Necrofear",
+	"cardname": "Dark Necrofear",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -3979,7 +3979,7 @@
   {
 	"id": "98502113",
 	"kind": "MONSTER",
-	"name": "Dark Paladin",
+	"cardname": "Dark Paladin",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -4009,7 +4009,7 @@
   {
 	"id": "53982768",
 	"kind": "MONSTER",
-	"name": "Dark Ruler Ha Des",
+	"cardname": "Dark Ruler Ha Des",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -4032,7 +4032,7 @@
   {
 	"id": "92377303",
 	"kind": "MONSTER",
-	"name": "Dark Sage",
+	"cardname": "Dark Sage",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -4062,7 +4062,7 @@
   {
 	"id": "61587183",
 	"kind": "MONSTER",
-	"name": "Dark Scorpion - Chick the Yellow",
+	"cardname": "Dark Scorpion - Chick the Yellow",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4085,7 +4085,7 @@
   {
 	"id": "06967870",
 	"kind": "MONSTER",
-	"name": "Dark Scorpion - Cliff the Trap Remover",
+	"cardname": "Dark Scorpion - Cliff the Trap Remover",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4108,7 +4108,7 @@
   {
 	"id": "48768179",
 	"kind": "MONSTER",
-	"name": "Dark Scorpion - Gorg the Strong",
+	"cardname": "Dark Scorpion - Gorg the Strong",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4131,7 +4131,7 @@
   {
 	"id": "74153887",
 	"kind": "MONSTER",
-	"name": "Dark Scorpion - Meanae the Thorn",
+	"cardname": "Dark Scorpion - Meanae the Thorn",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4154,7 +4154,7 @@
   {
 	"id": "40933924",
 	"kind": "MONSTER",
-	"name": "Dark Scorpion Burglars",
+	"cardname": "Dark Scorpion Burglars",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4177,7 +4177,7 @@
   {
 	"id": "35798491",
 	"kind": "MONSTER",
-	"name": "Darkbishop Archfiend",
+	"cardname": "Darkbishop Archfiend",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -4200,7 +4200,7 @@
   {
 	"id": "57579381",
 	"kind": "MONSTER",
-	"name": "Darklord Marie",
+	"cardname": "Darklord Marie",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -4223,7 +4223,7 @@
   {
 	"id": "10209545",
 	"kind": "MONSTER",
-	"name": "Decayed Commander",
+	"cardname": "Decayed Commander",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -4246,7 +4246,7 @@
   {
 	"id": "24128274",
 	"kind": "MONSTER",
-	"name": "Deepsea Warrior",
+	"cardname": "Deepsea Warrior",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4259,9 +4259,9 @@
 	"effects": [
 	  {
 		"trigger": "ON_PLAY",
-		"template": "set_field_spell_by_name",
+		"template": "set_field_spell_by_cardname",
 		"params": {
-		  "field_name": "Umi"
+		  "field_cardname": "Umi"
 		}
 	  },
 	  {
@@ -4276,7 +4276,7 @@
   {
 	"id": "87621407",
 	"kind": "MONSTER",
-	"name": "Dekoichi the Battlechanted Locomotive",
+	"cardname": "Dekoichi the Battlechanted Locomotive",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -4299,7 +4299,7 @@
   {
 	"id": "72426662",
 	"kind": "MONSTER",
-	"name": "Demise, King of Armageddon",
+	"cardname": "Demise, King of Armageddon",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -4322,7 +4322,7 @@
   {
 	"id": "12965761",
 	"kind": "MONSTER",
-	"name": "Des Dendle",
+	"cardname": "Des Dendle",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -4345,7 +4345,7 @@
   {
 	"id": "81985784",
 	"kind": "MONSTER",
-	"name": "Des Feral Imp",
+	"cardname": "Des Feral Imp",
 	"attribute": null,
 	"race": "REPTILE",
 	"level": null,
@@ -4368,7 +4368,7 @@
   {
 	"id": "84451804",
 	"kind": "MONSTER",
-	"name": "Des Frog",
+	"cardname": "Des Frog",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -4391,7 +4391,7 @@
   {
 	"id": "78613627",
 	"kind": "MONSTER",
-	"name": "Des Kangaroo",
+	"cardname": "Des Kangaroo",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -4414,7 +4414,7 @@
   {
 	"id": "69579761",
 	"kind": "MONSTER",
-	"name": "Des Koala",
+	"cardname": "Des Koala",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -4437,7 +4437,7 @@
   {
 	"id": "02326738",
 	"kind": "MONSTER",
-	"name": "Des Lacooda",
+	"cardname": "Des Lacooda",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -4450,9 +4450,9 @@
 	"effects": [
 	  {
 		"trigger": "ON_FLIP",
-		"template": "set_field_spell_by_name",
+		"template": "set_field_spell_by_cardname",
 		"params": {
-		  "field_name": "Wastelands"
+		  "field_cardname": "Wastelands"
 		}
 	  }
 	]
@@ -4460,7 +4460,7 @@
   {
 	"id": "81059524",
 	"kind": "MONSTER",
-	"name": "Des Volstgalph",
+	"cardname": "Des Volstgalph",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -4490,7 +4490,7 @@
   {
 	"id": "09637706",
 	"kind": "MONSTER",
-	"name": "Des Wombat",
+	"cardname": "Des Wombat",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -4513,7 +4513,7 @@
   {
 	"id": "13409151",
 	"kind": "MONSTER",
-	"name": "Desertapir",
+	"cardname": "Desertapir",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -4536,7 +4536,7 @@
   {
 	"id": "71200730",
 	"kind": "MONSTER",
-	"name": "Despair from the Dark",
+	"cardname": "Despair from the Dark",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -4559,7 +4559,7 @@
   {
 	"id": "72192100",
 	"kind": "MONSTER",
-	"name": "Desrook Archfiend",
+	"cardname": "Desrook Archfiend",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -4582,7 +4582,7 @@
   {
 	"id": "03549275",
 	"kind": "MONSTER",
-	"name": "Dice Jar",
+	"cardname": "Dice Jar",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -4605,7 +4605,7 @@
   {
 	"id": "50939127",
 	"kind": "MONSTER",
-	"name": "Different Dimension Dragon",
+	"cardname": "Different Dimension Dragon",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -4635,7 +4635,7 @@
   {
 	"id": "73414375",
 	"kind": "MONSTER",
-	"name": "Dimension Jar",
+	"cardname": "Dimension Jar",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -4658,7 +4658,7 @@
   {
 	"id": "19612721",
 	"kind": "MONSTER",
-	"name": "Disc Fighter",
+	"cardname": "Disc Fighter",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4681,7 +4681,7 @@
   {
 	"id": "15595052",
 	"kind": "MONSTER",
-	"name": "Disciple of the Forbidden Spell",
+	"cardname": "Disciple of the Forbidden Spell",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4704,7 +4704,7 @@
   {
 	"id": "10032958",
 	"kind": "MONSTER",
-	"name": "Divine Dragon - Excelion",
+	"cardname": "Divine Dragon - Excelion",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -4719,7 +4719,7 @@
 		"trigger": "PASSIVE",
 		"template": "custom_raw",
 		"params": {
-		  "raw": "For each card with the same name as this card in your grave gain the following effects: 1+:This card gets +1000Atk. 2+:This card can attack twice per turn. 3+:"
+		  "raw": "For each card with the same cardname as this card in your grave gain the following effects: 1+:This card gets +1000Atk. 2+:This card can attack twice per turn. 3+:"
 		}
 	  },
 	  {
@@ -4735,7 +4735,7 @@
   {
 	"id": "57062206",
 	"kind": "MONSTER",
-	"name": "Doitsu",
+	"cardname": "Doitsu",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -4758,7 +4758,7 @@
   {
 	"id": "03493978",
 	"kind": "MONSTER",
-	"name": "Don Turtle",
+	"cardname": "Don Turtle",
 	"attribute": null,
 	"race": "REPTILE",
 	"level": null,
@@ -4781,7 +4781,7 @@
   {
 	"id": "76922029",
 	"kind": "MONSTER",
-	"name": "Don Zaloog",
+	"cardname": "Don Zaloog",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4804,7 +4804,7 @@
   {
 	"id": "76039636",
 	"kind": "MONSTER",
-	"name": "Doom Dozer",
+	"cardname": "Doom Dozer",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -4834,7 +4834,7 @@
   {
 	"id": "44436472",
 	"kind": "MONSTER",
-	"name": "Double Coston",
+	"cardname": "Double Coston",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -4847,9 +4847,9 @@
 	"effects": [
 	  {
 		"trigger": "ON_PLAY",
-		"template": "set_field_spell_by_name",
+		"template": "set_field_spell_by_cardname",
 		"params": {
-		  "field_name": "Mystic Plasma Zone"
+		  "field_cardname": "Mystic Plasma Zone"
 		}
 	  }
 	]
@@ -4857,7 +4857,7 @@
   {
 	"id": "63018132",
 	"kind": "MONSTER",
-	"name": "Dragon Manipulator",
+	"cardname": "Dragon Manipulator",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4880,7 +4880,7 @@
   {
 	"id": "55763552",
 	"kind": "MONSTER",
-	"name": "Dragon Piper",
+	"cardname": "Dragon Piper",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -4903,7 +4903,7 @@
   {
 	"id": "28563545",
 	"kind": "MONSTER",
-	"name": "Dragon Seeker",
+	"cardname": "Dragon Seeker",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -4926,7 +4926,7 @@
   {
 	"id": "13215230",
 	"kind": "MONSTER",
-	"name": "Dream Clown",
+	"cardname": "Dream Clown",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -4949,7 +4949,7 @@
   {
 	"id": "08687195",
 	"kind": "MONSTER",
-	"name": "Dreamsprite",
+	"cardname": "Dreamsprite",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -4972,7 +4972,7 @@
   {
 	"id": "88733579",
 	"kind": "MONSTER",
-	"name": "Drill Bug",
+	"cardname": "Drill Bug",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -4995,7 +4995,7 @@
   {
 	"id": "99050989",
 	"kind": "MONSTER",
-	"name": "Drillago",
+	"cardname": "Drillago",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -5018,7 +5018,7 @@
   {
 	"id": "71218746",
 	"kind": "MONSTER",
-	"name": "Drillroid",
+	"cardname": "Drillroid",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -5041,7 +5041,7 @@
   {
 	"id": "13532663",
 	"kind": "MONSTER",
-	"name": "Dummy Golem",
+	"cardname": "Dummy Golem",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -5064,7 +5064,7 @@
   {
 	"id": "53693416",
 	"kind": "MONSTER",
-	"name": "Eagle Eye",
+	"cardname": "Eagle Eye",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -5087,7 +5087,7 @@
   {
 	"id": "46128076",
 	"kind": "MONSTER",
-	"name": "Ebon Magician Curran",
+	"cardname": "Ebon Magician Curran",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -5110,7 +5110,7 @@
   {
 	"id": "55875323",
 	"kind": "MONSTER",
-	"name": "Electric Lizard",
+	"cardname": "Electric Lizard",
 	"attribute": null,
 	"race": "THUNDER",
 	"level": null,
@@ -5134,7 +5134,7 @@
   {
 	"id": "11324436",
 	"kind": "MONSTER",
-	"name": "Electric Snake",
+	"cardname": "Electric Snake",
 	"attribute": null,
 	"race": "THUNDER",
 	"level": null,
@@ -5158,7 +5158,7 @@
   {
 	"id": "23118924",
 	"kind": "MONSTER",
-	"name": "Element Doom",
+	"cardname": "Element Doom",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -5181,7 +5181,7 @@
   {
 	"id": "30314994",
 	"kind": "MONSTER",
-	"name": "Element Dragon",
+	"cardname": "Element Dragon",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -5204,7 +5204,7 @@
   {
 	"id": "65260293",
 	"kind": "MONSTER",
-	"name": "Element Magician",
+	"cardname": "Element Magician",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -5227,7 +5227,7 @@
   {
 	"id": "92755808",
 	"kind": "MONSTER",
-	"name": "Element Saurus",
+	"cardname": "Element Saurus",
 	"attribute": null,
 	"race": "DINOSAUR",
 	"level": null,
@@ -5250,7 +5250,7 @@
   {
 	"id": "66712593",
 	"kind": "MONSTER",
-	"name": "Element Soldier",
+	"cardname": "Element Soldier",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -5273,7 +5273,7 @@
   {
 	"id": "97623219",
 	"kind": "MONSTER",
-	"name": "Element Valkyrie",
+	"cardname": "Element Valkyrie",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -5296,7 +5296,7 @@
   {
 	"id": "59793705",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Bladedge",
+	"cardname": "Elemental HERO Bladedge",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5313,7 +5313,7 @@
   {
 	"id": "79979666",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Bubbleman",
+	"cardname": "Elemental HERO Bubbleman",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5336,7 +5336,7 @@
   {
 	"id": "35809262",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Flame Wingman",
+	"cardname": "Elemental HERO Flame Wingman",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5360,7 +5360,7 @@
   {
 	"id": "89252153",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Necroshade",
+	"cardname": "Elemental HERO Necroshade",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5383,7 +5383,7 @@
   {
 	"id": "05285665",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Neo Bubbleman",
+	"cardname": "Elemental HERO Neo Bubbleman",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5406,7 +5406,7 @@
   {
 	"id": "47737087",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Rampart Blaster",
+	"cardname": "Elemental HERO Rampart Blaster",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5429,7 +5429,7 @@
   {
 	"id": "25366484",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Shining Flare Wingman",
+	"cardname": "Elemental HERO Shining Flare Wingman",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5460,7 +5460,7 @@
   {
 	"id": "81197327",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Steam Healer",
+	"cardname": "Elemental HERO Steam Healer",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5483,7 +5483,7 @@
   {
 	"id": "83121692",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Tempest",
+	"cardname": "Elemental HERO Tempest",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5506,7 +5506,7 @@
   {
 	"id": "61204971",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Thunder Giant",
+	"cardname": "Elemental HERO Thunder Giant",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5529,7 +5529,7 @@
   {
 	"id": "10526791",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Wildedge",
+	"cardname": "Elemental HERO Wildedge",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5554,7 +5554,7 @@
   {
 	"id": "86188410",
 	"kind": "MONSTER",
-	"name": "Elemental HERO Wildheart",
+	"cardname": "Elemental HERO Wildheart",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5577,7 +5577,7 @@
   {
 	"id": "99414168",
 	"kind": "MONSTER",
-	"name": "Elemental Mistress Doriado",
+	"cardname": "Elemental Mistress Doriado",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -5600,7 +5600,7 @@
   {
 	"id": "85166216",
 	"kind": "MONSTER",
-	"name": "Elephant Statue of Blessing",
+	"cardname": "Elephant Statue of Blessing",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -5630,7 +5630,7 @@
   {
 	"id": "12160911",
 	"kind": "MONSTER",
-	"name": "Elephant Statue of Disaster",
+	"cardname": "Elephant Statue of Disaster",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -5660,7 +5660,7 @@
   {
 	"id": "43580269",
 	"kind": "MONSTER",
-	"name": "Emes the Infinity",
+	"cardname": "Emes the Infinity",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -5683,7 +5683,7 @@
   {
 	"id": "75043725",
 	"kind": "MONSTER",
-	"name": "Emissary of the Afterlife",
+	"cardname": "Emissary of the Afterlife",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -5713,7 +5713,7 @@
   {
 	"id": "06103294",
 	"kind": "MONSTER",
-	"name": "Emissary of the Oasis",
+	"cardname": "Emissary of the Oasis",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -5743,7 +5743,7 @@
   {
 	"id": "76909279",
 	"kind": "MONSTER",
-	"name": "Enraged Battle Ox",
+	"cardname": "Enraged Battle Ox",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -5766,7 +5766,7 @@
   {
 	"id": "74364659",
 	"kind": "MONSTER",
-	"name": "Eria the Water Charmer",
+	"cardname": "Eria the Water Charmer",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -5789,7 +5789,7 @@
   {
 	"id": "11460577",
 	"kind": "MONSTER",
-	"name": "Etoile Cyber",
+	"cardname": "Etoile Cyber",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5812,7 +5812,7 @@
   {
 	"id": "63749102",
 	"kind": "MONSTER",
-	"name": "Exarion Universe",
+	"cardname": "Exarion Universe",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -5829,7 +5829,7 @@
   {
 	"id": "74131780",
 	"kind": "MONSTER",
-	"name": "Exiled Force",
+	"cardname": "Exiled Force",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5852,7 +5852,7 @@
   {
 	"id": "12600382",
 	"kind": "MONSTER",
-	"name": "Exodia Necross",
+	"cardname": "Exodia Necross",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -5882,7 +5882,7 @@
   {
 	"id": "33396948",
 	"kind": "MONSTER",
-	"name": "Exodia the Forbidden One",
+	"cardname": "Exodia the Forbidden One",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -5905,7 +5905,7 @@
   {
 	"id": "45425051",
 	"kind": "MONSTER",
-	"name": "Fairy King Truesdale",
+	"cardname": "Fairy King Truesdale",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -5928,7 +5928,7 @@
   {
 	"id": "89731911",
 	"kind": "MONSTER",
-	"name": "Familiar Knight",
+	"cardname": "Familiar Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -5951,7 +5951,7 @@
   {
 	"id": "31887905",
 	"kind": "MONSTER",
-	"name": "Familiar-Possessed - Aussa",
+	"cardname": "Familiar-Possessed - Aussa",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -5978,7 +5978,7 @@
   {
 	"id": "68881649",
 	"kind": "MONSTER",
-	"name": "Familiar-Possessed - Eria",
+	"cardname": "Familiar-Possessed - Eria",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -6005,7 +6005,7 @@
   {
 	"id": "04376658",
 	"kind": "MONSTER",
-	"name": "Familiar-Possessed - Hiita",
+	"cardname": "Familiar-Possessed - Hiita",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -6032,7 +6032,7 @@
   {
 	"id": "31764353",
 	"kind": "MONSTER",
-	"name": "Familiar-Possessed - Wynn",
+	"cardname": "Familiar-Possessed - Wynn",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -6059,7 +6059,7 @@
   {
 	"id": "34193084",
 	"kind": "MONSTER",
-	"name": "Fear from the Dark",
+	"cardname": "Fear from the Dark",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -6082,7 +6082,7 @@
   {
 	"id": "00218704",
 	"kind": "MONSTER",
-	"name": "Fenrir",
+	"cardname": "Fenrir",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -6112,7 +6112,7 @@
   {
 	"id": "66235877",
 	"kind": "MONSTER",
-	"name": "Fiend Skull Dragon",
+	"cardname": "Fiend Skull Dragon",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -6142,7 +6142,7 @@
   {
 	"id": "64752646",
 	"kind": "MONSTER",
-	"name": "Fire Princess",
+	"cardname": "Fire Princess",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -6165,7 +6165,7 @@
   {
 	"id": "27132350",
 	"kind": "MONSTER",
-	"name": "Fire Sorcerer",
+	"cardname": "Fire Sorcerer",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -6188,7 +6188,7 @@
   {
 	"id": "87473172",
 	"kind": "MONSTER",
-	"name": "Firebird",
+	"cardname": "Firebird",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -6211,7 +6211,7 @@
   {
 	"id": "41089128",
 	"kind": "MONSTER",
-	"name": "Flame Ruler",
+	"cardname": "Flame Ruler",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -6234,7 +6234,7 @@
   {
 	"id": "96890582",
 	"kind": "MONSTER",
-	"name": "Flash Assailant",
+	"cardname": "Flash Assailant",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -6257,7 +6257,7 @@
   {
 	"id": "84834865",
 	"kind": "MONSTER",
-	"name": "Flying Kamakiri #1",
+	"cardname": "Flying Kamakiri #1",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -6280,7 +6280,7 @@
   {
 	"id": "88753985",
 	"kind": "MONSTER",
-	"name": "Fox Fire",
+	"cardname": "Fox Fire",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -6303,7 +6303,7 @@
   {
 	"id": "16556849",
 	"kind": "MONSTER",
-	"name": "Freed the Brave Wanderer",
+	"cardname": "Freed the Brave Wanderer",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -6326,7 +6326,7 @@
   {
 	"id": "49681811",
 	"kind": "MONSTER",
-	"name": "Freed the Matchless General",
+	"cardname": "Freed the Matchless General",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -6356,7 +6356,7 @@
   {
 	"id": "85359414",
 	"kind": "MONSTER",
-	"name": "Freezing Beast",
+	"cardname": "Freezing Beast",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -6386,7 +6386,7 @@
   {
 	"id": "38742075",
 	"kind": "MONSTER",
-	"name": "Frontier Wiseman",
+	"cardname": "Frontier Wiseman",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -6409,7 +6409,7 @@
   {
 	"id": "38538445",
 	"kind": "MONSTER",
-	"name": "Fushi No Tori",
+	"cardname": "Fushi No Tori",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -6439,7 +6439,7 @@
   {
 	"id": "39711336",
 	"kind": "MONSTER",
-	"name": "Fushioh Richie",
+	"cardname": "Fushioh Richie",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -6469,7 +6469,7 @@
   {
 	"id": "51632798",
 	"kind": "MONSTER",
-	"name": "Fusilier Dragon, the Dual-Mode Beast",
+	"cardname": "Fusilier Dragon, the Dual-Mode Beast",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -6492,7 +6492,7 @@
   {
 	"id": "51355346",
 	"kind": "MONSTER",
-	"name": "Gaia Soul the Combustible Collective",
+	"cardname": "Gaia Soul the Combustible Collective",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -6517,7 +6517,7 @@
   {
 	"id": "77491079",
 	"kind": "MONSTER",
-	"name": "Gale Lizard",
+	"cardname": "Gale Lizard",
 	"attribute": null,
 	"race": "REPTILE",
 	"level": null,
@@ -6540,7 +6540,7 @@
   {
 	"id": "12800777",
 	"kind": "MONSTER",
-	"name": "Garuda the Wind Spirit",
+	"cardname": "Garuda the Wind Spirit",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -6563,7 +6563,7 @@
   {
 	"id": "87751584",
 	"kind": "MONSTER",
-	"name": "Gatling Dragon",
+	"cardname": "Gatling Dragon",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -6586,7 +6586,7 @@
   {
 	"id": "30190809",
 	"kind": "MONSTER",
-	"name": "Gear Golem the Moving Fortress",
+	"cardname": "Gear Golem the Moving Fortress",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -6607,7 +6607,7 @@
   {
 	"id": "00423705",
 	"kind": "MONSTER",
-	"name": "Gearfried the Iron Knight",
+	"cardname": "Gearfried the Iron Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -6637,7 +6637,7 @@
   {
 	"id": "57046845",
 	"kind": "MONSTER",
-	"name": "Gearfried the Swordmaster",
+	"cardname": "Gearfried the Swordmaster",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -6667,7 +6667,7 @@
   {
 	"id": "21887179",
 	"kind": "MONSTER",
-	"name": "Getsu Fuhma",
+	"cardname": "Getsu Fuhma",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -6690,7 +6690,7 @@
   {
 	"id": "13386503",
 	"kind": "MONSTER",
-	"name": "Ghost Knight of Jackal",
+	"cardname": "Ghost Knight of Jackal",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -6713,7 +6713,7 @@
   {
 	"id": "78266168",
 	"kind": "MONSTER",
-	"name": "Giant Axe Mummy",
+	"cardname": "Giant Axe Mummy",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -6736,7 +6736,7 @@
   {
 	"id": "95178994",
 	"kind": "MONSTER",
-	"name": "Giant Germ",
+	"cardname": "Giant Germ",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -6766,7 +6766,7 @@
   {
 	"id": "58185394",
 	"kind": "MONSTER",
-	"name": "Giant Kozaky",
+	"cardname": "Giant Kozaky",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -6796,7 +6796,7 @@
   {
 	"id": "73698349",
 	"kind": "MONSTER",
-	"name": "Giant Orc",
+	"cardname": "Giant Orc",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -6817,7 +6817,7 @@
   {
 	"id": "97017120",
 	"kind": "MONSTER",
-	"name": "Giant Rat",
+	"cardname": "Giant Rat",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -6840,7 +6840,7 @@
   {
 	"id": "47606319",
 	"kind": "MONSTER",
-	"name": "Gigantes",
+	"cardname": "Gigantes",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -6863,7 +6863,7 @@
   {
 	"id": "69933858",
 	"kind": "MONSTER",
-	"name": "Gilford the Legend",
+	"cardname": "Gilford the Legend",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -6886,7 +6886,7 @@
   {
 	"id": "36354007",
 	"kind": "MONSTER",
-	"name": "Gilford the Lightning",
+	"cardname": "Gilford the Lightning",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -6909,7 +6909,7 @@
   {
 	"id": "78658564",
 	"kind": "MONSTER",
-	"name": "Goblin Attack Force",
+	"cardname": "Goblin Attack Force",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -6930,7 +6930,7 @@
   {
 	"id": "85306040",
 	"kind": "MONSTER",
-	"name": "Goblin Elite Attack Force",
+	"cardname": "Goblin Elite Attack Force",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -6951,7 +6951,7 @@
   {
 	"id": "18590133",
 	"kind": "MONSTER",
-	"name": "Goblin King",
+	"cardname": "Goblin King",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -6981,7 +6981,7 @@
   {
 	"id": "00425934",
 	"kind": "MONSTER",
-	"name": "Goblin of Greed",
+	"cardname": "Goblin of Greed",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -7004,7 +7004,7 @@
   {
 	"id": "67959180",
 	"kind": "MONSTER",
-	"name": "Goddess of Whim",
+	"cardname": "Goddess of Whim",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -7027,7 +7027,7 @@
   {
 	"id": "53493204",
 	"kind": "MONSTER",
-	"name": "Goddess with the Third Eye",
+	"cardname": "Goddess with the Third Eye",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -7050,7 +7050,7 @@
   {
 	"id": "14472500",
 	"kind": "MONSTER",
-	"name": "Gokipon",
+	"cardname": "Gokipon",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -7073,7 +7073,7 @@
   {
 	"id": "78004197",
 	"kind": "MONSTER",
-	"name": "Goldd, Wu-Lord of Dark World",
+	"cardname": "Goldd, Wu-Lord of Dark World",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -7096,7 +7096,7 @@
   {
 	"id": "52323207",
 	"kind": "MONSTER",
-	"name": "Golem Sentry",
+	"cardname": "Golem Sentry",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -7126,7 +7126,7 @@
   {
 	"id": "80233946",
 	"kind": "MONSTER",
-	"name": "Gora Turtle",
+	"cardname": "Gora Turtle",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -7149,7 +7149,7 @@
   {
 	"id": "42868711",
 	"kind": "MONSTER",
-	"name": "Gora Turtle of Illusion",
+	"cardname": "Gora Turtle of Illusion",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -7172,7 +7172,7 @@
   {
 	"id": "14291024",
 	"kind": "MONSTER",
-	"name": "Gradius' Option",
+	"cardname": "Gradius' Option",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -7195,7 +7195,7 @@
   {
 	"id": "13944422",
 	"kind": "MONSTER",
-	"name": "Granadora",
+	"cardname": "Granadora",
 	"attribute": null,
 	"race": "REPTILE",
 	"level": null,
@@ -7225,7 +7225,7 @@
   {
 	"id": "60229110",
 	"kind": "MONSTER",
-	"name": "Granmarg the Rock Monarch",
+	"cardname": "Granmarg the Rock Monarch",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -7248,7 +7248,7 @@
   {
 	"id": "41249545",
 	"kind": "MONSTER",
-	"name": "Grass Phantom",
+	"cardname": "Grass Phantom",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -7271,7 +7271,7 @@
   {
 	"id": "40937767",
 	"kind": "MONSTER",
-	"name": "Grave Ohja",
+	"cardname": "Grave Ohja",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -7301,7 +7301,7 @@
   {
 	"id": "11448373",
 	"kind": "MONSTER",
-	"name": "Grave Protector",
+	"cardname": "Grave Protector",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -7324,7 +7324,7 @@
   {
 	"id": "25262697",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Assailant",
+	"cardname": "Gravekeeper's Assailant",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7347,7 +7347,7 @@
   {
 	"id": "99877698",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Cannonholder",
+	"cardname": "Gravekeeper's Cannonholder",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7370,7 +7370,7 @@
   {
 	"id": "62473983",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Chief",
+	"cardname": "Gravekeeper's Chief",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7393,7 +7393,7 @@
   {
 	"id": "50712728",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Curse",
+	"cardname": "Gravekeeper's Curse",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7416,7 +7416,7 @@
   {
 	"id": "37101832",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Guard",
+	"cardname": "Gravekeeper's Guard",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7439,7 +7439,7 @@
   {
 	"id": "63695531",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Spear Soldier",
+	"cardname": "Gravekeeper's Spear Soldier",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7464,7 +7464,7 @@
   {
 	"id": "24317029",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Spy",
+	"cardname": "Gravekeeper's Spy",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7487,7 +7487,7 @@
   {
 	"id": "99690140",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Vassal",
+	"cardname": "Gravekeeper's Vassal",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7510,7 +7510,7 @@
   {
 	"id": "26084285",
 	"kind": "MONSTER",
-	"name": "Gravekeeper's Watcher",
+	"cardname": "Gravekeeper's Watcher",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7523,9 +7523,9 @@
 	"effects": [
 	  {
 		"trigger": "ON_PLAY",
-		"template": "set_field_spell_by_name",
+		"template": "set_field_spell_by_cardname",
 		"params": {
-		  "field_name": "Necrovalley"
+		  "field_cardname": "Necrovalley"
 		}
 	  }
 	]
@@ -7533,7 +7533,7 @@
   {
 	"id": "29618570",
 	"kind": "MONSTER",
-	"name": "Gray Wing",
+	"cardname": "Gray Wing",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -7556,7 +7556,7 @@
   {
 	"id": "88989706",
 	"kind": "MONSTER",
-	"name": "Great Dezard",
+	"cardname": "Great Dezard",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7579,7 +7579,7 @@
   {
 	"id": "02356994",
 	"kind": "MONSTER",
-	"name": "Great Long Nose",
+	"cardname": "Great Long Nose",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -7602,7 +7602,7 @@
   {
 	"id": "10809984",
 	"kind": "MONSTER",
-	"name": "Great Phantom Thief",
+	"cardname": "Great Phantom Thief",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -7625,7 +7625,7 @@
   {
 	"id": "61831093",
 	"kind": "MONSTER",
-	"name": "Greenkappa",
+	"cardname": "Greenkappa",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -7648,7 +7648,7 @@
   {
 	"id": "36584821",
 	"kind": "MONSTER",
-	"name": "Gren Maju Da Eiza",
+	"cardname": "Gren Maju Da Eiza",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -7671,7 +7671,7 @@
   {
 	"id": "95744531",
 	"kind": "MONSTER",
-	"name": "Griggle",
+	"cardname": "Griggle",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -7694,7 +7694,7 @@
   {
 	"id": "68007326",
 	"kind": "MONSTER",
-	"name": "Guardian Angel Joan",
+	"cardname": "Guardian Angel Joan",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -7717,7 +7717,7 @@
   {
 	"id": "73544866",
 	"kind": "MONSTER",
-	"name": "Guardian Baou",
+	"cardname": "Guardian Baou",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -7747,7 +7747,7 @@
   {
 	"id": "10755153",
 	"kind": "MONSTER",
-	"name": "Guardian Ceal",
+	"cardname": "Guardian Ceal",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -7770,7 +7770,7 @@
   {
 	"id": "74367458",
 	"kind": "MONSTER",
-	"name": "Guardian Elma",
+	"cardname": "Guardian Elma",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -7800,7 +7800,7 @@
   {
 	"id": "34022290",
 	"kind": "MONSTER",
-	"name": "Guardian Eatos",
+	"cardname": "Guardian Eatos",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -7823,7 +7823,7 @@
   {
 	"id": "47150851",
 	"kind": "MONSTER",
-	"name": "Guardian Grarl",
+	"cardname": "Guardian Grarl",
 	"attribute": null,
 	"race": "DINOSAUR",
 	"level": null,
@@ -7846,7 +7846,7 @@
   {
 	"id": "09633505",
 	"kind": "MONSTER",
-	"name": "Guardian Kay'est",
+	"cardname": "Guardian Kay'est",
 	"attribute": null,
 	"race": "SEA_SERPENT",
 	"level": null,
@@ -7883,7 +7883,7 @@
   {
 	"id": "40659562",
 	"kind": "MONSTER",
-	"name": "Guardian Sphinx",
+	"cardname": "Guardian Sphinx",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -7911,7 +7911,7 @@
   {
 	"id": "75209824",
 	"kind": "MONSTER",
-	"name": "Guardian Statue",
+	"cardname": "Guardian Statue",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -7939,7 +7939,7 @@
   {
 	"id": "46037213",
 	"kind": "MONSTER",
-	"name": "Guardian Tryce",
+	"cardname": "Guardian Tryce",
 	"attribute": null,
 	"race": "THUNDER",
 	"level": null,
@@ -7969,7 +7969,7 @@
   {
 	"id": "09817927",
 	"kind": "MONSTER",
-	"name": "Gyaku-Gire Panda",
+	"cardname": "Gyaku-Gire Panda",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -7994,7 +7994,7 @@
   {
 	"id": "18325492",
 	"kind": "MONSTER",
-	"name": "Gyroid",
+	"cardname": "Gyroid",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -8017,7 +8017,7 @@
   {
 	"id": "32491822",
 	"kind": "MONSTER",
-	"name": "Hamon, Lord of Striking Thunder",
+	"cardname": "Hamon, Lord of Striking Thunder",
 	"attribute": null,
 	"race": "THUNDER",
 	"level": null,
@@ -8047,7 +8047,7 @@
   {
 	"id": "98446407",
 	"kind": "MONSTER",
-	"name": "Hand of Nephthys",
+	"cardname": "Hand of Nephthys",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -8070,7 +8070,7 @@
   {
 	"id": "91932350",
 	"kind": "MONSTER",
-	"name": "Harpie Lady 1",
+	"cardname": "Harpie Lady 1",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -8095,7 +8095,7 @@
   {
 	"id": "27927359",
 	"kind": "MONSTER",
-	"name": "Harpie Lady 2",
+	"cardname": "Harpie Lady 2",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -8120,7 +8120,7 @@
   {
 	"id": "54415063",
 	"kind": "MONSTER",
-	"name": "Harpie Lady 3",
+	"cardname": "Harpie Lady 3",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -8145,7 +8145,7 @@
   {
 	"id": "12206212",
 	"kind": "MONSTER",
-	"name": "Harpie Lady Sisters",
+	"cardname": "Harpie Lady Sisters",
 	"attribute": null,
 	"race": "WINGED_BEAST",
 	"level": null,
@@ -8158,9 +8158,9 @@
 	"effects": [
 	  {
 		"trigger": "ON_PLAY",
-		"template": "set_field_spell_by_name",
+		"template": "set_field_spell_by_cardname",
 		"params": {
-		  "field_name": "Harpies' hunting ground"
+		  "field_cardname": "Harpies' hunting ground"
 		}
 	  }
 	]
@@ -8168,7 +8168,7 @@
   {
 	"id": "52040216",
 	"kind": "MONSTER",
-	"name": "Harpie's Pet Dragon",
+	"cardname": "Harpie's Pet Dragon",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -8191,7 +8191,7 @@
   {
 	"id": "21015833",
 	"kind": "MONSTER",
-	"name": "Hayabusa Knight",
+	"cardname": "Hayabusa Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -8214,7 +8214,7 @@
   {
 	"id": "23265594",
 	"kind": "MONSTER",
-	"name": "Heavy Mech Support Platform",
+	"cardname": "Heavy Mech Support Platform",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -8237,7 +8237,7 @@
   {
 	"id": "47025270",
 	"kind": "MONSTER",
-	"name": "Helping Robo for Combat",
+	"cardname": "Helping Robo for Combat",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -8260,7 +8260,7 @@
   {
 	"id": "76052811",
 	"kind": "MONSTER",
-	"name": "Helpoemer",
+	"cardname": "Helpoemer",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -8283,7 +8283,7 @@
   {
 	"id": "32679370",
 	"kind": "MONSTER",
-	"name": "Hero Kid",
+	"cardname": "Hero Kid",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -8306,7 +8306,7 @@
   {
 	"id": "82260502",
 	"kind": "MONSTER",
-	"name": "Hieracosphinx",
+	"cardname": "Hieracosphinx",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -8329,7 +8329,7 @@
   {
 	"id": "00759393",
 	"kind": "MONSTER",
-	"name": "Hiita the Fire Charmer",
+	"cardname": "Hiita the Fire Charmer",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -8352,7 +8352,7 @@
   {
 	"id": "75745607",
 	"kind": "MONSTER",
-	"name": "Hino-Kagu-Tsuchi",
+	"cardname": "Hino-Kagu-Tsuchi",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -8382,7 +8382,7 @@
   {
 	"id": "81863068",
 	"kind": "MONSTER",
-	"name": "Hiro's Shadow Scout",
+	"cardname": "Hiro's Shadow Scout",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -8405,7 +8405,7 @@
   {
 	"id": "40410110",
 	"kind": "MONSTER",
-	"name": "Homunculus the Alchemic Being",
+	"cardname": "Homunculus the Alchemic Being",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -8428,7 +8428,7 @@
   {
 	"id": "75830094",
 	"kind": "MONSTER",
-	"name": "Horus the Black Flame Dragon LV4",
+	"cardname": "Horus the Black Flame Dragon LV4",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -8458,7 +8458,7 @@
   {
 	"id": "11224103",
 	"kind": "MONSTER",
-	"name": "Horus the Black Flame Dragon LV6",
+	"cardname": "Horus the Black Flame Dragon LV6",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -8488,7 +8488,7 @@
   {
 	"id": "48229808",
 	"kind": "MONSTER",
-	"name": "Horus the Black Flame Dragon LV8",
+	"cardname": "Horus the Black Flame Dragon LV8",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -8511,7 +8511,7 @@
   {
 	"id": "09264485",
 	"kind": "MONSTER",
-	"name": "Horus' Servant",
+	"cardname": "Horus' Servant",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -8534,7 +8534,7 @@
   {
 	"id": "67629977",
 	"kind": "MONSTER",
-	"name": "Hoshiningen",
+	"cardname": "Hoshiningen",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -8564,7 +8564,7 @@
   {
 	"id": "93107608",
 	"kind": "MONSTER",
-	"name": "Howling Insect",
+	"cardname": "Howling Insect",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -8587,7 +8587,7 @@
   {
 	"id": "22587018",
 	"kind": "MONSTER",
-	"name": "Hydrogeddon",
+	"cardname": "Hydrogeddon",
 	"attribute": null,
 	"race": "DINOSAUR",
 	"level": null,
@@ -8610,7 +8610,7 @@
   {
 	"id": "22873798",
 	"kind": "MONSTER",
-	"name": "Hyena",
+	"cardname": "Hyena",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -8633,7 +8633,7 @@
   {
 	"id": "02671330",
 	"kind": "MONSTER",
-	"name": "Hyper Hammerhead",
+	"cardname": "Hyper Hammerhead",
 	"attribute": null,
 	"race": "DINOSAUR",
 	"level": null,
@@ -8656,7 +8656,7 @@
   {
 	"id": "21297224",
 	"kind": "MONSTER",
-	"name": "Hysteric Fairy",
+	"cardname": "Hysteric Fairy",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -8679,7 +8679,7 @@
   {
 	"id": "77084837",
 	"kind": "MONSTER",
-	"name": "Inaba White Rabbit",
+	"cardname": "Inaba White Rabbit",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -8702,7 +8702,7 @@
   {
 	"id": "84173492",
 	"kind": "MONSTER",
-	"name": "Indomitable Fighter Lei Lei",
+	"cardname": "Indomitable Fighter Lei Lei",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -8723,7 +8723,7 @@
   {
 	"id": "19847532",
 	"kind": "MONSTER",
-	"name": "Infernal Flame Emperor",
+	"cardname": "Infernal Flame Emperor",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -8753,7 +8753,7 @@
   {
 	"id": "23309606",
 	"kind": "MONSTER",
-	"name": "Infernal Incinerator",
+	"cardname": "Infernal Incinerator",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -8783,7 +8783,7 @@
   {
 	"id": "08581705",
 	"kind": "MONSTER",
-	"name": "Infernalqueen Archfiend",
+	"cardname": "Infernalqueen Archfiend",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -8813,7 +8813,7 @@
   {
 	"id": "74823665",
 	"kind": "MONSTER",
-	"name": "Inferno",
+	"cardname": "Inferno",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -8836,7 +8836,7 @@
   {
 	"id": "17185260",
 	"kind": "MONSTER",
-	"name": "Inferno Hammer",
+	"cardname": "Inferno Hammer",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -8859,7 +8859,7 @@
   {
 	"id": "79575620",
 	"kind": "MONSTER",
-	"name": "Injection Fairy Lily",
+	"cardname": "Injection Fairy Lily",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -8882,7 +8882,7 @@
   {
 	"id": "37957847",
 	"kind": "MONSTER",
-	"name": "Insect Princess",
+	"cardname": "Insect Princess",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -8912,7 +8912,7 @@
   {
 	"id": "91512835",
 	"kind": "MONSTER",
-	"name": "Insect Queen",
+	"cardname": "Insect Queen",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -8942,7 +8942,7 @@
   {
 	"id": "07019529",
 	"kind": "MONSTER",
-	"name": "Insect Soldiers of the Sky",
+	"cardname": "Insect Soldiers of the Sky",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -8965,7 +8965,7 @@
   {
 	"id": "56647086",
 	"kind": "MONSTER",
-	"name": "Invader of Darkness",
+	"cardname": "Invader of Darkness",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -8995,7 +8995,7 @@
   {
 	"id": "03056267",
 	"kind": "MONSTER",
-	"name": "Invader of the Throne",
+	"cardname": "Invader of the Throne",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -9018,7 +9018,7 @@
   {
 	"id": "26082229",
 	"kind": "MONSTER",
-	"name": "Invasion of Flames",
+	"cardname": "Invasion of Flames",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -9041,7 +9041,7 @@
   {
 	"id": "52675689",
 	"kind": "MONSTER",
-	"name": "Invitation to a Dark Sleep",
+	"cardname": "Invitation to a Dark Sleep",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -9064,7 +9064,7 @@
   {
 	"id": "73431236",
 	"kind": "MONSTER",
-	"name": "Iron Blacksmith Kotetsu",
+	"cardname": "Iron Blacksmith Kotetsu",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -9087,7 +9087,7 @@
   {
 	"id": "43697559",
 	"kind": "MONSTER",
-	"name": "Jetroid",
+	"cardname": "Jetroid",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -9110,7 +9110,7 @@
   {
 	"id": "90020065",
 	"kind": "MONSTER",
-	"name": "Jigen Bakudan",
+	"cardname": "Jigen Bakudan",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -9133,7 +9133,7 @@
   {
 	"id": "77585513",
 	"kind": "MONSTER",
-	"name": "Jinzo",
+	"cardname": "Jinzo",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -9163,7 +9163,7 @@
   {
 	"id": "32809211",
 	"kind": "MONSTER",
-	"name": "Jinzo #7",
+	"cardname": "Jinzo #7",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -9186,7 +9186,7 @@
   {
 	"id": "41855169",
 	"kind": "MONSTER",
-	"name": "Jowgen the Spiritualist",
+	"cardname": "Jowgen the Spiritualist",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -9216,7 +9216,7 @@
   {
 	"id": "05257687",
 	"kind": "MONSTER",
-	"name": "Jowls of Dark Demise",
+	"cardname": "Jowls of Dark Demise",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -9237,7 +9237,7 @@
   {
 	"id": "52768103",
 	"kind": "MONSTER",
-	"name": "KA-2 Des Scissors",
+	"cardname": "KA-2 Des Scissors",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -9260,7 +9260,7 @@
   {
 	"id": "34627841",
 	"kind": "MONSTER",
-	"name": "Kaibaman",
+	"cardname": "Kaibaman",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -9283,7 +9283,7 @@
   {
 	"id": "52824910",
 	"kind": "MONSTER",
-	"name": "Kaiser Glider",
+	"cardname": "Kaiser Glider",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -9313,7 +9313,7 @@
   {
 	"id": "17444133",
 	"kind": "MONSTER",
-	"name": "Kaiser Sea Horse",
+	"cardname": "Kaiser Sea Horse",
 	"attribute": null,
 	"race": "SEA_SERPENT",
 	"level": null,
@@ -9336,7 +9336,7 @@
   {
 	"id": "95789089",
 	"kind": "MONSTER",
-	"name": "Kangaroo Champ",
+	"cardname": "Kangaroo Champ",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -9359,7 +9359,7 @@
   {
 	"id": "23289281",
 	"kind": "MONSTER",
-	"name": "Karate Man",
+	"cardname": "Karate Man",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -9382,7 +9382,7 @@
   {
 	"id": "62340868",
 	"kind": "MONSTER",
-	"name": "Kazejin",
+	"cardname": "Kazejin",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -9405,7 +9405,7 @@
   {
 	"id": "54878498",
 	"kind": "MONSTER",
-	"name": "Kelbek",
+	"cardname": "Kelbek",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -9428,7 +9428,7 @@
   {
 	"id": "80441106",
 	"kind": "MONSTER",
-	"name": "Keldo",
+	"cardname": "Keldo",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -9451,7 +9451,7 @@
   {
 	"id": "13756293",
 	"kind": "MONSTER",
-	"name": "King Dragun",
+	"cardname": "King Dragun",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -9481,7 +9481,7 @@
   {
 	"id": "36021814",
 	"kind": "MONSTER",
-	"name": "King of the Skull Servants",
+	"cardname": "King of the Skull Servants",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -9511,7 +9511,7 @@
   {
 	"id": "79109599",
 	"kind": "MONSTER",
-	"name": "King of the Swamp",
+	"cardname": "King of the Swamp",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -9534,7 +9534,7 @@
   {
 	"id": "83986578",
 	"kind": "MONSTER",
-	"name": "King Tiger Wanghu",
+	"cardname": "King Tiger Wanghu",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -9557,7 +9557,7 @@
   {
 	"id": "64788463",
 	"kind": "MONSTER",
-	"name": "King's Knight",
+	"cardname": "King's Knight",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -9580,7 +9580,7 @@
   {
 	"id": "84814897",
 	"kind": "MONSTER",
-	"name": "Kiryu",
+	"cardname": "Kiryu",
 	"attribute": null,
 	"race": "DRAGON",
 	"level": null,
@@ -9603,7 +9603,7 @@
   {
 	"id": "04266839",
 	"kind": "MONSTER",
-	"name": "Kiseitai",
+	"cardname": "Kiseitai",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -9626,7 +9626,7 @@
   {
 	"id": "69456283",
 	"kind": "MONSTER",
-	"name": "Koitsu",
+	"cardname": "Koitsu",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -9649,7 +9649,7 @@
   {
 	"id": "19406822",
 	"kind": "MONSTER",
-	"name": "Kotodama",
+	"cardname": "Kotodama",
 	"attribute": null,
 	"race": "FAIRY",
 	"level": null,
@@ -9664,7 +9664,7 @@
 		"trigger": "PASSIVE",
 		"template": "custom_raw",
 		"params": {
-		  "raw": "If this card is face-up on the field, There can only be one copy of each monster on the field; if there are two monsters with the same name, one of them will be destroyed."
+		  "raw": "If this card is face-up on the field, There can only be one copy of each monster on the field; if there are two monsters with the same cardname, one of them will be destroyed."
 		}
 	  }
 	]
@@ -9672,7 +9672,7 @@
   {
 	"id": "82642348",
 	"kind": "MONSTER",
-	"name": "Kryuel",
+	"cardname": "Kryuel",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -9695,7 +9695,7 @@
   {
 	"id": "40640057",
 	"kind": "MONSTER",
-	"name": "Kuriboh",
+	"cardname": "Kuriboh",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -9718,7 +9718,7 @@
   {
 	"id": "88240808",
 	"kind": "MONSTER",
-	"name": "Kycoo the Ghost Destroyer",
+	"cardname": "Kycoo the Ghost Destroyer",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -9748,7 +9748,7 @@
   {
 	"id": "90147755",
 	"kind": "MONSTER",
-	"name": "Lady Assailant of Flames",
+	"cardname": "Lady Assailant of Flames",
 	"attribute": null,
 	"race": "PYRO",
 	"level": null,
@@ -9771,7 +9771,7 @@
   {
 	"id": "82005435",
 	"kind": "MONSTER",
-	"name": "Lady Ninja Yae",
+	"cardname": "Lady Ninja Yae",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -9794,7 +9794,7 @@
   {
 	"id": "38480590",
 	"kind": "MONSTER",
-	"name": "Lady Panther",
+	"cardname": "Lady Panther",
 	"attribute": null,
 	"race": "BEAST_WARRIOR",
 	"level": null,
@@ -9817,7 +9817,7 @@
   {
 	"id": "87756343",
 	"kind": "MONSTER",
-	"name": "Larvae Moth",
+	"cardname": "Larvae Moth",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -9840,7 +9840,7 @@
   {
 	"id": "20394040",
 	"kind": "MONSTER",
-	"name": "Lava Battleguard",
+	"cardname": "Lava Battleguard",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -9863,7 +9863,7 @@
   {
 	"id": "00102380",
 	"kind": "MONSTER",
-	"name": "Lava Golem",
+	"cardname": "Lava Golem",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -9893,7 +9893,7 @@
   {
 	"id": "87010442",
 	"kind": "MONSTER",
-	"name": "Legacy Hunter",
+	"cardname": "Legacy Hunter",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -9916,7 +9916,7 @@
   {
 	"id": "60258960",
 	"kind": "MONSTER",
-	"name": "Legendary Flame Lord",
+	"cardname": "Legendary Flame Lord",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -9939,7 +9939,7 @@
   {
 	"id": "25773409",
 	"kind": "MONSTER",
-	"name": "Legendary Jujitsu Master",
+	"cardname": "Legendary Jujitsu Master",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -9962,7 +9962,7 @@
   {
 	"id": "12472242",
 	"kind": "MONSTER",
-	"name": "Leghul",
+	"cardname": "Leghul",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -9985,7 +9985,7 @@
   {
 	"id": "62543393",
 	"kind": "MONSTER",
-	"name": "Lekunga",
+	"cardname": "Lekunga",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -10008,7 +10008,7 @@
   {
 	"id": "16475472",
 	"kind": "MONSTER",
-	"name": "Lesser Fiend",
+	"cardname": "Lesser Fiend",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -10031,7 +10031,7 @@
   {
 	"id": "37721209",
 	"kind": "MONSTER",
-	"name": "Levia-Dragon - Daedalus",
+	"cardname": "Levia-Dragon - Daedalus",
 	"attribute": null,
 	"race": "SEA_SERPENT",
 	"level": null,
@@ -10054,7 +10054,7 @@
   {
 	"id": "68658728",
 	"kind": "MONSTER",
-	"name": "Little Chimera",
+	"cardname": "Little Chimera",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -10077,7 +10077,7 @@
   {
 	"id": "90790253",
 	"kind": "MONSTER",
-	"name": "Little-Winguard",
+	"cardname": "Little-Winguard",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -10100,7 +10100,7 @@
   {
 	"id": "17985575",
 	"kind": "MONSTER",
-	"name": "Lord of D.",
+	"cardname": "Lord of D.",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -10123,7 +10123,7 @@
   {
 	"id": "40320754",
 	"kind": "MONSTER",
-	"name": "Lord Poison",
+	"cardname": "Lord Poison",
 	"attribute": null,
 	"race": "PLANT",
 	"level": null,
@@ -10146,7 +10146,7 @@
   {
 	"id": "45871897",
 	"kind": "MONSTER",
-	"name": "Lost Guardian",
+	"cardname": "Lost Guardian",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -10169,7 +10169,7 @@
   {
 	"id": "57482479",
 	"kind": "MONSTER",
-	"name": "Luminous Soldier",
+	"cardname": "Luminous Soldier",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -10192,7 +10192,7 @@
   {
 	"id": "46700124",
 	"kind": "MONSTER",
-	"name": "Machine King",
+	"cardname": "Machine King",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -10215,7 +10215,7 @@
   {
 	"id": "89222931",
 	"kind": "MONSTER",
-	"name": "Machine King Prototype",
+	"cardname": "Machine King Prototype",
 	"attribute": null,
 	"race": "MACHINE",
 	"level": null,
@@ -10238,7 +10238,7 @@
   {
 	"id": "79870141",
 	"kind": "MONSTER",
-	"name": "Mad Sword Beast",
+	"cardname": "Mad Sword Beast",
 	"attribute": null,
 	"race": "DINOSAUR",
 	"level": null,
@@ -10255,7 +10255,7 @@
   {
 	"id": "08034697",
 	"kind": "MONSTER",
-	"name": "Magical Marionette",
+	"cardname": "Magical Marionette",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -10278,7 +10278,7 @@
   {
 	"id": "32362575",
 	"kind": "MONSTER",
-	"name": "Magical Merchant",
+	"cardname": "Magical Merchant",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -10301,7 +10301,7 @@
   {
 	"id": "07802006",
 	"kind": "MONSTER",
-	"name": "Magical Plant Mandragola",
+	"cardname": "Magical Plant Mandragola",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -10324,7 +10324,7 @@
   {
 	"id": "34206604",
 	"kind": "MONSTER",
-	"name": "Magical Scientist",
+	"cardname": "Magical Scientist",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -10347,7 +10347,7 @@
   {
 	"id": "31560081",
 	"kind": "MONSTER",
-	"name": "Magician of Faith",
+	"cardname": "Magician of Faith",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -10370,7 +10370,7 @@
   {
 	"id": "93013676",
 	"kind": "MONSTER",
-	"name": "Maha Vailo",
+	"cardname": "Maha Vailo",
 	"attribute": null,
 	"race": "SPELLCASTER",
 	"level": null,
@@ -10393,7 +10393,7 @@
   {
 	"id": "40695128",
 	"kind": "MONSTER",
-	"name": "Maharaghi",
+	"cardname": "Maharaghi",
 	"attribute": null,
 	"race": "ROCK",
 	"level": null,
@@ -10416,7 +10416,7 @@
   {
 	"id": "17214465",
 	"kind": "MONSTER",
-	"name": "Maiden of the Aqua",
+	"cardname": "Maiden of the Aqua",
 	"attribute": null,
 	"race": "AQUA",
 	"level": null,
@@ -10429,9 +10429,9 @@
 	"effects": [
 	  {
 		"trigger": "ON_PLAY",
-		"template": "set_field_spell_by_name",
+		"template": "set_field_spell_by_cardname",
 		"params": {
-		  "field_name": "Umi"
+		  "field_cardname": "Umi"
 		}
 	  }
 	]
@@ -10439,7 +10439,7 @@
   {
 	"id": "60102563",
 	"kind": "MONSTER",
-	"name": "Maji-Gire Panda",
+	"cardname": "Maji-Gire Panda",
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
@@ -10462,7 +10462,7 @@
   {
 	"id": "08794435",
 	"kind": "MONSTER",
-	"name": "Maju Garzett",
+	"cardname": "Maju Garzett",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -10485,7 +10485,7 @@
   {
 	"id": "21593977",
 	"kind": "MONSTER",
-	"name": "Makyura the Destructor",
+	"cardname": "Makyura the Destructor",
 	"attribute": null,
 	"race": "WARRIOR",
 	"level": null,
@@ -10506,7 +10506,7 @@
   {
 	"id": "14255590",
 	"kind": "MONSTER",
-	"name": "Malice Ascendant",
+	"cardname": "Malice Ascendant",
 	"attribute": null,
 	"race": "ZOMBIE",
 	"level": null,
@@ -10529,7 +10529,7 @@
   {
 	"id": "72657739",
 	"kind": "MONSTER",
-	"name": "Malice Doll of Demise",
+	"cardname": "Malice Doll of Demise",
 	"attribute": null,
 	"race": "FIEND",
 	"level": null,
@@ -10552,7 +10552,7 @@
   {
 	"id": "54652250",
 	"kind": "MONSTER",
-	"name": "Man-Eater Bug",
+	"cardname": "Man-Eater Bug",
 	"attribute": null,
 	"race": "INSECT",
 	"level": null,
@@ -10575,7 +10575,7 @@
   {
 	"id": "67048711",
 	"kind": "SPELL",
-	"name": "7",
+	"cardname": "7",
 	"attribute": null,
 	"race": "CONTINUOUS",
 	"level": null,
@@ -10598,7 +10598,7 @@
   {
 	"id": "86198326",
 	"kind": "SPELL",
-	"name": "7 Completed",
+	"cardname": "7 Completed",
 	"attribute": null,
 	"race": "EQUIP",
 	"level": null,
@@ -10621,7 +10621,7 @@
   {
 	"id": "06850209",
 	"kind": "TRAP",
-	"name": "A Deal with Dark Ruler",
+	"cardname": "A Deal with Dark Ruler",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10644,7 +10644,7 @@
   {
 	"id": "49140998",
 	"kind": "SPELL",
-	"name": "A Feather of the Phoenix",
+	"cardname": "A Feather of the Phoenix",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10667,7 +10667,7 @@
   {
 	"id": "00295517",
 	"kind": "SPELL",
-	"name": "A Legendary Ocean",
+	"cardname": "A Legendary Ocean",
 	"attribute": null,
 	"race": "FIELD",
 	"level": null,
@@ -10690,7 +10690,7 @@
   {
 	"id": "28596933",
 	"kind": "SPELL",
-	"name": "A Wingbeat of Giant Dragon",
+	"cardname": "A Wingbeat of Giant Dragon",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10713,7 +10713,7 @@
   {
 	"id": "89801755",
 	"kind": "SPELL",
-	"name": "Abyssal Designator",
+	"cardname": "Abyssal Designator",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10736,7 +10736,7 @@
   {
 	"id": "21323861",
 	"kind": "SPELL",
-	"name": "Acid Rain",
+	"cardname": "Acid Rain",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10759,7 +10759,7 @@
   {
 	"id": "25345186",
 	"kind": "SPELL",
-	"name": "After the Struggle",
+	"cardname": "After the Struggle",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10782,7 +10782,7 @@
   {
 	"id": "81325903",
 	"kind": "SPELL",
-	"name": "Amazoness Spellcaster",
+	"cardname": "Amazoness Spellcaster",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10805,7 +10805,7 @@
   {
 	"id": "92001300",
 	"kind": "SPELL",
-	"name": "Ancient Gear Castle",
+	"cardname": "Ancient Gear Castle",
 	"attribute": null,
 	"race": "CONTINUOUS",
 	"level": null,
@@ -10842,7 +10842,7 @@
   {
 	"id": "67829249",
 	"kind": "SPELL",
-	"name": "Ancient Gear Drill",
+	"cardname": "Ancient Gear Drill",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10872,7 +10872,7 @@
   {
 	"id": "30435145",
 	"kind": "SPELL",
-	"name": "Ancient Gear Factory",
+	"cardname": "Ancient Gear Factory",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10895,7 +10895,7 @@
   {
 	"id": "17092736",
 	"kind": "SPELL",
-	"name": "Ancient Telescope",
+	"cardname": "Ancient Telescope",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10918,7 +10918,7 @@
   {
 	"id": "34236961",
 	"kind": "SPELL",
-	"name": "Ante",
+	"cardname": "Ante",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -10941,7 +10941,7 @@
   {
 	"id": "22796548",
 	"kind": "SPELL",
-	"name": "Archfiend's Oath",
+	"cardname": "Archfiend's Oath",
 	"attribute": null,
 	"race": "CONTINUOUS",
 	"level": null,
@@ -10971,7 +10971,7 @@
   {
 	"id": "90374791",
 	"kind": "SPELL",
-	"name": "Armed Changer",
+	"cardname": "Armed Changer",
 	"attribute": null,
 	"race": "EQUIP",
 	"level": null,
@@ -10994,7 +10994,7 @@
   {
 	"id": "69296555",
 	"kind": "SPELL",
-	"name": "Array of Revealing Light",
+	"cardname": "Array of Revealing Light",
 	"attribute": null,
 	"race": "CONTINUOUS",
 	"level": null,
@@ -11017,7 +11017,7 @@
   {
 	"id": "71453557",
 	"kind": "SPELL",
-	"name": "Autonomous Action Unit",
+	"cardname": "Autonomous Action Unit",
 	"attribute": null,
 	"race": "EQUIP",
 	"level": null,
@@ -11040,7 +11040,7 @@
   {
 	"id": "40619825",
 	"kind": "SPELL",
-	"name": "Axe of Despair",
+	"cardname": "Axe of Despair",
 	"attribute": null,
 	"race": "EQUIP",
 	"level": null,
@@ -11063,7 +11063,7 @@
   {
 	"id": "04614116",
 	"kind": "SPELL",
-	"name": "Dark Energy",
+	"cardname": "Dark Energy",
 	"attribute": null,
 	"race": "EQUIP",
 	"level": null,
@@ -11086,7 +11086,7 @@
   {
 	"id": "83225447",
 	"kind": "SPELL",
-	"name": "Stim-Pack",
+	"cardname": "Stim-Pack",
 	"attribute": null,
 	"race": "EQUIP",
 	"level": null,
@@ -11109,7 +11109,7 @@
   {
 	"id": "41356845",
 	"kind": "TRAP",
-	"name": "Acid Trap Hole",
+	"cardname": "Acid Trap Hole",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -11132,7 +11132,7 @@
   {
 	"id": "62325062",
 	"kind": "TRAP",
-	"name": "Adhesion Trap Hole",
+	"cardname": "Adhesion Trap Hole",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -11155,7 +11155,7 @@
   {
 	"id": "97077563",
 	"kind": "TRAP",
-	"name": "Call of the Haunted",
+	"cardname": "Call of the Haunted",
 	"attribute": null,
 	"race": "CONTINUOUS",
 	"level": null,
@@ -11178,7 +11178,7 @@
   {
 	"id": "44209392",
 	"kind": "TRAP",
-	"name": "Castle Walls",
+	"cardname": "Castle Walls",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
@@ -11201,7 +11201,7 @@
   {
 	"id": "26022485",
 	"kind": "TRAP",
-	"name": "Enervating Mist",
+	"cardname": "Enervating Mist",
 	"attribute": null,
 	"race": "CONTINUOUS",
 	"level": null,
@@ -11224,7 +11224,7 @@
   {
 	"id": "56120475",
 	"kind": "TRAP",
-	"name": "Sakuretsu Armor",
+	"cardname": "Sakuretsu Armor",
 	"attribute": null,
 	"race": "NORMAL",
 	"level": null,
