@@ -1,548 +1,741 @@
 {
   "version": "0.4",
   "triggers": {
-    "ON_PLAY": "Al jugar un monstruo desde la mano o al invocarlo como resultado de fusión (invocación normal del turno).",
-    "ON_SUMMON_BY_EFFECT": "Cuando un monstruo entra al campo por un efecto (incluye rituales u otras invocaciones especiales).",
-    "ON_ACTIVATE": "Activación manual (click -> activar efecto).",
-    "ON_FLIP": "Cuando un monstruo cambia de boca abajo a boca arriba (por acción o por ataque).",
-    "ON_ATTACK_DECLARATION": "Cuando se declara un ataque (antes de resolver combate).",
-    "ON_INFLICT_BATTLE_DAMAGE": "Cuando se inflige daño de batalla al jugador.",
-    "ON_INFLICT_EFFECT_DAMAGE": "Cuando se inflige daño de efecto (burn) al jugador.",
-    "ON_DESTROY": "Cuando este monstruo es destruido (cualquier causa).",
-    "ON_DESTROY_BATTLE": "Cuando este monstruo es destruido por batalla.",
-    "ON_DESTROY_EFFECT": "Cuando este monstruo es destruido por efecto.",
-    "ON_LEAVE_FIELD": "Cuando esta carta deja el campo sin ser destruida (enviada/retornada/tributada/etc).",
-    "ON_BANISH": "Cuando esta carta es removida del juego.",
-    "ON_DESTROY_MONSTER_BY_BATTLE": "Cuando este monstruo destruye a otro en batalla.",
-    "ON_DESTROY_OPPONENT_MONSTER_BY_BATTLE": "Alias más explícito del anterior (si prefieres solo uno, eliminar el otro).",
-    "ON_LEVEL_LOSS": "Cuando esta carta pierde niveles como parte de un efecto.",
-    "TURN_START": "Inicio del turno (después de robar hasta 5).",
-    "TURN_END": "Final del turno."
+	"ON_PLAY": "Al jugar un monstruo desde la mano o al invocarlo como resultado de fusión (invocación normal del turno).",
+	"ON_SUMMON_BY_EFFECT": "Cuando un monstruo entra al campo por un efecto (incluye rituales u otras invocaciones especiales).",
+	"ON_ACTIVATE": "Activación manual (click -> activar efecto).",
+	"ON_FLIP": "Cuando un monstruo cambia de boca abajo a boca arriba (por acción o por ataque).",
+	"ON_ATTACK_DECLARATION": "Cuando se declara un ataque (antes de resolver combate).",
+	"ON_INFLICT_BATTLE_DAMAGE": "Cuando se inflige daño de batalla al jugador.",
+	"ON_INFLICT_EFFECT_DAMAGE": "Cuando se inflige daño de efecto (burn) al jugador.",
+	"ON_DESTROY": "Cuando este monstruo es destruido (cualquier causa).",
+	"ON_DESTROY_BATTLE": "Cuando este monstruo es destruido por batalla.",
+	"ON_DESTROY_EFFECT": "Cuando este monstruo es destruido por efecto.",
+	"ON_LEAVE_FIELD": "Cuando esta carta deja el campo sin ser destruida (enviada/retornada/tributada/etc).",
+	"ON_BANISH": "Cuando esta carta es removida del juego.",
+	"ON_DESTROY_MONSTER_BY_BATTLE": "Cuando este monstruo destruye a otro en batalla.",
+	"ON_DESTROY_OPPONENT_MONSTER_BY_BATTLE": "Alias más explícito del anterior (si prefieres solo uno, eliminar el otro).",
+	"ON_LEVEL_LOSS": "Cuando esta carta pierde niveles como parte de un efecto.",
+	"TURN_START": "Inicio del turno (después de robar hasta 5).",
+	"TURN_END": "Final del turno.",
+	"ON_SEND_TO_GRAVE": "Cuando esta carta es enviada al cementerio (incluye destrucción, tributo, envío por efecto, descarte, etc).",
+	"ON_SEND_TO_GRAVE_BY_EFFECT": "Cuando esta carta es enviada al cementerio por el efecto de otra carta (no incluye batalla/tributo como costo).",
+	"ON_SEND_TO_GRAVE_AS_COST": "Cuando esta carta es enviada al cementerio específicamente como costo (ej. tributo/costo de activación)."
   },
   "keywords": {
-    "PIERCING": "Daño perforante al atacar un monstruo en DEF (si ATK > DEF).",
-    "TAUNT": "Mientras esté boca arriba, solo puede atacarse a monstruos con TAUNT del mismo lado.",
-    "STEALTH": "No puede ser objetivo de ataques.",
-    "SLOW": "No puede atacar el turno en que es invocado.",
-    "PARALYZED": "No puede declarar ataque en su próximo turno.",
-    "BAD_LUCK": "No recibe bonus/malus de Guardian Star.",
-    "MULTI_ATTACK_2": "Puede atacar 2 veces por turno.",
-    "MULTI_ATTACK_ALL": "Puede atacar a cada monstruo oponente una vez por turno.",
-    "DIRECT_ATTACK": "Puede atacar directamente a LP (cuando aplique).",
-    "NAME_COUNTS_AS_HARPIE_LADY": "Se considera «Harpie Lady» (para sinergias por nombre).",
-    "NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF": "El controlador no recibe daño de batalla en batallas que involucren a esta carta."
+	"PIERCING": "Daño perforante al atacar un monstruo en DEF (si ATK > DEF).",
+	"TAUNT": "Mientras esté boca arriba, solo puede atacarse a monstruos con TAUNT del mismo lado.",
+	"STEALTH": "No puede ser objetivo de ataques.",
+	"SLOW": "No puede atacar el turno en que es invocado.",
+	"PARALYZED": "No puede declarar ataque en su próximo turno.",
+	"BAD_LUCK": "No recibe bonus/malus de Guardian Star.",
+	"MULTI_ATTACK_2": "Puede atacar 2 veces por turno.",
+	"MULTI_ATTACK_ALL": "Puede atacar a cada monstruo oponente una vez por turno.",
+	"DIRECT_ATTACK": "Puede atacar directamente a LP (cuando aplique).",
+	"NAME_COUNTS_AS_HARPIE_LADY": "Se considera «Harpie Lady» (para sinergias por nombre).",
+	"NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF": "El controlador no recibe daño de batalla en batallas que involucren a esta carta."
   },
   "templates": {
-    "destroy_target": {
-      "desc": "Destruye 1 objetivo seleccionado por selector.",
-      "params_schema": {
-        "target": "string(enum selectors)"
-      }
-    },
-    "destroy_all_matching": {
-      "desc": "Destruye todas las cartas que cumplan filtros.",
-      "params_schema": {
-        "controller": "SELF|OPPONENT|BOTH",
-        "kind": "MONSTER|SPELL|TRAP",
-        "faceup": "bool?",
-        "level": "int?",
-        "race": "string?",
-        "attribute": "string?"
-      }
-    },
-    "destroy_all_others_monsters": {
-      "desc": "Destruye todos los monstruos excepto la fuente.",
-      "params_schema": {}
-    },
-    "inflict_effect_damage": {
-      "desc": "Inflige daño de efecto a un jugador.",
-      "params_schema": {
-        "amount": "int",
-        "target": "SELF|OPPONENT"
-      }
-    },
-    "inflict_effect_damage_scaled_by_race_on_field": {
-      "desc": "Daño de efecto escalado por cantidad de monstruos de una raza en el campo.",
-      "params_schema": {
-        "base": "int",
-        "race": "string",
-        "target": "SELF|OPPONENT"
-      }
-    },
-    "burn_scaled_by_opponent_field_card_count": {
-      "desc": "Daño escalado por cantidad de cartas en el campo del oponente.",
-      "params_schema": {
-        "amount_per": "int"
-      }
-    },
-    "banish_destroyer": {
-      "desc": "Banish al monstruo que destruyó a esta carta (si existe).",
-      "params_schema": {}
-    },
-    "apply_status_to_destroyer": {
-      "desc": "Aplica un estado al monstruo que destruyó a esta carta.",
-      "params_schema": {
-        "status": "string",
-        "duration_turns": "int"
-      }
-    },
-    "modify_destroyer_atk_multiplier_until_turn_end": {
-      "desc": "Modifica el ATK del destruidor con un multiplicador hasta fin de turno del controlador de la carta destruida.",
-      "params_schema": {
-        "multiplier": "float"
-      }
-    },
-    "modify_destroyer_stats_until_turn_end": {
-      "desc": "Modifica stats del destruidor hasta fin de turno.",
-      "params_schema": {
-        "atk_delta": "int?",
-        "def_delta": "int?"
-      }
-    },
-    "set_field_spell_by_name": {
-      "desc": "Activa un Field Spell por nombre (resolver por CardDB).",
-      "params_schema": {
-        "field_name": "string"
-      }
-    },
-    "set_random_trap_from_db": {
-      "desc": "Coloca una trampa aleatoria desde DB (no desde Deck).",
-      "params_schema": {
-        "owner": "SELF|OPPONENT"
-      }
-    },
-    "reveal_random_set_card_opponent": {
-      "desc": "Revela una carta colocada aleatoria del oponente (información para el jugador).",
-      "params_schema": {}
-    },
-    "destroy_random_opponent_spelltrap": {
-      "desc": "Destruye una Spell/Trap aleatoria del oponente, con preferencia por face-up si se pide.",
-      "params_schema": {
-        "kind": "SPELL|TRAP|ANY",
-        "prefer_faceup": "bool"
-      }
-    },
-    "summon_random_from_db": {
-      "desc": "Invoca un monstruo aleatorio desde DB con filtros. No interactúa con Deck.",
-      "params_schema": {
-        "controller": "SELF|OPPONENT",
-        "filters": "object",
-        "position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF",
-        "exclude_ids": "array?",
-        "prefer_highest_level": "bool?"
-      }
-    },
-    "summon_multiple_random_from_db": {
-      "desc": "Invoca múltiples monstruos aleatorios desde DB con filtros.",
-      "params_schema": {
-        "count": "int",
-        "controller": "SELF|OPPONENT",
-        "filters": "object",
-        "position": "string"
-      }
-    },
-    "activate_sacrifice_allies_of_race_to_summon_by_total_levels": {
-      "desc": "Tributa (envía al cementerio) aliados de una raza (y opcionalmente a sí mismo), suma niveles y luego invoca una carta aleatoria de una raza cuyo nivel sea igual a la suma (cap).",
-      "params_schema": {
-        "race": "string",
-        "include_self": "bool",
-        "level_cap": "int",
-        "summon_controller": "SELF|OPPONENT",
-        "summon_race": "string"
-      }
-    },
-    "activate_sacrifice_self_to_summon_random_tag_by_grave_count": {
-      "desc": "Envía esta carta al cementerio como costo y luego invoca un monstruo aleatorio con cierto tag cuyo nivel sea igual (o menor si no existe) a la cantidad de cartas en tu cementerio.",
-      "params_schema": {
-        "tag": "string",
-        "level_source": "SELF_GRAVE_COUNT",
-        "allow_lower_level_if_exact_missing": "bool",
-        "prefer_highest_level": "bool",
-        "cannot_summon_self": "bool"
-      }
-    },
-    "activate_burn_per_tag_you_control_once_per_turn": {
-      "desc": "Efecto activable 1 vez por turno: daño = cantidad de aliados con tag * amount_per.",
-      "params_schema": {
-        "tag": "string",
-        "amount_per": "int",
-        "target": "OPPONENT|SELF"
-      }
-    },
-    "burn_opponent_scaled_by_destroyed_monster_atk": {
-      "desc": "Al destruir por batalla, inflige daño de efecto igual a ATK del destruido * (num/den).",
-      "params_schema": {
-        "multiplier_num": "int",
-        "multiplier_den": "int"
-      }
-    },
-    "change_position_of_highest_atk_attacker_and_lock_while_source_faceup": {
-      "desc": "Cambia la posición del monstruo aliado de mayor ATK (que esté en ATK) y bloquea su cambio mientras la fuente permanezca.",
-      "params_schema": {
-        "controller": "SELF",
-        "new_position": "DEF|ATK",
-        "lock": "bool"
-      }
-    },
-    "conditional_keyword_while_you_control_race": {
-      "desc": "Otorga un keyword mientras controles al menos 1 monstruo de cierta raza.",
-      "params_schema": {
-        "race": "string",
-        "keyword": "string"
-      }
-    },
-    "burn_opponent_when_spell_activated": {
-      "desc": "Cada vez que se activa una Spell, inflige daño fijo al oponente.",
-      "params_schema": {
-        "amount": "int"
-      }
-    },
-    "extra_attacks_based_on_attached_equip_spells": {
-      "desc": "Extra ataques = cantidad de Equip Spells adjuntas.",
-      "params_schema": {}
-    },
-    "extra_attacks_based_on_race_you_control": {
-      "desc": "Extra ataques escalados por la cantidad de monstruos de una raza que controlas.",
-      "params_schema": {
-        "race": "string",
-        "base_extra": "int",
-        "per_count": "int"
-      }
-    },
-    "summon_token_with_stats_equal_to_battle_damage_then_destroy_at_your_next_turn_end": {
-      "desc": "Al infligir daño de batalla, invoca un token con ATK/DEF = daño. Se destruye al final de tu próximo turno.",
-      "params_schema": {
-        "race": "string",
-        "attribute": "string"
-      }
-    },
-    "change_all_other_monsters_battle_positions": {
-      "desc": "Cambia la posición de todos los demás monstruos (ej. toggle ATK/DEF).",
-      "params_schema": {
-        "mode": "TOGGLE_ATK_DEF"
-      }
-    },
-    "modify_self_stats": {
-      "desc": "Modifica stats de esta carta.",
-      "params_schema": {
-        "atk_delta": "int?",
-        "def_delta": "int?",
-        "duration": "INSTANT|PERMANENT_WHILE_FACEUP"
-      }
-    },
-    "replace_send_to_grave_with_banish_global": {
-      "desc": "Reemplazo global: cualquier carta que fuera a cementerio se va a banish.",
-      "params_schema": {}
-    },
-    "activate_coin_toss_destroy_opponent_highest_level_if_at_least_heads": {
-      "desc": "Efecto activable: lanza monedas; si >= min_heads, destruye objetivo por selector.",
-      "params_schema": {
-        "coins": "int",
-        "min_heads": "int",
-        "target": "string"
-      }
-    },
-    "banish_from_top_of_own_grave_to_gain_atk": {
-      "desc": "Banish hasta N cartas del tope del cementerio propio para ganar ATK por cada una.",
-      "params_schema": {
-        "max_cards": "int",
-        "atk_per": "int"
-      }
-    },
-    "schedule_self_to_defense_at_turn_end": {
-      "desc": "Programa que esta carta pase a DEF al final del turno.",
-      "params_schema": {}
-    },
-    "set_self_facedown_defense_at_turn_end": {
-      "desc": "Al final de tu turno, coloca esta carta boca abajo en DEF.",
-      "params_schema": {}
-    },
-    "conditional_keyword_while_field_active": {
-      "desc": "Otorga un keyword mientras un Field Spell específico esté activo.",
-      "params_schema": {
-        "field_name": "string",
-        "keyword": "string"
-      }
-    },
-    "self_atk_bonus_per_tag_on_field": {
-      "desc": "ATK bonus para esta carta por cantidad de monstruos con un tag en el campo.",
-      "params_schema": {
-        "tag": "string",
-        "atk_per": "int",
-        "controller": "SELF|OPPONENT|BOTH"
-      }
-    },
-    "self_stats_bonus_per_card_name_on_field": {
-      "desc": "ATK/DEF bonus por cantidad de copias de un nombre en el campo.",
-      "params_schema": {
-        "name": "string",
-        "atk_per": "int",
-        "def_per": "int"
-      }
-    },
-    "redirect_battle_damage_from_self_to_opponent": {
-      "desc": "El daño de batalla que recibirías en batallas con esta carta lo recibe el oponente.",
-      "params_schema": {}
-    },
-    "prevent_battle_destruction_once": {
-      "desc": "Previene la primera destrucción por batalla mientras permanezca en campo.",
-      "params_schema": {}
-    },
-    "grant_keyword_to_allies_by_attribute_until_turn_end": {
-      "desc": "Otorga una keyword a todos los monstruos aliados en campo con un atributo dado hasta fin de turno.",
-      "params_schema": {
-        "attribute": {
-          "type": "enum",
-          "values": [
-            "EARTH",
-            "WATER",
-            "FIRE",
-            "WIND",
-            "LIGHT",
+	"destroy_target": {
+	  "desc": "Destruye 1 objetivo seleccionado por selector.",
+	  "params_schema": {
+		"target": "string(enum selectors)"
+	  }
+	},
+	"destroy_all_matching": {
+	  "desc": "Destruye todas las cartas que cumplan filtros.",
+	  "params_schema": {
+		"controller": "SELF|OPPONENT|BOTH",
+		"kind": "MONSTER|SPELL|TRAP",
+		"faceup": "bool?",
+		"level": "int?",
+		"race": "string?",
+		"attribute": "string?"
+	  }
+	},
+	"destroy_all_others_monsters": {
+	  "desc": "Destruye todos los monstruos excepto la fuente.",
+	  "params_schema": {}
+	},
+	"inflict_effect_damage": {
+	  "desc": "Inflige daño de efecto a un jugador.",
+	  "params_schema": {
+		"amount": "int",
+		"target": "SELF|OPPONENT"
+	  }
+	},
+	"inflict_effect_damage_scaled_by_race_on_field": {
+	  "desc": "Daño de efecto escalado por cantidad de monstruos de una raza en el campo.",
+	  "params_schema": {
+		"base": "int",
+		"race": "string",
+		"target": "SELF|OPPONENT"
+	  }
+	},
+	"burn_scaled_by_opponent_field_card_count": {
+	  "desc": "Daño escalado por cantidad de cartas en el campo del oponente.",
+	  "params_schema": {
+		"amount_per": "int"
+	  }
+	},
+	"banish_destroyer": {
+	  "desc": "Banish al monstruo que destruyó a esta carta (si existe).",
+	  "params_schema": {}
+	},
+	"apply_status_to_destroyer": {
+	  "desc": "Aplica un estado al monstruo que destruyó a esta carta.",
+	  "params_schema": {
+		"status": "string",
+		"duration_turns": "int"
+	  }
+	},
+	"modify_destroyer_atk_multiplier_until_turn_end": {
+	  "desc": "Modifica el ATK del destruidor con un multiplicador hasta fin de turno del controlador de la carta destruida.",
+	  "params_schema": {
+		"multiplier": "float"
+	  }
+	},
+	"modify_destroyer_stats_until_turn_end": {
+	  "desc": "Modifica stats del destruidor hasta fin de turno.",
+	  "params_schema": {
+		"atk_delta": "int?",
+		"def_delta": "int?"
+	  }
+	},
+	"set_field_spell_by_name": {
+	  "desc": "Activa un Field Spell por nombre (resolver por CardDB).",
+	  "params_schema": {
+		"field_name": "string"
+	  }
+	},
+	"set_random_trap_from_db": {
+	  "desc": "Coloca una trampa aleatoria desde DB (no desde Deck).",
+	  "params_schema": {
+		"owner": "SELF|OPPONENT"
+	  }
+	},
+	"reveal_random_set_card_opponent": {
+	  "desc": "Revela una carta colocada aleatoria del oponente (información para el jugador).",
+	  "params_schema": {}
+	},
+	"destroy_random_opponent_spelltrap": {
+	  "desc": "Destruye una Spell/Trap aleatoria del oponente, con preferencia por face-up si se pide.",
+	  "params_schema": {
+		"kind": "SPELL|TRAP|ANY",
+		"prefer_faceup": "bool"
+	  }
+	},
+	"summon_random_from_db": {
+	  "desc": "Invoca un monstruo aleatorio desde DB con filtros. No interactúa con Deck.",
+	  "params_schema": {
+		"controller": "SELF|OPPONENT",
+		"filters": "object",
+		"position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF",
+		"exclude_ids": "array?",
+		"prefer_highest_level": "bool?"
+	  }
+	},
+	"summon_multiple_random_from_db": {
+	  "desc": "Invoca múltiples monstruos aleatorios desde DB con filtros.",
+	  "params_schema": {
+		"count": "int",
+		"controller": "SELF|OPPONENT",
+		"filters": "object",
+		"position": "string"
+	  }
+	},
+	"activate_sacrifice_allies_of_race_to_summon_by_total_levels": {
+	  "desc": "Tributa (envía al cementerio) aliados de una raza (y opcionalmente a sí mismo), suma niveles y luego invoca una carta aleatoria de una raza cuyo nivel sea igual a la suma (cap).",
+	  "params_schema": {
+		"race": "string",
+		"include_self": "bool",
+		"level_cap": "int",
+		"summon_controller": "SELF|OPPONENT",
+		"summon_race": "string"
+	  }
+	},
+	"activate_sacrifice_self_to_summon_random_tag_by_grave_count": {
+	  "desc": "Envía esta carta al cementerio como costo y luego invoca un monstruo aleatorio con cierto tag cuyo nivel sea igual (o menor si no existe) a la cantidad de cartas en tu cementerio.",
+	  "params_schema": {
+		"tag": "string",
+		"level_source": "SELF_GRAVE_COUNT",
+		"allow_lower_level_if_exact_missing": "bool",
+		"prefer_highest_level": "bool",
+		"cannot_summon_self": "bool"
+	  }
+	},
+	"activate_burn_per_tag_you_control_once_per_turn": {
+	  "desc": "Efecto activable 1 vez por turno: daño = cantidad de aliados con tag * amount_per.",
+	  "params_schema": {
+		"tag": "string",
+		"amount_per": "int",
+		"target": "OPPONENT|SELF"
+	  }
+	},
+	"burn_opponent_scaled_by_destroyed_monster_atk": {
+	  "desc": "Al destruir por batalla, inflige daño de efecto igual a ATK del destruido * (num/den).",
+	  "params_schema": {
+		"multiplier_num": "int",
+		"multiplier_den": "int"
+	  }
+	},
+	"change_position_of_highest_atk_attacker_and_lock_while_source_faceup": {
+	  "desc": "Cambia la posición del monstruo aliado de mayor ATK (que esté en ATK) y bloquea su cambio mientras la fuente permanezca.",
+	  "params_schema": {
+		"controller": "SELF",
+		"new_position": "DEF|ATK",
+		"lock": "bool"
+	  }
+	},
+	"conditional_keyword_while_you_control_race": {
+	  "desc": "Otorga un keyword mientras controles al menos 1 monstruo de cierta raza.",
+	  "params_schema": {
+		"race": "string",
+		"keyword": "string"
+	  }
+	},
+	"burn_opponent_when_spell_activated": {
+	  "desc": "Cada vez que se activa una Spell, inflige daño fijo al oponente.",
+	  "params_schema": {
+		"amount": "int"
+	  }
+	},
+	"extra_attacks_based_on_attached_equip_spells": {
+	  "desc": "Extra ataques = cantidad de Equip Spells adjuntas.",
+	  "params_schema": {}
+	},
+	"extra_attacks_based_on_race_you_control": {
+	  "desc": "Extra ataques escalados por la cantidad de monstruos de una raza que controlas.",
+	  "params_schema": {
+		"race": "string",
+		"base_extra": "int",
+		"per_count": "int"
+	  }
+	},
+	"summon_token_with_stats_equal_to_battle_damage_then_destroy_at_your_next_turn_end": {
+	  "desc": "Al infligir daño de batalla, invoca un token con ATK/DEF = daño. Se destruye al final de tu próximo turno.",
+	  "params_schema": {
+		"race": "string",
+		"attribute": "string"
+	  }
+	},
+	"change_all_other_monsters_battle_positions": {
+	  "desc": "Cambia la posición de todos los demás monstruos (ej. toggle ATK/DEF).",
+	  "params_schema": {
+		"mode": "TOGGLE_ATK_DEF"
+	  }
+	},
+	"modify_self_stats": {
+	  "desc": "Modifica stats de esta carta.",
+	  "params_schema": {
+		"atk_delta": "int?",
+		"def_delta": "int?",
+		"duration": "INSTANT|PERMANENT_WHILE_FACEUP"
+	  }
+	},
+	"replace_send_to_grave_with_banish_global": {
+	  "desc": "Reemplazo global: cualquier carta que fuera a cementerio se va a banish.",
+	  "params_schema": {}
+	},
+	"activate_coin_toss_destroy_opponent_highest_level_if_at_least_heads": {
+	  "desc": "Efecto activable: lanza monedas; si >= min_heads, destruye objetivo por selector.",
+	  "params_schema": {
+		"coins": "int",
+		"min_heads": "int",
+		"target": "string"
+	  }
+	},
+	"banish_from_top_of_own_grave_to_gain_atk": {
+	  "desc": "Banish hasta N cartas del tope del cementerio propio para ganar ATK por cada una.",
+	  "params_schema": {
+		"max_cards": "int",
+		"atk_per": "int"
+	  }
+	},
+	"schedule_self_to_defense_at_turn_end": {
+	  "desc": "Programa que esta carta pase a DEF al final del turno.",
+	  "params_schema": {}
+	},
+	"set_self_facedown_defense_at_turn_end": {
+	  "desc": "Al final de tu turno, coloca esta carta boca abajo en DEF.",
+	  "params_schema": {}
+	},
+	"conditional_keyword_while_field_active": {
+	  "desc": "Otorga un keyword mientras un Field Spell específico esté activo.",
+	  "params_schema": {
+		"field_name": "string",
+		"keyword": "string"
+	  }
+	},
+	"self_atk_bonus_per_tag_on_field": {
+	  "desc": "ATK bonus para esta carta por cantidad de monstruos con un tag en el campo.",
+	  "params_schema": {
+		"tag": "string",
+		"atk_per": "int",
+		"controller": "SELF|OPPONENT|BOTH"
+	  }
+	},
+	"self_stats_bonus_per_card_name_on_field": {
+	  "desc": "ATK/DEF bonus por cantidad de copias de un nombre en el campo.",
+	  "params_schema": {
+		"name": "string",
+		"atk_per": "int",
+		"def_per": "int"
+	  }
+	},
+	"redirect_battle_damage_from_self_to_opponent": {
+	  "desc": "El daño de batalla que recibirías en batallas con esta carta lo recibe el oponente.",
+	  "params_schema": {}
+	},
+	"prevent_battle_destruction_once": {
+	  "desc": "Previene la primera destrucción por batalla mientras permanezca en campo.",
+	  "params_schema": {}
+	},
+	"grant_keyword_to_summoned_monsters_while_source_faceup": {
+  "desc": "Mientras la fuente esté boca arriba, aplica keyword a monstruos que entren al campo y cumplan filtros.",
+  "params_schema": {
+	"affected_side": "OPPONENT|OWNER|BOTH",
+	"summon_triggers": ["ON_PLAY", "ON_SUMMON_BY_EFFECT"],
+	"filters": "object?",
+	"keyword": "string",
+	"duration": "UNTIL_LEAVE_FIELD|UNTIL_TURN_END|PERMANENT_WHILE_FACEUP"
+  }
+},
+	"grant_keyword_to_allies_by_attribute_until_turn_end": {
+	  "desc": "Otorga una keyword a todos los monstruos aliados en campo con un atributo dado hasta fin de turno.",
+	  "params_schema": {
+		"attribute": {
+		  "type": "enum",
+		  "values": [
+			"EARTH",
+			"WATER",
+			"FIRE",
+			"WIND",
+			"LIGHT",
             "DARK"
-          ]
-        },
-        "keyword": {
-          "type": "enum",
-          "values": [
-            "PIERCING",
-            "TAUNT",
-            "STEALTH",
-            "SLOW",
-            "PARALYZED",
-            "BAD_LUCK",
-            "MULTI_ATTACK_2",
-            "MULTI_ATTACK_ALL",
-            "DIRECT_ATTACK",
-            "NAME_COUNTS_AS_HARPIE_LADY",
+		  ]
+		},
+		"keyword": {
+		  "type": "enum",
+		  "values": [
+			"PIERCING",
+			"TAUNT",
+			"STEALTH",
+			"SLOW",
+			"PARALYZED",
+			"BAD_LUCK",
+			"MULTI_ATTACK_2",
+			"MULTI_ATTACK_ALL",
+			"DIRECT_ATTACK",
+			"NAME_COUNTS_AS_HARPIE_LADY",
             "NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF"
-          ]
-        },
-        "include_future_summons": {
-          "type": "bool",
-          "default": false
-        },
-        "limit_per_instance": {
-          "type": "int",
-          "min": 1,
-          "max": 1,
-          "default": 1
-        }
-      },
-      "notes": [
-        "Por defecto solo afecta monstruos aliados ya presentes en campo al resolverse el ON_ACTIVATE.",
-        "Si include_future_summons=true, aplicar también a monstruos que entren luego en el mismo turno (se implementa como un buff de turno ligado al controlador).",
+		  ]
+		},
+		"include_future_summons": {
+		  "type": "bool",
+		  "default": false
+		},
+		"limit_per_instance": {
+		  "type": "int",
+		  "min": 1,
+		  "max": 1,
+		  "default": 1
+		}
+	  },
+	  "notes": [
+		"Por defecto solo afecta monstruos aliados ya presentes en campo al resolverse el ON_ACTIVATE.",
+		"Si include_future_summons=true, aplicar también a monstruos que entren luego en el mismo turno (se implementa como un buff de turno ligado al controlador).",
         "La keyword expira en TURN_END del controlador."
-      ]
-    }
+	  ]
+	},
+	"summon_token_copy_source_stats_on_send_to_grave_by_effect": {
+	  "desc": "Al ser enviada al cementerio por efecto, invoca un Token copiando las estadísticas conocidas de la fuente antes de salir del campo.",
+	  "params_schema": {
+		"token_name": "string",
+		"token_art_id": "string|null",
+		"copy_from": "SOURCE_LAST_KNOWN",
+		"include_keywords": "bool",
+		"include_effects": "bool",
+		"position": "FACEUP_ATK|FACEUP_DEF",
+		"controller": "SELF|OPPONENT",
+		"destroy_timing": "NONE|AT_TURN_END|AT_NEXT_TURN_END"
+	  },
+	  "notes": [
+		"Requiere que el motor capture 'last known information' (LKI) de la carta al abandonar el campo.",
+        "Por defecto, token_art_id=null implica reutilizar el art id de la fuente."
+	  ]
+	},
+	"summon_token_on_sent_to_grave": {
+  "desc": "Invoca un token cuando esta carta es enviada al cementerio bajo una causa específica.",
+  "params_schema": {
+	"cause_filter": "ANY|DESTROY|DESTROY_BATTLE|DESTROY_EFFECT|TRIBUTE|EFFECT_SEND",
+	"controller": "SELF|OPPONENT",
+	"token": {
+	  "id": "string?",
+	  "name": "string",
+	  "attribute": "string?",
+	  "race": "string?",
+	  "level": "int?",
+	  "atk_mode": "FIXED|SOURCE_LAST_KNOWN",
+	  "def_mode": "FIXED|SOURCE_LAST_KNOWN",
+	  "atk": "int?",
+	  "def": "int?",
+	  "keywords": "array?",
+	  "tags": "array?",
+	  "copy_art_from_source": "bool",
+	  "art_id": "string?"
+	},
+	"position": "FACEUP_ATK|FACEUP_DEF"
+  }
+},
+	"guardian_star_bonus_multiplier": {
+	  "desc": "Modifica el bonus/malus de Guardian Star de esta carta multiplicándolo por un factor.",
+		"params_schema": {
+	"atk_multiplier": "float",
+	"def_multiplier": "float"
+  },
+	  "notes": [
+		"Si el bonus base es 500, multiplier=2 produce 1000.",
+        "No altera el cálculo de ventaja/desventaja, solo la magnitud."
+	  ]
+	},
+	"reveal_set_cards": {
+	  "desc": "Revela cartas colocadas (set) según un selector; luego las vuelve a dejar colocadas (no cambia estado).",
+		"params_schema": {
+	"target_selector": "selector",
+	"count": "int|null",
+	"rehide_after_reveal": "bool"
+  },
+	  "notes": [
+		"En UI: mostrar temporalmente y luego restaurar visual de facedown.",
+        "No habilita interacción adicional salvo información."
+	  ]
+	},
+	"schedule_change_battle_position_on_battle_end": {
+  "desc": "Programa cambio de posición de esta carta al final de la batalla si se cumple condición.",
+  "params_schema": {
+	"when": "WHEN_ATTACKED|WHEN_ATTACKS|ALWAYS_THIS_BATTLE",
+	"to": "TOGGLE|ATTACK|DEFENSE"
+  }
+},
+	"change_self_position_when_attacked_end_of_battle": {
+	  "desc": "Si esta carta es objetivo de un ataque, cambia su posición al final de esa batalla.",
+	  "params_schema": {
+		"new_position": "ATTACK|DEFENSE|TOGGLE",
+		"only_if_faceup": "bool"
+	  },
+	  "notes": [
+        "Debe engancharse a ON_ATTACK_DECLARATION y/o al evento de 'battle resolved' para programar el cambio."
+	  ]
+	},
+	"apply_keyword_to_new_summons_while_source_faceup": {
+	  "desc": "Mientras la fuente permanezca boca arriba, aplica una keyword a los monstruos que el lado objetivo juegue/implante.",
+	  "params_schema": {
+		"target_side": "OPPONENT|OWNER|BOTH",
+		"keyword": "keyword(enum keywords)",
+		"applies_to": "MONSTER",
+		"summon_triggers": "array(enum triggers)",
+		"duration": "WHILE_SOURCE_FACE_UP"
+	  },
+	  "notes": [
+		"Implementación típica: registrar un 'aura watcher' al entrar al campo; al salir, desregistrar.",
+        "Solo aplica a invocaciones posteriores; no retroactivo."
+	  ]
+	},
+"summon_random_from_db_by_source_stat_cap": {
+  "desc": "Invoca un monstruo aleatorio desde DB usando filtros y un límite derivado de la fuente.",
+  "params_schema": {
+	"controller": "SELF|OPPONENT",
+	"filters": {
+	  "tag": "string?",
+	  "attribute": "string?",
+	  "race": "string?"
+	},
+	"max_level_from_source": "CURRENT|LAST_KNOWN",
+	"position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF",
+	"prefer_highest_level": "bool?"
+  }
+}
   },
   "selectors": {
-    "Side": {
-      "desc": "Lado relativo al controlador del efecto.",
-      "enum": [
-        "OWNER",
-        "OPPONENT",
+	"Side": {
+	  "desc": "Lado relativo al controlador del efecto.",
+	  "enum": [
+		"OWNER",
+		"OPPONENT",
         "BOTH"
-      ]
-    },
-    "Zone": {
-      "desc": "Zona lógica para seleccionar objetivos.",
-      "enum": [
-        "MONSTER",
-        "SPELL_TRAP",
-        "HAND",
-        "GRAVE",
-        "BANISH",
+	  ]
+	},
+	"Zone": {
+	  "desc": "Zona lógica para seleccionar objetivos.",
+	  "enum": [
+		"MONSTER",
+		"SPELL_TRAP",
+		"HAND",
+		"GRAVE",
+		"BANISH",
         "FIELD"
-      ]
-    },
-    "Pick": {
-      "desc": "Estrategia de selección.",
-      "enum": [
-        "RANDOM",
-        "HIGHEST_ATK",
-        "LOWEST_ATK",
-        "HIGHEST_DEF",
-        "LOWEST_DEF",
-        "HIGHEST_LEVEL",
-        "LOWEST_LEVEL",
-        "FIRST_SET",
-        "LAST_SET",
+	  ]
+	},
+	"Pick": {
+	  "desc": "Estrategia de selección.",
+	  "enum": [
+		"RANDOM",
+		"HIGHEST_ATK",
+		"LOWEST_ATK",
+		"HIGHEST_DEF",
+		"LOWEST_DEF",
+		"HIGHEST_LEVEL",
+		"LOWEST_LEVEL",
+		"FIRST_SET",
+		"LAST_SET",
         "SELF"
-      ]
-    },
-    "Face": {
-      "desc": "Estado boca arriba/abajo.",
-      "enum": [
-        "ANY",
-        "FACE_UP",
+	  ]
+	},
+	"Face": {
+	  "desc": "Estado boca arriba/abajo.",
+	  "enum": [
+		"ANY",
+		"FACE_UP",
         "FACE_DOWN"
-      ]
-    },
-    "Position": {
-      "desc": "Posición de batalla (solo MONSTER).",
-      "enum": [
-        "ANY",
-        "ATTACK",
+	  ]
+	},
+	"Position": {
+	  "desc": "Posición de batalla (solo MONSTER).",
+	  "enum": [
+		"ANY",
+		"ATTACK",
         "DEFENSE"
-      ]
-    },
-    "CardKind": {
-      "enum": [
-        "MONSTER",
-        "SPELL",
+	  ]
+	},
+	"CardKind": {
+	  "enum": [
+		"MONSTER",
+		"SPELL",
         "TRAP"
-      ]
-    },
-    "Duration": {
-      "enum": [
-        "UNTIL_TURN_END",
-        "UNTIL_BATTLE_END",
-        "WHILE_SOURCE_FACE_UP",
+	  ]
+	},
+	"Duration": {
+	  "enum": [
+		"UNTIL_TURN_END",
+		"UNTIL_BATTLE_END",
+		"WHILE_SOURCE_FACE_UP",
         "PERMANENT"
-      ]
-    }
+	  ]
+	}
   },
   "selector_schema": {
-    "desc": "Estructura normalizada para seleccionar cartas.",
-    "shape": {
-      "side": {
-        "$ref": "#/selectors/Side"
-      },
-      "zone": {
-        "$ref": "#/selectors/Zone"
-      },
-      "pick": {
-        "$ref": "#/selectors/Pick"
-      },
-      "filters": {
-        "face": {
-          "$ref": "#/selectors/Face"
-        },
-        "position": {
-          "$ref": "#/selectors/Position"
-        },
-        "attribute": {
-          "type": "enum",
-          "values": [
-            "EARTH",
-            "WATER",
-            "FIRE",
-            "WIND",
-            "LIGHT",
+	"desc": "Estructura normalizada para seleccionar cartas.",
+	"shape": {
+	  "side": {
+		"$ref": "#/selectors/Side"
+	  },
+	  "zone": {
+		"$ref": "#/selectors/Zone"
+	  },
+	  "pick": {
+		"$ref": "#/selectors/Pick"
+	  },
+	  "filters": {
+		"face": {
+		  "$ref": "#/selectors/Face"
+		},
+		"position": {
+		  "$ref": "#/selectors/Position"
+		},
+		"attribute": {
+		  "type": "enum",
+		  "values": [
+			"EARTH",
+			"WATER",
+			"FIRE",
+			"WIND",
+			"LIGHT",
             "DARK"
-          ],
-          "nullable": true
-        },
-        "race": {
-          "type": "string",
-          "nullable": true
-        },
-        "tag": {
-          "type": "string",
-          "nullable": true
-        },
-        "min_level": {
-          "type": "int",
-          "nullable": true
-        },
-        "max_level": {
-          "type": "int",
-          "nullable": true
-        },
-        "min_atk": {
-          "type": "int",
-          "nullable": true
-        },
-        "max_atk": {
-          "type": "int",
-          "nullable": true
-        },
-        "has_keyword": {
-          "type": "string",
-          "nullable": true
-        }
-      }
-    },
-    "defaults": {
-      "filters": {
-        "face": "ANY",
-        "position": "ANY"
-      }
-    }
+		  ],
+		  "nullable": true
+		},
+		"race": {
+		  "type": "string",
+		  "nullable": true
+		},
+		"tag": {
+		  "type": "string",
+		  "nullable": true
+		},
+		"min_level": {
+		  "type": "int",
+		  "nullable": true
+		},
+		"max_level": {
+		  "type": "int",
+		  "nullable": true
+		},
+		"min_atk": {
+		  "type": "int",
+		  "nullable": true
+		},
+		"max_atk": {
+		  "type": "int",
+		  "nullable": true
+		},
+		"has_keyword": {
+		  "type": "string",
+		  "nullable": true
+		}
+	  },
+	  "all": {
+		"type": "bool",
+		"nullable": true
+	  },
+	  "self": {
+		"type": "bool",
+		"nullable": true
+	  }
+	},
+	"defaults": {
+	  "filters": {
+		"face": "ANY",
+		"position": "ANY"
+	  }
+	}
   },
   "selector_presets": {
-    "RANDOM_MONSTER": {
-      "zone": "MONSTER",
-      "pick": "RANDOM"
-    },
-    "HIGHEST_ATK_MONSTER": {
-      "zone": "MONSTER",
-      "pick": "HIGHEST_ATK"
-    },
-    "HIGHEST_DEF_MONSTER": {
-      "zone": "MONSTER",
-      "pick": "HIGHEST_DEF"
-    },
-    "HIGHEST_LEVEL_MONSTER": {
-      "zone": "MONSTER",
-      "pick": "HIGHEST_LEVEL"
-    },
-    "DESTROY_ALL_MONSTERS": {
-      "zone": "MONSTER",
-      "pick": "RANDOM",
-      "filters": {
-        "face": "ANY"
-      },
-      "all": true
-    },
-    "ALL_FACEUP_MONSTERS": {
-      "zone": "MONSTER",
-      "pick": "RANDOM",
-      "filters": {
-        "face": "FACE_UP"
-      },
-      "all": true
-    },
-    "RANDOM_FACEDOWN_MONSTER": {
-      "zone": "MONSTER",
-      "pick": "RANDOM",
-      "filters": {
-        "face": "FACE_DOWN"
-      }
-    },
-    "RANDOM_DEFENSE_MONSTER": {
-      "zone": "MONSTER",
-      "pick": "RANDOM",
-      "filters": {
-        "position": "DEFENSE"
-      }
-    },
-    "RANDOM_SPELL": {
-      "zone": "SPELL_TRAP",
-      "pick": "RANDOM",
-      "filters": {
-        "face": "FACE_UP"
-      }
-    },
-    "RANDOM_TRAP": {
-      "zone": "SPELL_TRAP",
-      "pick": "RANDOM",
-      "filters": {
-        "face": "ANY"
-      }
-    },
-    "RANDOM_SPELL_TRAP": {
-      "zone": "SPELL_TRAP",
-      "pick": "RANDOM",
-      "filters": {
-        "face": "ANY"
-      }
-    },
-    "SELF": {
-      "zone": "MONSTER",
-      "pick": "RANDOM",
-      "self": true
-    }
+	"RANDOM_MONSTER": {
+	  "zone": "MONSTER",
+	  "pick": "RANDOM"
+	},
+	"HIGHEST_ATK_MONSTER": {
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_ATK"
+	},
+	"HIGHEST_DEF_MONSTER": {
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_DEF"
+	},
+	"HIGHEST_LEVEL_MONSTER": {
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_LEVEL"
+	},
+	"DESTROY_ALL_MONSTERS": {
+	  "zone": "MONSTER",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "ANY"
+	  },
+	  "all": true
+	},
+	"ALL_FACEUP_MONSTERS": {
+	  "zone": "MONSTER",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "FACE_UP"
+	  },
+	  "all": true
+	},
+	"RANDOM_FACEDOWN_MONSTER": {
+	  "zone": "MONSTER",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "FACE_DOWN"
+	  }
+	},
+	"RANDOM_DEFENSE_MONSTER": {
+	  "zone": "MONSTER",
+	  "pick": "RANDOM",
+	  "filters": {
+		"position": "DEFENSE"
+	  }
+	},
+	"RANDOM_SPELL": {
+	  "zone": "SPELL_TRAP",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "FACE_UP"
+	  }
+	},
+	"RANDOM_TRAP": {
+	  "zone": "SPELL_TRAP",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "ANY"
+	  }
+	},
+	"RANDOM_SPELL_TRAP": {
+	  "zone": "SPELL_TRAP",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "ANY"
+	  }
+	},
+	"SELF": {
+	  "zone": "MONSTER",
+	  "pick": "RANDOM",
+	  "self": true
+	},
+	"RANDOM_OPPONENT_MONSTER": {
+	  "side": "OPPONENT",
+	  "zone": "MONSTER",
+	  "pick": "RANDOM"
+	},
+	"HIGHEST_ATK_OPPONENT_MONSTER": {
+	  "side": "OPPONENT",
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_ATK"
+	},
+	"HIGHEST_DEF_OPPONENT_MONSTER": {
+	  "side": "OPPONENT",
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_DEF"
+	},
+	"HIGHEST_LEVEL_OPPONENT_MONSTER": {
+	  "side": "OPPONENT",
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_LEVEL"
+	},
+	"RANDOM_OPPONENT_SPELL": {
+	  "side": "OPPONENT",
+	  "zone": "SPELL_TRAP",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "FACE_UP"
+	  }
+	},
+	"RANDOM_OPPONENT_TRAP": {
+	  "side": "OPPONENT",
+	  "zone": "SPELL_TRAP",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "ANY"
+	  }
+	},
+	"RANDOM_OPPONENT_SPELL_TRAP": {
+	  "side": "OPPONENT",
+	  "zone": "SPELL_TRAP",
+	  "pick": "RANDOM",
+	  "filters": {
+		"face": "ANY"
+	  }
+	},
+	"RANDOM_OWNER_MONSTER": {
+	  "side": "OWNER",
+	  "zone": "MONSTER",
+	  "pick": "RANDOM"
+	},
+	"HIGHEST_ATK_OWNER_MONSTER": {
+	  "side": "OWNER",
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_ATK"
+	},
+	"HIGHEST_DEF_OWNER_MONSTER": {
+	  "side": "OWNER",
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_DEF"
+	},
+	"HIGHEST_LEVEL_OWNER_MONSTER": {
+	  "side": "OWNER",
+	  "zone": "MONSTER",
+	  "pick": "HIGHEST_LEVEL"
+	}
   }
 }

@@ -1,782 +1,419 @@
+
 extends Node
 
-const BATTLE_POSS_OFFSET = 25
-const CARD_MOVE_SPEED = 0.2
-const MAX_HAND_SIZE = 5
-const STARTING_HP = 8000
+const MAX_HAND_SIZE := 5
+const STARTING_HP := 8000
 
 signal duel_over(result: String)
-
-var duel_finished = false
-var battle_timer
-var empty_monster_card_slots = []
-var opponent_cards_on_battlefield = []
-var player_cards_on_battlefield = []
-var player_cards_that_attacked_this_turn = []
-var player_graveyard = []
-var opponent_graveyard = []
-var player_hp
-var opponent_hp
-var spell_targeting := false
-var pending_spell = null
-var pending_effects = []
-var pending_effect: Array = []
-var pending_caster := ""
-var pending_required_targets := 0
-var pending_targets: Array = []
-var suppress_on_attack = false
-var multi_mode = {}
-var multi_remaining = {}
-var multi_already_attacked = {}
-var is_opponent_turn = false
-
 signal attack_declared(attacker, defender, attacker_owner)
-signal monster_played(monster, owner)
-signal spell_activated(spell, owner)
-signal trap_activated(trap, owner)
 signal turn_started(turn_owner)
 signal turn_ended(turn_owner)
 
+var duel_finished := false
+var is_opponent_turn := false
+
+var player_cards_on_battlefield: Array = []
+var opponent_cards_on_battlefield: Array = []
+var player_graveyard: Array = []
+var opponent_graveyard: Array = []
+var player_cards_that_attacked_this_turn: Array = []
+
+var player_hp := STARTING_HP
+var opponent_hp := STARTING_HP
+
+var _pending_position_changes_end_of_battle: Array = []
+var _last_known_info: Dictionary = {}
+
 func _ready() -> void:
 	add_to_group("battle_manager")
-	battle_timer = $"../BattleTimer"
-	battle_timer.one_shot = true
-	battle_timer.wait_time = 0.5
+	_sync_hp_labels()
+	var end_btn := get_node_or_null("../EndTurnButton")
+	if end_btn and not end_btn.is_connected("pressed", Callable(self, "_on_end_turn_button_pressed")):
+		end_btn.pressed.connect(_on_end_turn_button_pressed)
+	start_turn("Player")
 
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot")
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot2")
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot3")
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot4")
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot5")
-	
-	player_hp = STARTING_HP
-	$"../PlayerHP".text = str(player_hp)
-	opponent_hp = STARTING_HP
-	$"../OpponentHP".text = str(opponent_hp)
-	
-	# Verificar conexión de señales
-	print(">>> BATTLE_MANAGER: Conectando señales...")
-	print(">>> attack_declared conectado: ", attack_declared.get_connections().size(), " conexiones")
-	print(">>> monster_played conectado: ", monster_played.get_connections().size(), " conexiones")
-	print(">>> spell_activated conectado: ", spell_activated.get_connections().size(), " conexiones")
-	print(">>> trap_activated conectado: ", trap_activated.get_connections().size(), " conexiones")
-	await get_tree().create_timer(5.0).timeout
-	_test_trap_system()
-
-func _test_trap_system():
-	print("\n=== TEST DEL SISTEMA DE TRAMPAS ===")
-	print(">>> Emitiendo señal de prueba...")
-	
-	# Crear un contexto de prueba real
-	if opponent_cards_on_battlefield.size() > 0:
-		var test_attacker = opponent_cards_on_battlefield[0]
-		emit_signal("attack_declared", test_attacker, null, "Opponent")
-	else:
-		print(">>> No hay monstruos del oponente para probar")
-
-func _clear_multi_for(card):
-	multi_mode.erase(card)
-	multi_remaining.erase(card)
-	multi_already_attacked.erase(card)
-
-func _cleanup_multi_garbage():
-	for k in multi_mode.keys():
-		if not is_instance_valid(k) or (k not in player_cards_on_battlefield and k not in opponent_cards_on_battlefield):
-			_clear_multi_for(k)
-
-func _on_end_turn_button_pressed() -> void:
-	for k in multi_mode.keys():
-		if is_instance_valid(k) and (k in player_cards_on_battlefield):
-			_clear_multi_for(k)
-	_cleanup_multi_garbage()
-	is_opponent_turn = true
-	$"../CardManager".unselect_selected_monster()
-	$"../FusionManager".reset_turn()
-	player_cards_that_attacked_this_turn = []
-	$"../CardManager".reset_played_cards()
-	opponent_turn()
-
-func opponent_turn():
-	if duel_finished: return
-	$"../EndTurnButton".disabled = true
-	$"../EndTurnButton".visible = false
-	
-	await yield_to_refill_opponent_hand()
-	await action_waiter()
-	var opponent_ia = $"../OpponentIA"
-	if opponent_ia:
-		await opponent_ia.make_turn_decisions()
-		await action_waiter()
-	
-	await end_opponent_turn()
-
-func can_attack_directly(attacker_card):
-	if not is_instance_valid(attacker_card):
-		return
-	if attacker_card.has_meta("only_direct_attack") and attacker_card.get_meta("only_direct_attack"):
-		return true
-	if attacker_card.has_meta("can_direct_attack") and attacker_card.get_meta("can_direct_attack"):
-		return true
-			
-	var defenders = _live_defenders_for("Player" if _owner_of(attacker_card) == "Opponent" else "Opponent")
-	return defenders.size() == 0
-
-func trigger_on_play_effects(card, who: String) -> void:
-	if not is_instance_valid(card) or card.effects == null:
-		return
-		
-	for effect in card.effects:
-		if effect is Dictionary and effect.get("type") == "on_play":
-			await $"../Effect_Manager".execute_effect(effect, card, who, {"card": card})
-
-func attack(atk_card, defending, attacker):
-	if(atk_card.card_type != "Monster"):
-		return
-	if duel_finished: return
-	if not is_instance_valid(atk_card):
-		return
-	print(">>> BATTLE_MANAGER: Emitiendo attack_declared")
-	print(">>>   Atacante: ", atk_card.card_name)
-	print(">>>   Defensor: ", defending.card_name if defending else "DIRECT_ATTACK")
-	print(">>>   Owner atacante: ", attacker)
-	
-	emit_signal("attack_declared", atk_card, defending, attacker)
-	
-	if atk_card.has_meta("only_direct_attack") and atk_card.get_meta("only_direct_attack"):
-		if is_instance_valid(defending):
-			return
-		else:
-			await direct_attack(atk_card, attacker)
-			return
-	
-	if not is_instance_valid(defending):
-		if attacker == "Opponent":
-			var live_defenders = _live_defenders_for("Opponent")
-			if live_defenders.size() == 0:
-				await direct_attack(atk_card, "Opponent")
-		else:
-			$"../InputManager".inputs_disabled = false
-			enable_end_turn_button(true)
-		return
-
-	reveal_card(atk_card)
-	reveal_card(defending)
-
-	if attacker == "Player":
-		$"../InputManager".inputs_disabled = true
-		enable_end_turn_button(false)
-		$"../CardManager".selected_monster = null
-
-	await _trigger_on_attack_effects(atk_card, attacker, {
-		"phase": "declare",
-		"attacker": atk_card,
-		"defender": defending
-	})
-
-	if not is_instance_valid(atk_card):
-		if attacker == "Player":
-			$"../InputManager".inputs_disabled = false
-			enable_end_turn_button(true)
-		return
-	if not is_instance_valid(defending):
-		if attacker == "Opponent":
-			var live_defenders2 = _live_defenders_for("Opponent")
-			if live_defenders2.size() == 0:
-				await direct_attack(atk_card, "Opponent")
-		else:
-			$"../InputManager".inputs_disabled = false
-			enable_end_turn_button(true)
-		return
+func start_turn(turn_owner: String) -> void:
 	if duel_finished:
 		return
+	is_opponent_turn = (turn_owner == "Opponent")
+	if turn_owner == "Player":
+		player_cards_that_attacked_this_turn.clear()
+	_emit_duel_event("TURN_START", {"turn_owner": turn_owner, "battle_manager": self})
+	emit_signal("turn_started", turn_owner)
 
-	var gsm = $"../GuardianStarManager"
-	var atk_star = (atk_card.current_guardian_star() if atk_card.has_method("current_guardian_star") else "")
-	var def_star = (defending.current_guardian_star() if defending.has_method("current_guardian_star") else "")
-	var gs_bonus = (gsm.compute_bonuses(atk_star, def_star) if gsm else {
-		"attacker_atk":0, "attacker_def":0, "defender_atk":0, "defender_def":0
-	})
-	
-	if gs_bonus.attacker_atk > 0 or gs_bonus.attacker_def > 0:
-		if is_instance_valid(atk_card) and atk_card.has_method("play_guardian_star_bonus_animation"):
-			await atk_card.play_guardian_star_bonus_animation(atk_star)
+func end_turn(turn_owner: String) -> void:
+	if duel_finished:
+		return
+	_emit_duel_event("TURN_END", {"turn_owner": turn_owner, "battle_manager": self})
+	emit_signal("turn_ended", turn_owner)
 
-	if gs_bonus.defender_atk > 0 or gs_bonus.defender_def > 0:
-		if is_instance_valid(defending) and defending.has_method("play_guardian_star_bonus_animation"):
-			await defending.play_guardian_star_bonus_animation(def_star)
+func _on_end_turn_button_pressed() -> void:
+	if duel_finished:
+		return
+	end_turn("Player")
+	opponent_turn()
 
-	await action_waiter()
+func opponent_turn() -> void:
+	if duel_finished:
+		return
+	start_turn("Opponent")
+	await get_tree().process_frame
+	end_opponent_turn()
 
-	var temp_atk_atk = atk_card.Atk + int(gs_bonus.attacker_atk)
-	var temp_def_atk = defending.Atk + int(gs_bonus.defender_atk)
-	var temp_def_def = defending.Def + int(gs_bonus.defender_def)
+func end_opponent_turn() -> void:
+	end_turn("Opponent")
+	start_turn("Player")
+	_enable_player_input(true)
 
-	atk_card.z_index = 5
-	var target_pos: Vector2 = _anchored_target_position(atk_card, defending, BATTLE_POSS_OFFSET)
-	var t := get_tree().create_tween()
-	t.tween_property(atk_card, "global_position", target_pos, CARD_MOVE_SPEED)
-	await action_waiter()
+func attack(attacker_card, defender_card, attacker_owner: String) -> void:
+	if duel_finished or not is_instance_valid(attacker_card):
+		return
+	if _get_card_kind(attacker_card) != "MONSTER":
+		return
 
-	if defending.in_defense:
-		await _handle_defense_attack(atk_card, defending, attacker, temp_atk_atk, temp_def_def)
+	_reveal_if_needed(attacker_card)
+	if is_instance_valid(defender_card):
+		_reveal_if_needed(defender_card)
+
+	var battle_ctx := {
+		"battle_manager": self,
+		"source": attacker_card,
+		"attacker": attacker_card,
+		"defender": defender_card,
+		"attacker_owner": attacker_owner,
+		"defender_owner": _owner_of(defender_card),
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+	}
+	emit_signal("attack_declared", attacker_card, defender_card, attacker_owner)
+	_emit_duel_event("ON_ATTACK_DECLARATION", battle_ctx)
+
+	if not is_instance_valid(defender_card):
+		_resolve_direct_attack(attacker_card, attacker_owner)
+		_resolve_scheduled_end_of_battle_changes()
+		return
+
+	var atk_value := _get_current_atk(attacker_card)
+	var def_is_defense := _is_in_defense(defender_card)
+	var def_atk_value := _get_current_atk(defender_card)
+	var def_def_value := _get_current_def(defender_card)
+
+	var destroyed: Array = []
+
+	if def_is_defense:
+		if atk_value > def_def_value:
+			destroyed.append({"card": defender_card, "owner": _owner_of(defender_card), "cause": "DESTROY_BATTLE"})
+			if _has_keyword(attacker_card, "PIERCING"):
+				_inflict_battle_damage(_opponent_of(attacker_owner), atk_value - def_def_value, attacker_card, defender_card)
+		elif atk_value < def_def_value:
+			_inflict_battle_damage(attacker_owner, def_def_value - atk_value, defender_card, attacker_card)
 	else:
-		await _handle_attack_attack(atk_card, defending, attacker, temp_atk_atk, temp_def_atk)
-
-func _trigger_on_attack_effects(card, who: String, ctx: Dictionary) -> void:
-	if not card.get("effects"):
-		return
-	
-	for effect_data in card.effects:
-		if effect_data.get("type") == "on_attack":
-			await $"../Effect_Manager".execute_effect(effect_data, card, who, ctx)
-
-func _place_card_in_slot(card: Node2D, slot: Node2D) -> void:
-	card.card_slot_card_is_in = slot
-	slot.card_in_slot = true
-	
-	var should_reveal = false
-	
-	# Cartas de trampa siempre boca abajo
-	if card.attribute == "trap":
-		card.set_facedown(true)
-		should_reveal = false
-		# IMPORTANTE: Activar efectos de trampa inmediatamente al colocarla
-		if card.has_method("activate_trap_effects"):
-			print(">>> Colocando trampa - activando efectos: ", card.card_name)
-			card.activate_trap_effects()
-	
-	if card.card_type == "Monster":
-		print(">>> BATTLE_MANAGER: Emitiendo monster_played - ", card.card_name, " - Owner: ", card.card_owner)
-		emit_signal("monster_played", card, card.card_owner)
-	elif card.attribute == "spell":
-		print(">>> BATTLE_MANAGER: Emitiendo spell_activated - ", card.card_name, " - Owner: ", card.card_owner)
-		emit_signal("spell_activated", card, card.card_owner)
-	elif card.attribute == "trap":
-		print(">>> BATTLE_MANAGER: Emitiendo trap_activated - ", card.card_name, " - Owner: ", card.card_owner)
-		emit_signal("trap_activated", card, card.card_owner)
-	# Cartas de hechizo: boca abajo a menos que tengan efecto inmediato
-	elif card.attribute == "spell":
-		if _has_immediate_effect(card):
-			card.set_facedown(false)
-			should_reveal = true
+		if atk_value > def_atk_value:
+			_inflict_battle_damage(_opponent_of(attacker_owner), atk_value - def_atk_value, attacker_card, defender_card)
+			destroyed.append({"card": defender_card, "owner": _owner_of(defender_card), "cause": "DESTROY_BATTLE"})
+		elif atk_value < def_atk_value:
+			_inflict_battle_damage(attacker_owner, def_atk_value - atk_value, defender_card, attacker_card)
+			destroyed.append({"card": attacker_card, "owner": attacker_owner, "cause": "DESTROY_BATTLE"})
 		else:
-			card.set_facedown(true)
-			should_reveal = false
-	# Monstruos: boca abajo a menos que tengan efecto inmediato o sean fusión/ritual
-	elif card.card_type == "Monster":
-		if card.fusion_result or _has_immediate_effect(card):
-			card.set_facedown(false)
-			should_reveal = true
-		else:
-			card.set_facedown(true)
-			should_reveal = false
-	
-	card.set_show_back_only(false)
-	card.scale = Vector2($"../CardManager".FIELD_SCALE, $"../CardManager".FIELD_SCALE)
-	$"../CardManager"._snap_card_to_slot_center(card, slot)
-	card.z_index = -4
-	
-	# EMITIR SEÑAL para trampas - después de colocar
-	if card.card_type == "Monster":
-		print(">>> BATTLE_MANAGER: Emitiendo monster_played - ", card.card_name, " - Owner: ", card.card_owner)
-		emit_signal("monster_played", card, card.card_owner)
-	elif card.attribute == "spell":
-		print(">>> BATTLE_MANAGER: Emitiendo spell_activated - ", card.card_name, " - Owner: ", card.card_owner)
-		emit_signal("spell_activated", card, card.card_owner)
-	elif card.attribute == "trap":
-		print(">>> BATTLE_MANAGER: Emitiendo trap_activated - ", card.card_name, " - Owner: ", card.card_owner)
-		emit_signal("trap_activated", card, card.card_owner)
-	
-	# Si la carta se revela, activar efectos on_play inmediatos
-	if should_reveal:
-		reveal_card(card)
-		# Activar efectos on_play si los tiene
-		_trigger_on_play_effects(card, card.card_owner)
+			destroyed.append({"card": attacker_card, "owner": attacker_owner, "cause": "DESTROY_BATTLE"})
+			destroyed.append({"card": defender_card, "owner": _owner_of(defender_card), "cause": "DESTROY_BATTLE"})
 
-func _has_immediate_effect(card) -> bool:
-	if not card.get("effects"):
-		return false
-	
-	for effects in card.effects:
-		if effects.get("type") == "on_play":
-			return true
-		if effects.get("type") == "spell_activation" and effects.get("immediate", false):
-			return true
-	
-	return false
-
-func _trigger_on_play_effects(card, card_owner: String) -> void:
-	if not card.get("effects"):
-		return
-	
-	for effect_data in card.effects:
-		if effect_data.get("type") == "on_play":
-			$"../Effect_Manager".execute_effect(effect_data, card, card_owner, {"card": card})
-
-func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power):
-	var defender_owner := ("Opponent" if attacker == "Player" else "Player")
-	var result_str = "lose"
-	
-	var has_piercing = atk_card.get_meta("piercing_damage", false)
-	
-	if atk_power > def_power:
-		destroy_card(defending, defender_owner)
-		result_str = "win"
-	elif atk_power == def_power:
-		result_str = "tie"
-	else:
-		var diff = def_power - atk_power
-		if attacker == "Opponent":
-			opponent_hp = max(0, opponent_hp - diff)
-			$"../OpponentHP".text = str(opponent_hp)
-		else:
-			player_hp = max(0, player_hp - diff)
-			$"../PlayerHP".text = str(player_hp)
-		_check_end_duel()
-	
-	if has_piercing and atk_power > def_power:
-		var piercing_damage = atk_power - def_power
-		if attacker == "Opponent":
-			player_hp = max(0, player_hp - piercing_damage)
-			$"../PlayerHP".text = str(player_hp)
-		else:
-			opponent_hp = max(0, opponent_hp - piercing_damage)
-			$"../OpponentHP".text = str(opponent_hp)
-		_check_end_duel()
-
-	if not _is_card_alive(atk_card):
-		_clear_bonuses([atk_card, defending])
-		if attacker == "Player":
-			_enable_player_input()
-		return
-
-	var return_pos: Vector2 = _anchored_slot_position(atk_card)
-	var t2 := get_tree().create_tween()
-	t2.tween_property(atk_card, "global_position", return_pos, CARD_MOVE_SPEED)
-	await t2.finished
-	
-	if _is_card_alive(atk_card):
-		atk_card.z_index = 0
-
-	var defender_ref = defending if is_instance_valid(defending) else null
-	await _trigger_on_attack(atk_card, attacker, {
-		"phase": "after_damage",
-		"attacker": atk_card,
-		"defender": defender_ref,
-		"result": result_str
-	})
-
-	_clear_bonuses([atk_card, defending])
-	
-	if attacker == "Player" and not (atk_card in player_cards_that_attacked_this_turn):
-		player_cards_that_attacked_this_turn.append(atk_card)
-
-	if attacker == "Player":
-		_enable_player_input()
-
-func _handle_attack_attack(atk_card, defending, attacker, atk_power, def_power):
-	if atk_power == def_power:
-		destroy_card_tie(atk_card, defending)
-		await _trigger_on_attack(atk_card, attacker, {
-			"phase": "after_damage",
-			"attacker": atk_card,
-			"defender": defending,
-			"result": "tie"
+	for item in destroyed:
+		var target = item.get("card")
+		if not is_instance_valid(target):
+			continue
+		if item.get("cause") == "DESTROY_BATTLE" and target != attacker_card and is_instance_valid(attacker_card):
+			_emit_duel_event("ON_DESTROY_OPPONENT_MONSTER_BY_BATTLE", {
+				"battle_manager": self,
+				"source": attacker_card,
+				"destroyed": target,
+				"controller": attacker_owner
+			})
+			_emit_duel_event("ON_DESTROY_MONSTER_BY_BATTLE", {
+				"battle_manager": self,
+				"source": attacker_card,
+				"destroyed": target,
+				"controller": attacker_owner
+			})
+		destroy_card(target, str(item.get("owner", "")), str(item.get("cause", "DESTROY_EFFECT")), {
+			"battle_manager": self,
+			"attacker": attacker_card,
+			"defender": defender_card,
+			"attacker_owner": attacker_owner,
+			"turn_owner": ("Opponent" if is_opponent_turn else "Player")
 		})
-		_clear_bonuses([atk_card, defending])
-		if attacker == "Player" and not (atk_card in player_cards_that_attacked_this_turn):
-			player_cards_that_attacked_this_turn.append(atk_card)
-		_enable_player_input()
+
+	_resolve_scheduled_end_of_battle_changes()
+	if attacker_owner == "Player" and is_instance_valid(attacker_card) and not player_cards_that_attacked_this_turn.has(attacker_card):
+		player_cards_that_attacked_this_turn.append(attacker_card)
+
+func _resolve_direct_attack(attacker_card, attacker_owner: String) -> void:
+	_inflict_battle_damage(_opponent_of(attacker_owner), _get_current_atk(attacker_card), attacker_card, null)
+	if attacker_owner == "Player" and not player_cards_that_attacked_this_turn.has(attacker_card):
+		player_cards_that_attacked_this_turn.append(attacker_card)
+
+func register_card_played(card, controller: String, by_effect := false) -> void:
+	if not is_instance_valid(card):
 		return
+	_register_card_on_field(card, controller)
+	_emit_duel_event(("ON_SUMMON_BY_EFFECT" if by_effect else "ON_PLAY"), {
+		"battle_manager": self,
+		"source": card,
+		"controller": controller,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+	})
+	_register_card_auras(card, controller)
 
-	var attacker_won = atk_power > def_power
-	var damage = abs(atk_power - def_power)
-	
-	if attacker_won:
-		if attacker == "Opponent":
-			player_hp = max(0, player_hp - damage)
-			$"../PlayerHP".text = str(player_hp)
-			_check_end_duel()
-			destroy_card(defending, "Player")
-		else:
-			opponent_hp = max(0, opponent_hp - damage)
-			$"../OpponentHP".text = str(opponent_hp)
-			_check_end_duel()
-			destroy_card(defending, "Opponent")
-	else:
-		if attacker == "Opponent":
-			opponent_hp = max(0, opponent_hp - damage)
-			$"../OpponentHP".text = str(opponent_hp)
-			_check_end_duel()
-			destroy_card(atk_card, "Opponent")
-		else:
-			player_hp = max(0, player_hp - damage)
-			$"../PlayerHP".text = str(player_hp)
-			_check_end_duel()
-			destroy_card(atk_card, "Player")
-
-	if not _is_card_alive(atk_card):
-		_clear_bonuses([atk_card, defending])
-		if attacker == "Player":
-			_enable_player_input()
+func activate_card(card, controller: String) -> void:
+	if not is_instance_valid(card):
 		return
+	_register_card_on_field(card, controller)
+	_emit_duel_event("ON_ACTIVATE", {
+		"battle_manager": self,
+		"source": card,
+		"controller": controller,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+	})
+	_register_card_auras(card, controller)
 
-	var return_pos2: Vector2 = _anchored_slot_position(atk_card)
-	var t2b := get_tree().create_tween()
-	t2b.tween_property(atk_card, "global_position", return_pos2, CARD_MOVE_SPEED)
-	await t2b.finished
-	
-	if _is_card_alive(atk_card):
-		atk_card.z_index = 0
-
-	var defender_ref2 = defending if is_instance_valid(defending) else null
-	await _trigger_on_attack(atk_card, attacker, {
-		"phase": "after_damage",
-		"attacker": atk_card,
-		"defender": defender_ref2,
-		"result": ("win" if attacker_won else "lose")
+func register_card_flip(card, controller: String) -> void:
+	if not is_instance_valid(card):
+		return
+	_reveal_if_needed(card)
+	_emit_duel_event("ON_FLIP", {
+		"battle_manager": self,
+		"source": card,
+		"controller": controller,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player")
 	})
 
-	_clear_bonuses([atk_card, defending])
-	
-	if attacker == "Player" and not (atk_card in player_cards_that_attacked_this_turn):
-		player_cards_that_attacked_this_turn.append(atk_card)
+func destroy_by_selector(source, selector, ctx: Dictionary = {}) -> void:
+	for target in _resolve_selector_targets(source, selector):
+		var target_owner: String = _owner_of(target)
+		if target_owner == "":
+			continue
+		destroy_card(target, target_owner, "DESTROY_EFFECT", _merge_ctx(ctx, {
+			"battle_manager": self,
+			"effect_source": source
+		}))
 
-	if attacker == "Player":
-		_enable_player_input()
+func reveal_set_cards_by_selector(source, selector, count = null, _reveal_to := "OWNER_ONLY", _ctx: Dictionary = {}) -> void:
+	var targets := _resolve_selector_targets(source, selector)
+	var limit: int = targets.size() if count == null else min(int(count), targets.size())
+	for i in range(limit):
+		_reveal_if_needed(targets[i])
 
-func _is_card_alive(card) -> bool:
-	return is_instance_valid(card) and (card in player_cards_on_battlefield or card in opponent_cards_on_battlefield)
+func schedule_change_position_end_of_battle(source, new_position: String, _ctx: Dictionary = {}) -> void:
+	if is_instance_valid(source):
+		_pending_position_changes_end_of_battle.append({"card": source, "new_position": new_position})
 
-func _clear_bonuses(cards: Array):
-	for card in cards:
-		if is_instance_valid(card) and card.has_method("clear_temporary_display_bonus"):
-			card.clear_temporary_display_bonus()
+func apply_keyword_to_card_if_matches_side(source, played, target_side: String, keyword: String, _ctx: Dictionary = {}) -> void:
+	if not is_instance_valid(source) or not is_instance_valid(played):
+		return
+	if _get_card_kind(played) != "MONSTER":
+		return
+	var source_owner := _owner_of(source)
+	var played_owner := _owner_of(played)
+	var ok := false
+	match target_side:
+		"OWNER": ok = played_owner == source_owner
+		"OPPONENT": ok = played_owner != source_owner and played_owner != ""
+		"BOTH": ok = true
+		_: ok = false
+	if not ok:
+		return
+	if played.has_method("add_keyword"):
+		played.add_keyword(keyword)
+	else:
+		var kws = played.get("keywords")
+		if kws is Array and not kws.has(keyword):
+			kws.append(keyword)
+			played.keywords = kws
 
-func _enable_player_input():
-	$"../InputManager".inputs_disabled = false
-	enable_end_turn_button(true)
+func summon_token_from_source_lki(_source, _params: Dictionary, _ctx: Dictionary = {}) -> void:
+	push_warning("battle_manager: summon_token_from_source_lki pendiente (falta factory/spawner del proyecto).")
+
+func destroy_card(card, card_owner: String, cause := "DESTROY_EFFECT", ctx: Dictionary = {}) -> void:
+	if not is_instance_valid(card):
+		return
+
+	_capture_lki(card)
+	_unregister_card_from_field(card)
+	_register_card_left_auras(card)
+
+	var base_ctx := _merge_ctx(ctx, {
+		"battle_manager": self,
+		"source": card,
+		"controller": card_owner,
+		"cause": cause,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+	})
+
+	var specific_destroy := _destroy_cause_to_trigger(cause)
+	if specific_destroy != "":
+		_emit_duel_event(specific_destroy, base_ctx)
+	_emit_duel_event("ON_DESTROY", base_ctx)
+	_emit_duel_event("ON_LEAVE_FIELD", _merge_ctx(base_ctx, {"from_zone": "FIELD", "to_zone": "GRAVE"}))
+	_emit_duel_event("ON_SEND_TO_GRAVE", base_ctx)
+	if cause == "DESTROY_EFFECT":
+		_emit_duel_event("ON_SEND_TO_GRAVE_BY_EFFECT", base_ctx)
+
+	_move_card_to_grave(card, card_owner)
+	_check_end_duel()
+
+func _emit_duel_event(event_name: String, payload: Dictionary) -> void:
+	var bus = get_node_or_null("/root/DuelEventBus")
+	if bus == null:
+		bus = get_node_or_null("/root/EventBus")
+	if bus and bus.has_method("emit_event"):
+		bus.emit_event(event_name, payload)
+
+func _register_card_auras(card, controller: String) -> void:
+	var engine = get_node_or_null("/root/DuelEffectEngine")
+	if engine == null:
+		engine = get_node_or_null("/root/EffectEngine")
+	if engine and engine.has_method("register_card_entered_field"):
+		engine.register_card_entered_field(card, controller)
+
+func _register_card_left_auras(card) -> void:
+	var engine = get_node_or_null("/root/DuelEffectEngine")
+	if engine == null:
+		engine = get_node_or_null("/root/EffectEngine")
+	if engine and engine.has_method("register_card_left_field"):
+		engine.register_card_left_field(card)
+
+func _register_card_on_field(card, controller: String) -> void:
+	if controller == "Player":
+		if not player_cards_on_battlefield.has(card):
+			player_cards_on_battlefield.append(card)
+	else:
+		if not opponent_cards_on_battlefield.has(card):
+			opponent_cards_on_battlefield.append(card)
+
+func _unregister_card_from_field(card) -> void:
+	player_cards_on_battlefield.erase(card)
+	opponent_cards_on_battlefield.erase(card)
+	player_cards_that_attacked_this_turn.erase(card)
+
+func _move_card_to_grave(card, controller: String) -> void:
+	if controller == "Player":
+		if not player_graveyard.has(card):
+			player_graveyard.append(card)
+	else:
+		if not opponent_graveyard.has(card):
+			opponent_graveyard.append(card)
+	if card.has_method("queue_free"):
+		card.queue_free()
 
 func _owner_of(card) -> String:
-	if card in player_cards_on_battlefield:
+	if not is_instance_valid(card):
+		return ""
+	if player_cards_on_battlefield.has(card):
 		return "Player"
-	if card in opponent_cards_on_battlefield:
+	if opponent_cards_on_battlefield.has(card):
+		return "Opponent"
+	var owner_side = str(card.get("owner_side", ""))
+	if owner_side == "OWNER":
+		return "Player"
+	if owner_side == "OPPONENT":
 		return "Opponent"
 	return ""
 
-func destroy_card_tie(card_a, card_b):
-	if is_instance_valid(card_a):
-		var owner_a := _owner_of(card_a)
-		if owner_a != "":
-			destroy_card(card_a, owner_a)
-	if is_instance_valid(card_b):
-		var owner_b := _owner_of(card_b)
-		if owner_b != "":
-			destroy_card(card_b, owner_b)
-	_clear_multi_for(card_a)
-	_clear_multi_for(card_b)
+func _opponent_of(controller: String) -> String:
+	return "Opponent" if controller == "Player" else "Player"
 
-func direct_attack(atk_card, attacker):
-	if duel_finished: return
-	var new_pos_y
-	reveal_card(atk_card)
-	if attacker == "Opponent":
-		new_pos_y = 1000
-	else:
-		$"../InputManager".inputs_disabled = true
-		enable_end_turn_button(false)
-		new_pos_y = 0
-		player_cards_that_attacked_this_turn.append(atk_card)
-	var new_pos = Vector2(atk_card.global_position.x,new_pos_y)
-	
-	atk_card.z_index = 5
-	
-	var t := get_tree().create_tween()
-	t.tween_property(atk_card, "global_position", new_pos, CARD_MOVE_SPEED)
-	await action_waiter()
-	
-	if attacker == "Opponent":
-		player_hp = max(0,player_hp - atk_card.Atk)
-		$"../PlayerHP".text = str(player_hp)
-		_check_end_duel()
-	else:
-		opponent_hp = max(0,opponent_hp - atk_card.Atk)
-		$"../OpponentHP".text = str(opponent_hp)
-		_check_end_duel()
-	if duel_finished:
-		return
-	var return_pos :Vector2 = _anchored_slot_position(atk_card)
-	var t2 := get_tree().create_tween()
-	t2.tween_property(atk_card, "global_position", return_pos, CARD_MOVE_SPEED)
-	await action_waiter()
-	atk_card.z_index = 0
-	if attacker == "Player":
-		$"../InputManager".inputs_disabled = true
-		enable_end_turn_button(false)
+func _get_card_kind(card) -> String:
+	return str(card.get("kind", "")) if is_instance_valid(card) else ""
 
-func _clean_battlefield_lists():
-	player_cards_on_battlefield = player_cards_on_battlefield.filter(is_instance_valid)
-	opponent_cards_on_battlefield = opponent_cards_on_battlefield.filter(is_instance_valid)
+func _get_current_atk(card) -> int:
+	return int(card.get("atk", 0)) if is_instance_valid(card) else 0
 
-func _has_on_attack(card) -> bool:
-	if card == null: return false
-	if card.effects == null: return false
-	var eff_list = card.effects
-	if typeof(eff_list) != TYPE_ARRAY: return false
-	if eff_list.size() == 0: return false
-	
-	for effect in eff_list:
-		if effect is Dictionary and effect.get("type") == "on_attack":
-			return true
-	
+func _get_current_def(card) -> int:
+	return int(card.get("def", 0)) if is_instance_valid(card) else 0
+
+func _is_in_defense(card) -> bool:
+	if not is_instance_valid(card):
+		return false
+	if card.get("in_defense") != null:
+		return bool(card.get("in_defense"))
+	var pos = card.get("battle_position")
+	if pos != null:
+		return str(pos) in ["DEFENSE", "FACEUP_DEF", "FACEDOWN_DEF"]
 	return false
 
-func _trigger_on_attack(card, who: String, ctx: Dictionary) -> void:
-	if suppress_on_attack: 
+func _set_position(card, new_position: String) -> void:
+	if not is_instance_valid(card):
 		return
-	if not is_instance_valid(card): 
+	match new_position:
+		"ATTACK":
+			if card.get("battle_position") != null:
+				card.battle_position = "ATTACK"
+			if card.get("in_defense") != null:
+				card.in_defense = false
+		"DEFENSE":
+			if card.get("battle_position") != null:
+				card.battle_position = "DEFENSE"
+			if card.get("in_defense") != null:
+				card.in_defense = true
+		"TOGGLE":
+			_set_position(card, "ATTACK" if _is_in_defense(card) else "DEFENSE")
+		_:
+			pass
+
+func _resolve_scheduled_end_of_battle_changes() -> void:
+	for item in _pending_position_changes_end_of_battle:
+		var c = item.get("card")
+		if is_instance_valid(c):
+			_set_position(c, str(item.get("new_position", "TOGGLE")))
+	_pending_position_changes_end_of_battle.clear()
+
+func _has_keyword(card, keyword: String) -> bool:
+	if not is_instance_valid(card):
+		return false
+	var kws = card.get("keywords")
+	return kws is Array and kws.has(keyword)
+
+func _reveal_if_needed(card) -> void:
+	if not is_instance_valid(card):
 		return
-	if not _has_on_attack(card):
-		return
-	
-	suppress_on_attack = true
-	
-	# Ejecutar todos los efectos "on_attack" de la carta
-	for effect in card.effects:
-		if effect is Dictionary and effect.get("type") == "on_attack":
-			await $"../Effect_Manager".execute_effect(effect, card, who, ctx)
-	
-	suppress_on_attack = false
-
-func _live_defenders_for(attacker_side: String):
-	var list = []
-	if attacker_side == "Player":
-		for d in opponent_cards_on_battlefield:
-			if is_instance_valid(d):
-				list.append(d)
-	else:
-		for d in player_cards_on_battlefield:
-			if is_instance_valid(d):
-				list.append(d)
-	return list
-
-func _targets_required_for(effect_list: Array) -> int:
-	var n := 0
-	for e in effect_list:
-		if e == "target_enemy_monster":
-			n += 1
-	return n
-
-func start_spell_activation(spell_card, who: String) -> void:
-	emit_signal("spell_activated", spell_card, who)
-	# Revelar la carta si está boca abajo
-	if spell_card.is_facedown:
-		reveal_card(spell_card)
-	
-	# EMITIR SEÑAL para trampas que respondan a activación de hechizos
-	emit_signal("spell_activated", spell_card, who)
-	
-	# Verificar si tiene efectos
-	if not spell_card.get("effects"):
-		_send_spell_to_graveyard(spell_card, who)
-		return
-	
-	# Buscar efectos de activación de hechizo
-	var activation_effects = []
-	for effects in spell_card.effects:
-		if effects.get("type") == "spell_activation":
-			activation_effects.append(effects)
-	
-	if activation_effects.is_empty():
-		_send_spell_to_graveyard(spell_card, who)
-		return
-	
-	# Verificar si necesita targets
-	var need_targets = false
-	for effects in activation_effects:
-		if effects.get("requires_target", false):
-			need_targets = true
-			break
-	
-	if not need_targets:
-		# Ejecutar todos los efectos sin targets
-		for effects in activation_effects:
-			await $"../Effect_Manager".execute_effect(effects, spell_card, who, {})
-		_send_spell_to_graveyard(spell_card, who)
-	else:
-		# Configurar targeting
-		spell_targeting = true
-		pending_spell = spell_card
-		pending_effects = activation_effects  # Ahora puede tener múltiples efectos
-		pending_caster = who
-		pending_required_targets = 1  # Por simplicidad, asumimos 1 target por ahora
-		pending_targets = []
-		$"../EndTurnButton".disabled = true
-
-func receive_spell_target(card) -> void:
-	if not spell_targeting: return
-
-	var is_enemy = (pending_caster == "Player" and card in opponent_cards_on_battlefield) \
-		or (pending_caster == "Opponent" and card in player_cards_on_battlefield)
-	if not is_enemy:
-		return
-	if pending_targets.has(card):
-		return
-
-	pending_targets.append(card)
-
-	if pending_targets.size() >= pending_required_targets:
-		$"../Effects".execute(pending_effect, pending_caster, {"targets": pending_targets})
-		_send_spell_to_graveyard(pending_spell, pending_caster)
-		_clear_spell_targeting()
-
-func _clear_spell_targeting() -> void:
-	spell_targeting = false
-	pending_spell = null
-	pending_effects = []
-	pending_caster = ""
-	pending_required_targets = 0
-	pending_targets = []
-	$"../EndTurnButton".disabled = false
-
-func _send_spell_to_graveyard(spell_card, who: String) -> void:
-	if spell_card.card_slot_card_is_in:
-		spell_card.card_slot_card_is_in.card_in_slot = false
-		if "card_ref" in spell_card.card_slot_card_is_in:
-			spell_card.card_slot_card_is_in.card_ref = null
-	if who == "Player":
-		player_graveyard.append(spell_card)
-	else:
-		opponent_graveyard.append(spell_card)
-	spell_card.queue_free()
-	_clean_battlefield_lists()
-
-func destroy_card(card, card_owner):
-	if card_owner == "Player":
-		card.defeated = true
-		card.get_node("Area2D/CollisionShape2D").disabled = true
-		if card in player_cards_on_battlefield:
-			player_graveyard.append(card)
-			player_cards_on_battlefield.erase(card)
-			card.card_slot_card_is_in.get_node("Area2D/CollisionShape2D").disabled = false
-	else:
-		if card in opponent_cards_on_battlefield:
-			opponent_graveyard.append(card)
-			opponent_cards_on_battlefield.erase(card)
-	if card.card_slot_card_is_in:
-		card.card_slot_card_is_in.card_in_slot = false
-		if "card_ref" in card.card_slot_card_is_in:
-			card.card_slot_card_is_in.card_ref = null
-		var slot = card.card_slot_card_is_in
-		if slot.get_parent() == $"../CardSlotsRival":
-			if not empty_monster_card_slots.has(slot):
-				empty_monster_card_slots.append(slot)
-	if multi_mode.has(card): multi_mode.erase(card)
-	if multi_remaining.has(card): multi_remaining.erase(card)
-	if multi_already_attacked.has(card): multi_already_attacked.erase(card)
-	card.queue_free()
-	_clean_battlefield_lists()
-	_clear_multi_for(card)
-
-func yield_to_refill_opponent_hand():
-	var deck_rival = $"../DeckRival/Deck"
-	var opp_hand = $"../OpponentHand"
-	while deck_rival.opponent_deck.size() > 0 and opp_hand.opponent_hand.size() < MAX_HAND_SIZE:
-		deck_rival.draw_card()
-		await action_waiter()
-
-func enemy_card_selected(defending_card):
-	var atk_card = $"../CardManager".selected_monster
-	if atk_card:
-		if defending_card in opponent_cards_on_battlefield:
-			attack(atk_card, defending_card, "Player")
-
-func try_play_highest_atk_card():
-	var opponent_hand = $"../OpponentHand".opponent_hand
-	if opponent_hand.is_empty():
-		return
-
-	var monsters: Array = []
-	for c in opponent_hand:
-		if c.card_type == "Monster":
-			monsters.append(c)
-	if monsters.is_empty():
-		return
-
-	var slot_index := randi_range(0, empty_monster_card_slots.size() - 1)
-	var slot = empty_monster_card_slots[slot_index]
-	empty_monster_card_slots.erase(slot)
-
-	var card_highestAtk = monsters[0]
-	for c in monsters:
-		if c.Atk > card_highestAtk.Atk:
-			card_highestAtk = c
-
-	$"../OpponentHand".remove_card_from_hand(card_highestAtk)
-
-	card_highestAtk.card_slot_card_is_in = slot
-	slot.card_in_slot = true
-	if "card_ref" in slot:
-		slot.card_ref = card_highestAtk
-	var shape := slot.get_node("Area2D/CollisionShape2D") as CollisionShape2D
-	if shape:
-		shape.disabled = true
-
-	card_highestAtk.set_show_back_only(false)
-	card_highestAtk.set_facedown(true)  
-	card_highestAtk.z_index = 5
-
-	var mgr := $"../CardManager"
-	card_highestAtk.scale = Vector2(mgr.FIELD_SCALE, mgr.FIELD_SCALE)
-
-	var final_pos = _anchored_slot_position(card_highestAtk)
-
-	var tw := get_tree().create_tween()
-	tw.tween_property(card_highestAtk, "global_position", final_pos, CARD_MOVE_SPEED)
-	await tw.finished
-
-	opponent_cards_on_battlefield.append(card_highestAtk)
-	emit_signal("monster_played", card_highestAtk, "Opponent")
-	await action_waiter()
-
-func end_opponent_turn():
-	var player_deck = $"../Deck"
-	var player_hand_node = $"../PlayerHand"
-	var card_manager = $"../CardManager"
-	is_opponent_turn = false
-	card_manager.reset_played_cards()
-	for k in multi_mode.keys():
-		if is_instance_valid(k) and (k in opponent_cards_on_battlefield):
-			_clear_multi_for(k)
-		_cleanup_multi_garbage()
-	while player_deck.player_deck.size() > 0 and player_hand_node.player_hand.size() < MAX_HAND_SIZE:
-		player_deck.draw_card()
-		card_manager.reset_played_monster()
-		await action_waiter()
-
-	$"../EndTurnButton".disabled = false
-	$"../EndTurnButton".visible = true
-
-func reveal_card(card: Node):
-	if not is_instance_valid(card): return
-	if "is_facedown" in card and card.is_facedown:
+	if card.has_method("set_face_down"):
+		card.set_face_down(false)
+	elif card.has_method("set_facedown"):
 		card.set_facedown(false)
-		if card.has_method("ensure_guardian_initialized"):
-			card.ensure_guardian_initialized()
-		if card.has_method("_update_guardian_star_label"):
-			card._update_guardian_star_label()
 
-func enable_end_turn_button(is_enabled):
-	if is_enabled:
-		$"../EndTurnButton".disabled = false
-		$"../EndTurnButton".visible = true
+func _inflict_battle_damage(target_owner: String, amount: int, source_card, defender_card) -> void:
+	if amount <= 0:
+		return
+	if target_owner == "Player":
+		player_hp = max(0, player_hp - amount)
 	else:
-		$"../EndTurnButton".disabled = true
-		$"../EndTurnButton".visible = false
+		opponent_hp = max(0, opponent_hp - amount)
+	_sync_hp_labels()
+	_emit_duel_event("ON_INFLICT_BATTLE_DAMAGE", {
+		"battle_manager": self,
+		"source": source_card,
+		"target_player": target_owner,
+		"amount": amount,
+		"defender": defender_card,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+	})
+	_check_end_duel()
 
-func action_waiter():
-	battle_timer.start()
-	await battle_timer.timeout
+func _sync_hp_labels() -> void:
+	var p = get_node_or_null("../PlayerHP")
+	if p:
+		p.text = str(player_hp)
+	var o = get_node_or_null("../OpponentHP")
+	if o:
+		o.text = str(opponent_hp)
+
+func _enable_player_input(enabled: bool) -> void:
+	var im = get_node_or_null("../InputManager")
+	if im and im.get("inputs_disabled") != null:
+		im.inputs_disabled = not enabled
+	var btn = get_node_or_null("../EndTurnButton")
+	if btn:
+		btn.disabled = not enabled
+		btn.visible = true
 
 func _check_end_duel() -> bool:
 	if duel_finished:
@@ -786,25 +423,97 @@ func _check_end_duel() -> bool:
 		emit_signal("duel_over", "draw")
 	elif player_hp <= 0:
 		duel_finished = true
-		emit_signal("duel_over","player_defeat")
+		emit_signal("duel_over", "player_defeat")
 	elif opponent_hp <= 0:
 		duel_finished = true
-		emit_signal("duel_over","player_victory")
+		emit_signal("duel_over", "player_victory")
 	return duel_finished
 
-func _anchored_slot_position(card: Node2D):
-	if card == null or card.card_slot_card_is_in == null:
-		return card.global_position
-	var slot = card.card_slot_card_is_in as Node2D
-	var card_anchor = card.get_node_or_null("AnchorCenter") as Node2D
-	var slot_anchor = slot.get_node_or_null("Anchor") as Node2D
-	var target = slot_anchor if slot_anchor else slot
-	var delta = card_anchor.to_global(Vector2.ZERO) - card.to_global(Vector2.ZERO)
-	return target.global_position - delta
+func _capture_lki(card) -> void:
+	if not is_instance_valid(card):
+		return
+	_last_known_info[card.get_instance_id()] = {
+		"id": str(card.get("id", "")),
+		"cardname": str(card.get("cardname", "")),
+		"atk": int(card.get("atk", 0)),
+		"def": int(card.get("def", 0)),
+		"keywords": (card.get("keywords", []) if card.get("keywords", []) is Array else []).duplicate(true),
+		"owner": _owner_of(card)
+	}
 
-func _anchored_target_position(attacker: Node2D, defender: Node2D, y_offset := 0.0) -> Vector2:
-	var def_anchor := defender.get_node_or_null("AnchorCenter") as Node2D
-	var def_center := (def_anchor if def_anchor else defender) as Node2D
-	var atk_anchor := attacker.get_node_or_null("AnchorCenter") as Node2D
-	var atk_delta := atk_anchor.to_global(Vector2.ZERO) - attacker.to_global(Vector2.ZERO)
-	return def_center.global_position - atk_delta + Vector2(0, y_offset)
+func _destroy_cause_to_trigger(cause: String) -> String:
+	match cause:
+		"DESTROY_BATTLE":
+			return "ON_DESTROY_BATTLE"
+		"DESTROY_EFFECT":
+			return "ON_DESTROY_EFFECT"
+		_:
+			return ""
+
+func _resolve_selector_targets(source, selector) -> Array:
+	if selector is Dictionary:
+		return _resolve_selector_object(source, selector)
+	if selector is String:
+		match String(selector):
+			"SELF":
+				return [source] if is_instance_valid(source) else []
+			"OPPONENT_RANDOM_MONSTER":
+				var opp = _field_for_side(_opponent_of(_owner_of(source)))
+				opp = opp.filter(func(c): return is_instance_valid(c))
+				return [] if opp.is_empty() else [opp[randi() % opp.size()]]
+			"OPPONENT_LOWEST_ATK_MONSTER":
+				return _pick_stat_monster(_field_for_side(_opponent_of(_owner_of(source))), "atk", true)
+			"OPPONENT_HIGHEST_ATK_MONSTER":
+				return _pick_stat_monster(_field_for_side(_opponent_of(_owner_of(source))), "atk", false)
+			"OPPONENT_LOWEST_DEF_MONSTER":
+				return _pick_stat_monster(_field_for_side(_opponent_of(_owner_of(source))), "def", true)
+			"OPPONENT_HIGHEST_DEF_MONSTER":
+				return _pick_stat_monster(_field_for_side(_opponent_of(_owner_of(source))), "def", false)
+			_:
+				return []
+	return []
+
+func _resolve_selector_object(source, selector: Dictionary) -> Array:
+	var side := str(selector.get("side", "OPPONENT"))
+	var zone := str(selector.get("zone", "MONSTER"))
+	if zone != "MONSTER":
+		return []
+	var source_owner: String = _owner_of(source)
+	var candidates: Array = []
+	match side:
+		"OWNER": candidates = _field_for_side(source_owner)
+		"OPPONENT": candidates = _field_for_side(_opponent_of(source_owner))
+		"BOTH": candidates = player_cards_on_battlefield + opponent_cards_on_battlefield
+		_: candidates = []
+	candidates = candidates.filter(func(c): return is_instance_valid(c))
+	var pick := str(selector.get("pick", "RANDOM"))
+	match pick:
+		"SELF": return [source] if is_instance_valid(source) else []
+		"HIGHEST_ATK": return _pick_stat_monster(candidates, "atk", false)
+		"LOWEST_ATK": return _pick_stat_monster(candidates, "atk", true)
+		"HIGHEST_DEF": return _pick_stat_monster(candidates, "def", false)
+		"LOWEST_DEF": return _pick_stat_monster(candidates, "def", true)
+		"RANDOM":
+			return [] if candidates.is_empty() else [candidates[randi() % candidates.size()]]
+		_:
+			return [] if candidates.is_empty() else [candidates[0]]
+
+func _field_for_side(side: String) -> Array:
+	return player_cards_on_battlefield if side == "Player" else opponent_cards_on_battlefield
+
+func _pick_stat_monster(candidates: Array, stat: String, asc: bool) -> Array:
+	var live := candidates.filter(func(c): return is_instance_valid(c))
+	if live.is_empty():
+		return []
+	live.sort_custom(func(a, b):
+		var av = int(a.get(stat, 0))
+		var bv = int(b.get(stat, 0))
+		return av < bv if asc else av > bv
+	)
+	return [live[0]]
+
+func _merge_ctx(base: Dictionary, extra: Dictionary) -> Dictionary:
+	var out := base.duplicate(true)
+	for k in extra.keys():
+		out[k] = extra[k]
+	return out
