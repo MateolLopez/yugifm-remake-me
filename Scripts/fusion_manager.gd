@@ -1,7 +1,12 @@
 extends Node
 
-var generic_db
-var specific_db
+@export_file("*.json") var cards_db_path: String = "res://Scripts/JSON/CardsDB.json"
+@export_file("*.json") var generic_fusions_path: String = "res://Scripts/JSON/generic_fusions.json"
+@export_file("*.json") var specific_fusions_path: String = "res://Scripts/JSON/specific_fusions.json"
+@export var card_scene: PackedScene = preload("res://Scenes/Card.tscn")
+
+var repo: FusionRepository
+var fusion: FusionService
 
 var generic_materials: Array = []
 var specific_materials: Array = []
@@ -22,10 +27,11 @@ signal fusion_animation_started()
 signal fusion_animation_finished()
 
 func _ready() -> void:
-	generic_db = preload("res://Scripts/GenericFusionDB.gd").new()
-	specific_db = preload("res://Scripts/SpecificFusionDB.gd").new()
-	add_child(generic_db)
-	add_child(specific_db)
+	repo = FusionRepository.new()
+	add_child(repo)
+	repo.load_all(cards_db_path, generic_fusions_path, specific_fusions_path)
+	fusion = FusionService.new(repo, card_scene)
+	add_child(fusion)
 	materials_updated.connect(_on_materials_updated)
 
 func _position_mouse_at_fusion_point():
@@ -150,7 +156,7 @@ func _execute_next_fusion_step(fusion_owner: String):
 	
 	await _animate_materials_to_fusion_point([material1, material2])
 	
-	var result_card = generic_db.find_fusion(material1, material2)
+	var result_card = fusion.find_generic_fusion(material1, material2)
 	var success = (result_card != material2)
 	
 	await _show_fusion_result(result_card, success, fusion_owner)
@@ -318,7 +324,7 @@ func _execute_specific_fusion_with_animation(fusion_owner: String) -> Dictionary
 	_reset_card_positions_for_animation(specific_materials.duplicate())
 	await _animate_materials_to_fusion_point(specific_materials.duplicate())
 	
-	var result_card = specific_db.find_fusion(specific_materials.duplicate())
+	var result_card = fusion.find_specific_fusion(specific_materials.duplicate())
 	var last_card = specific_materials[specific_materials.size() - 1]
 	var success = (result_card != last_card)
 	
@@ -503,7 +509,7 @@ func _setup_pending_fusion_card(card, fusion_owner: String):
 		else:
 			card.z_index = 2
 		
-		card.card_owner = fusion_owner
+		card.owner_side = fusion_owner.to_upper()
 		
 		if card.has_method("set_in_hand_mask"):
 			card.set_in_hand_mask(false)
@@ -527,26 +533,27 @@ func place_fusion_card(slot) -> bool:
 		return false
 	
 	var the_owner = "Player"
-	if pending_fusion_card.has_method("get") and pending_fusion_card.get("card_owner"):
-		the_owner = pending_fusion_card.card_owner
+	if pending_fusion_card.get("owner_side") != null:
+		the_owner = "Player" if str(pending_fusion_card.owner_side).to_upper() == "PLAYER" else "Opponent"
 	
 	card_manager._place_card_in_slot(pending_fusion_card, slot)
 	
-	pending_fusion_card.card_slot_card_is_in = slot
+	if pending_fusion_card.has_method("set_field_slot"):
+		pending_fusion_card.set_field_slot(slot)
 	slot.card_in_slot = true
 	if "card_ref" in slot:
 		slot.card_ref = pending_fusion_card
 	
-	if the_owner == "Player":
-		if not battle_manager.player_cards_on_battlefield.has(pending_fusion_card):
-			battle_manager.player_cards_on_battlefield.append(pending_fusion_card)
-		card_manager.played_monster_card_this_turn = true
+	if battle_manager.has_method("register_card_played"):
+		battle_manager.register_card_played(pending_fusion_card, the_owner)
 	else:
-		if not battle_manager.opponent_cards_on_battlefield.has(pending_fusion_card):
-			battle_manager.opponent_cards_on_battlefield.append(pending_fusion_card)
-		var opponent_ia = get_node_or_null("../OpponentIA")
-		if opponent_ia:
-			opponent_ia.played_monster_card_this_turn = true
+		# fallback mínimo
+		if the_owner == "Player":
+			if not battle_manager.player_cards_on_battlefield.has(pending_fusion_card):
+				battle_manager.player_cards_on_battlefield.append(pending_fusion_card)
+		else:
+			if not battle_manager.opponent_cards_on_battlefield.has(pending_fusion_card):
+				battle_manager.opponent_cards_on_battlefield.append(pending_fusion_card)
 	
 	if pending_fusion_card.has_method("apply_owner_collision_layers"):
 		pending_fusion_card.apply_owner_collision_layers()
@@ -604,7 +611,9 @@ func reset_turn():
 	fusion_in_progress = false
 	
 	if pending_fusion_card:
-		var the_owner = pending_fusion_card.card_owner if pending_fusion_card.has_method("get") and pending_fusion_card.get("card_owner") else "Player"
+		var the_owner = "Player"
+		if pending_fusion_card.get("owner_side") != null:
+			the_owner = "Player" if str(pending_fusion_card.owner_side).to_upper() == "PLAYER" else "Opponent"
 		_destroy_card_for_fusion(pending_fusion_card, the_owner)
 		pending_fusion_card = null
 	clear_materials()

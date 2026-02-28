@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://cv3psty7bf6sh"]
+[gd_scene load_steps=28 format=3 uid="uid://cv3psty7bf6sh"]
 
 [ext_resource type="Script" uid="uid://ddwrxhfr5nnlw" path="res://Scripts/card_manager.gd" id="1_sooux"]
 [ext_resource type="Script" uid="uid://c2bwtc3j72nmj" path="res://Scripts/player_hand.gd" id="2_qattd"]
@@ -13,7 +13,6 @@
 [ext_resource type="PackedScene" uid="uid://kqebt535l1q6" path="res://scenes/Opponent_deck.tscn" id="9_h8wu8"]
 [ext_resource type="Script" uid="uid://c3cq8iq62h58f" path="res://Scripts/opponent_deck.gd" id="10_sjiiy"]
 [ext_resource type="Script" uid="uid://q3kdx072n7j6" path="res://Scripts/battle_manager.gd" id="11_flypn"]
-[ext_resource type="Script" uid="uid://b3a205v21jh1r" path="res://Scripts/effect_manager.gd" id="12_5q81d"]
 [ext_resource type="Texture2D" uid="uid://x5bxsg0ni8wq" path="res://assets/placeholders/bgduel.jpg" id="13_jmg8l"]
 [ext_resource type="Texture2D" uid="uid://dypaf1l8b8p0" path="res://assets/Deck.png" id="15_h1aux"]
 [ext_resource type="Script" uid="uid://r727c8vuvmas" path="res://Scripts/duel_flow.gd" id="16_qattd"]
@@ -23,8 +22,6 @@
 [ext_resource type="Script" uid="uid://cghynuk8yhf5v" path="res://Scripts/fusion_point.gd" id="21_h8wu8"]
 [ext_resource type="Shader" uid="uid://bvgt7o8x8wamb" path="res://shaders/GenericFusion.gdshader" id="21_v5elv"]
 [ext_resource type="Texture2D" uid="uid://lh0bvihtk75j" path="res://_resources/animationiguess/pngegg.png" id="21_vhs7o"]
-[ext_resource type="Script" uid="uid://c410jp4q3rui6" path="res://Scripts/trap_manager.gd" id="24_sjiiy"]
-[ext_resource type="Script" uid="uid://1nsx8otcvjt6" path="res://Scripts/trap_test.gd" id="25_flypn"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_t45xh"]
 load_path = "res://.godot/imported/756652.jpg-ac6c3d5ebd245cf2e8902e5d9ae068ff.ctex"
@@ -249,9 +246,6 @@ offset_bottom = 455.0
 scale = Vector2(2, 2)
 text = "0"
 
-[node name="Effect_Manager" type="Node" parent="."]
-script = ExtResource("12_5q81d")
-
 [node name="Bgduel" type="Sprite2D" parent="."]
 z_index = -20
 position = Vector2(1036, 482)
@@ -308,11 +302,5 @@ libraries = {
 &"": SubResource("AnimationLibrary_sjiiy")
 }
 autoplay = "animationSpiral"
-
-[node name="TrapManager" type="Node" parent="."]
-script = ExtResource("24_sjiiy")
-
-[node name="TrapTest" type="Node" parent="."]
-script = ExtResource("25_flypn")
 
 [connection signal="pressed" from="EndTurnButton" to="BattleManager" method="_on_end_turn_button_pressed"]

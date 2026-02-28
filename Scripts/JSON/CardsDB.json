@@ -54,12 +54,12 @@
 	"id": "14261867",
 	"kind": "MONSTER",
 	"cardname": "8-Claws Scorpion",
-	"attribute": null,
-	"race": "INSECT",
-	"level": null,
-	"atk": null,
-	"def": null,
-	"guardian_star": null,
+	"attribute": "DARK",
+	"race": "Insect",
+	"level": 2,
+	"atk": 300,
+	"def": 200,
+	"guardian_star": ["JUPITER","MERCURY"],
 	"tags": [],
 	"keywords": [],
 	"description": null,
@@ -1456,23 +1456,25 @@
 	"id": "99426834",
 	"kind": "MONSTER",
 	"cardname": "Beastking of the Swamps",
-	"attribute": null,
-	"race": "AQUA",
-	"level": null,
-	"atk": null,
-	"def": null,
-	"guardian_star": null,
-	"tags": [],
+	"attribute": "WATER",
+	"race": "Aqua",
+	"level": 4,
+	"atk": 1000,
+	"def": 1100,
+	"guardian_star": ["JUPITER","NEPTUNE"],
+	"tags": ["king","beast","water","aqua","plant"],
 	"keywords": [],
-	"description": null,
+	"description": "Al caer en batalla, su remanente permanece combatiendo en su lugar.",
 	"effects": [
 	  {
-		"trigger": "ON_DESTROY",
-		"template": "custom_raw",
-		"params": {
-		  "raw": "If this card goes to the grave by the effect of a card, summon a \"Swamp Token\" with the same stats as this card had before leaving the field. (Everything without the effect)"
-		}
-	  }
+		  "trigger": "ON_DESTROY_BATTLE",
+		  "template": "summon_token_from_source_basestats",
+		  "params": {
+			"token_name": "Swamp Token",
+			"token_tags": ["token","beast","water","aqua","plant"],
+			"same_controller": true
+ 		}
+	}
 	]
   },
   {
@@ -6821,8 +6823,8 @@
 	"attribute": null,
 	"race": "BEAST",
 	"level": null,
-	"atk": null,
-	"def": null,
+	"atk": 0,
+	"def": 0,
 	"guardian_star": null,
 	"tags": [],
 	"keywords": [],
@@ -11222,26 +11224,197 @@
 	]
   },
   {
-	"id": "56120475",
-	"kind": "TRAP",
-	"cardname": "Sakuretsu Armor",
-	"attribute": null,
-	"race": "NORMAL",
-	"level": null,
-	"atk": null,
-	"def": null,
-	"guardian_star": null,
-	"tags": [],
-	"keywords": [],
-	"description": null,
-	"effects": [
-	  {
-		"trigger": "ON_PLAY",
-		"template": "custom_raw",
-		"params": {
-		  "raw": "Trigger: When an oponent monsters declare an attack. Effect: Destroy de attacking monster."
-		}
+  "id": "56120475",
+  "kind": "TRAP",
+  "cardname": "Sakuretsu Armor",
+  "attribute": null,
+  "race": "NORMAL",
+  "level": null,
+  "atk": null,
+  "def": null,
+  "guardian_star": null,
+  "tags": ["cursed-armor"],
+  "keywords": [],
+  "description": null,
+  "effects": [
+	{
+	  "trigger": "ON_ATTACK_DECLARATION",
+	  "template": "negate_attack_and_destroy",
+	  "params": {
+		"only_if_attacker_is_opponent": true,
+		"destroy_mode": "attacker"
 	  }
-	]
-  }
+	}
+  ]
+},
+{
+  "id": "52090844",
+  "kind": "MONSTER",
+  "cardname": "Bowganian",
+  "attribute": "DARK",
+  "race": "MACHINE",
+  "level": 3,
+  "atk": 1300,
+  "def": 1000,
+  "guardian_star": ["MARS","SATURN"],
+  "tags": ["machine"],
+  "keywords": [],
+  "description": "Al inicio de tu turno, inflige 600 de daño de efecto al oponente con su arco.",
+  "effects": [
+	{
+	  "trigger": "TURN_START",
+	  "template": "inflict_effect_damage",
+	  "params": {
+		"amount": 600,
+		"target": "OPPONENT",
+		"only_on_controller_turn": true
+	  }
+	}
+  ]
+},
+{
+  "id": "04732017",
+  "kind": "MONSTER",
+  "cardname": "Molten Zombie",
+  "attribute": "FIRE",
+  "race": "PYRO",
+  "level": 4,
+  "atk": 1600,
+  "def": 400,
+  "guardian_star": ["MARS","SUN"],
+  "tags": ["pyro","fire"],
+  "keywords": [],
+  "description": "Activar: inflige 500 de daño de efecto al oponente. Una vez por turno.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "inflict_effect_damage",
+	  "params": {
+		"amount": 500,
+		"target": "OPPONENT",
+		"once_per_turn": true
+	  }
+	}
+  ]
+},
+{
+  "id": "12580477",
+  "kind": "SPELL",
+  "cardname": "Raigeki",
+  "race": "NORMAL",
+  "tags": ["lightning"],
+  "keywords": [],
+  "description": "Activar: destruye todos los monstruos del oponente.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "destroy_by_effect",
+	  "params": {
+		"target_side": "OPPONENT",
+		"choose": "ALL"
+	  }
+	}
+  ]
+},
+{
+  "id": "69162969",
+  "kind": "SPELL",
+  "cardname": "Lightning Vortex",
+  "race": "NORMAL",
+  "tags": ["lightning-vortex","lightning"],
+  "keywords": [],
+  "description": "Activar: destruye todos los monstruos boca arriba del oponente.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "destroy_by_effect",
+	  "params": {
+		"target_side": "OPPONENT",
+		"choose": "ALL",
+		"faceup_only": true
+	  }
+	}
+  ]
+},
+{
+  "id": "53129443",
+  "kind": "SPELL",
+  "cardname": "Dark Hole",
+  "race": "NORMAL",
+  "tags": ["dark-hole"],
+  "keywords": [],
+  "description": "Activar: destruye todos los monstruos en el campo.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "destroy_by_effect",
+	  "params": {
+		"target_side": "BOTH",
+		"choose": "ALL"
+	  }
+	}
+  ]
+},
+{
+  "id": "79759861",
+  "kind": "SPELL",
+  "cardname": "Tribute to The Doomed",
+  "race": "NORMAL",
+  "tags": ["tribute-doomed"],
+  "keywords": [],
+  "description": "Activar: destruye el monstruo de mayor nivel del oponente.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "destroy_by_effect",
+	  "params": {
+		"target_side": "OPPONENT",
+		"choose": "HIGHEST_LEVEL",
+		"count": 1
+	  }
+	}
+  ]
+},
+{
+  "id": "66788016",
+  "kind": "SPELL",
+  "cardname": "Fissure",
+  "race": "NORMAL",
+  "tags": ["fissure"],
+  "keywords": [],
+  "description": "Activar: destruye el monstruo boca arriba del oponente con menor ATK.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "destroy_by_effect",
+	  "params": {
+		"target_side": "OPPONENT",
+		"faceup_only": true,
+		"choose": "LOWEST_ATK",
+		"count": 1
+	  }
+	}
+  ]
+},
+{
+  "id": "26412047",
+  "kind": "SPELL",
+  "cardname": "Hammer Shot",
+  "race": "NORMAL",
+  "tags": ["hammer-shot"],
+  "keywords": [],
+  "description": "Activar: destruye el monstruo boca arriba con mayor ATK en el campo.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "destroy_by_effect",
+	  "params": {
+		"target_side": "BOTH",
+		"faceup_only": true,
+		"choose": "HIGHEST_ATK",
+		"count": 1
+	  }
+	}
+  ]
+}
 ]

@@ -3,32 +3,37 @@
   "triggers": {
 	"ON_PLAY": "Al jugar un monstruo desde la mano o al invocarlo como resultado de fusión (invocación normal del turno).",
 	"ON_SUMMON_BY_EFFECT": "Cuando un monstruo entra al campo por un efecto (incluye rituales u otras invocaciones especiales).",
+	"ON_OPPONENT_NORMAL_SUMMON":"",
 	"ON_ACTIVATE": "Activación manual (click -> activar efecto).",
 	"ON_FLIP": "Cuando un monstruo cambia de boca abajo a boca arriba (por acción o por ataque).",
 	"ON_ATTACK_DECLARATION": "Cuando se declara un ataque (antes de resolver combate).",
 	"ON_INFLICT_BATTLE_DAMAGE": "Cuando se inflige daño de batalla al jugador.",
 	"ON_INFLICT_EFFECT_DAMAGE": "Cuando se inflige daño de efecto (burn) al jugador.",
+	"ON_TRAP_ACTIVATE": "",
+	"ON_OPPONENT_TRAP_ACTIVATE":"",
+	"ON_SPELL_ACTIVATE":"",
+	"ON_OPPONENT_SPELL_ACTIVATE":"",
 	"ON_DESTROY": "Cuando este monstruo es destruido (cualquier causa).",
 	"ON_DESTROY_BATTLE": "Cuando este monstruo es destruido por batalla.",
 	"ON_DESTROY_EFFECT": "Cuando este monstruo es destruido por efecto.",
 	"ON_LEAVE_FIELD": "Cuando esta carta deja el campo sin ser destruida (enviada/retornada/tributada/etc).",
 	"ON_BANISH": "Cuando esta carta es removida del juego.",
 	"ON_DESTROY_MONSTER_BY_BATTLE": "Cuando este monstruo destruye a otro en batalla.",
-	"ON_DESTROY_OPPONENT_MONSTER_BY_BATTLE": "Alias más explícito del anterior (si prefieres solo uno, eliminar el otro).",
 	"ON_LEVEL_LOSS": "Cuando esta carta pierde niveles como parte de un efecto.",
 	"TURN_START": "Inicio del turno (después de robar hasta 5).",
 	"TURN_END": "Final del turno.",
 	"ON_SEND_TO_GRAVE": "Cuando esta carta es enviada al cementerio (incluye destrucción, tributo, envío por efecto, descarte, etc).",
 	"ON_SEND_TO_GRAVE_BY_EFFECT": "Cuando esta carta es enviada al cementerio por el efecto de otra carta (no incluye batalla/tributo como costo).",
-	"ON_SEND_TO_GRAVE_AS_COST": "Cuando esta carta es enviada al cementerio específicamente como costo (ej. tributo/costo de activación)."
-  },
+	"ON_SEND_TO_GRAVE_AS_COST": "Cuando esta carta es enviada al cementerio específicamente como costo (ej. tributo/costo de activación).",
+	"PASSIVE":"pasivo"  
+},
   "keywords": {
 	"PIERCING": "Daño perforante al atacar un monstruo en DEF (si ATK > DEF).",
 	"TAUNT": "Mientras esté boca arriba, solo puede atacarse a monstruos con TAUNT del mismo lado.",
 	"STEALTH": "No puede ser objetivo de ataques.",
 	"SLOW": "No puede atacar el turno en que es invocado.",
 	"PARALYZED": "No puede declarar ataque en su próximo turno.",
-	"BAD_LUCK": "No recibe bonus/malus de Guardian Star.",
+	"BAD_LUCK": "No recibe bonus de Guardian Star.",
 	"MULTI_ATTACK_2": "Puede atacar 2 veces por turno.",
 	"MULTI_ATTACK_ALL": "Puede atacar a cada monstruo oponente una vez por turno.",
 	"DIRECT_ATTACK": "Puede atacar directamente a LP (cuando aplique).",
@@ -56,6 +61,17 @@
 	"destroy_all_others_monsters": {
 	  "desc": "Destruye todos los monstruos excepto la fuente.",
 	  "params_schema": {}
+	},
+	"destroy_by_effect": {
+	  "desc": "Destruye uno o más monstruos según un selector.",
+	  "params_schema": {
+		"selector": "string",
+		"target_side": "SELF|OPPONENT|BOTH",
+		"faceup_only": "bool?",
+		"facedown_only": "bool?",
+		"count": "int?",
+		"choose": "HIGHEST_ATK|LOWEST_ATK|HIGHEST_LEVEL|LOWEST_ATK_FACEUP|HIGHEST_ATK_FACEUP|ALL"
+	  }
 	},
 	"inflict_effect_damage": {
 	  "desc": "Inflige daño de efecto a un jugador.",
@@ -212,11 +228,12 @@
 		"per_count": "int"
 	  }
 	},
-	"summon_token_with_stats_equal_to_battle_damage_then_destroy_at_your_next_turn_end": {
-	  "desc": "Al infligir daño de batalla, invoca un token con ATK/DEF = daño. Se destruye al final de tu próximo turno.",
+	"summon_token_from_source_basestats": {
+	  "desc": "Invoca un token vanilla con stats base del source (no stats modificadas).",
 	  "params_schema": {
-		"race": "string",
-		"attribute": "string"
+		"token_name": "string",
+		"token_tags": "array?",
+		"same_controller": "bool?"
 	  }
 	},
 	"change_all_other_monsters_battle_positions": {

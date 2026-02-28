@@ -1,60 +1,58 @@
 extends Node
 class_name CardDB
 
-var _cards_by_id: Dictionary = {}
-var _loaded := false
+@export_file("*.json") var cards_db_path: String = "res://Scripts/JSON/CardsDB.json"
 
-const CARDS_PATH := "res://Scripts/JSON/CardsDB.json"
+var CARDS: Dictionary = {}
+
+var RAW_CARDS: Array = []
 
 func _ready() -> void:
-	_load_cards_if_needed()
+	load_cards()
 
-func _load_cards_if_needed() -> void:
-	if _loaded:
-		return
-	_loaded = true
+func load_cards() -> void:
+	CARDS.clear()
+	RAW_CARDS.clear()
 
-	var file := FileAccess.open(CARDS_PATH, FileAccess.READ)
-	if file == null:
-		push_error("CardDB: no se pudo abrir %s" % CARDS_PATH)
+	if cards_db_path == "" or not FileAccess.file_exists(cards_db_path):
+		push_error("CardDB: No existe CardsDB.json en: %s" % cards_db_path)
 		return
 
-	var text := file.get_as_text()
-	file.close()
+	var json_text: String = FileAccess.get_file_as_string(cards_db_path)
+	var parsed = JSON.parse_string(json_text)
 
-	var parsed = JSON.parse_string(text)
 	if parsed == null:
-		push_error("CardDB: JSON inválido en %s" % CARDS_PATH)
+		push_error("CardDB: JSON inválido en %s" % cards_db_path)
 		return
 
-	_cards_by_id.clear()
-
-	# Acepta dos formatos:
-	# 1) Array de objetos: [{id: "...", ...}, ...]
-	# 2) Objeto/dict: {"8963...": {...}, "2285...": {...}}
-	if parsed is Array:
-		for entry in parsed:
-			if entry is Dictionary and entry.has("id"):
-				_cards_by_id[str(entry["id"])] = entry
-	elif parsed is Dictionary:
-		for k in parsed.keys():
-			var entry = parsed[k]
-			if entry is Dictionary:
-				if not entry.has("id"):
-					entry = entry.duplicate(true)
-					entry["id"] = str(k)
-				_cards_by_id[str(entry["id"])] = entry
+	if typeof(parsed) == TYPE_ARRAY:
+		RAW_CARDS = parsed
+	elif typeof(parsed) == TYPE_DICTIONARY and parsed.has("cards") and typeof(parsed["cards"]) == TYPE_ARRAY:
+		RAW_CARDS = parsed["cards"]
 	else:
-		push_error("CardDB: formato no soportado en %s" % CARDS_PATH)
+		push_error("CardDB: Formato de CardsDB.json no soportado. Se esperaba Array o {cards:[...]}")
+		return
+
+	for c in RAW_CARDS:
+		if typeof(c) != TYPE_DICTIONARY:
+			continue
+		var id := str(c.get("id", ""))
+		if id == "":
+			id = str(c.get("passcode", ""))
+		if id == "":
+			continue
+		CARDS[id] = c
+
+	print("CardDB: cargadas %d cartas (indexadas: %d)" % [RAW_CARDS.size(), CARDS.size()])
 
 func has_card(id: String) -> bool:
-	_load_cards_if_needed()
-	return _cards_by_id.has(id)
+	return CARDS.has(id)
 
 func get_card(id: String) -> Dictionary:
-	_load_cards_if_needed()
-	return _cards_by_id.get(id, {})
+	return CARDS.get(id, {})
 
-func get_all_cards() -> Array:
-	_load_cards_if_needed()
-	return _cards_by_id.values()
+func get_random_card_id() -> String:
+	if CARDS.is_empty():
+		return ""
+	var keys := CARDS.keys()
+	return str(keys[randi_range(0, keys.size() - 1)])

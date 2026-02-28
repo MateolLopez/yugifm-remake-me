@@ -41,11 +41,18 @@ func _input(event: InputEvent) -> void:
 						highest_z = c.z_index
 				picked = highest_card
 
-			if is_instance_valid(picked) and picked.card_type == "Monster" and picked.card_slot_card_is_in:
+			if is_instance_valid(picked) and str(picked.kind) == "MONSTER" and picked.has_method("is_on_field") and picked.is_on_field():
 				var bm = $"../BattleManager"
 				if bm and (picked in bm.player_cards_that_attacked_this_turn):
 					return
-				picked.toggle_defense_position()
+
+				if bm and bm.has_method("_set_position"):
+					bm._set_position(picked, "DEFENSE" if not bool(picked.in_defense) else "ATTACK")
+				else:
+					if picked.has_method("set_defense_position"):
+						picked.set_defense_position(not bool(picked.in_defense))
+					else:
+						picked.in_defense = not bool(picked.in_defense)
 		return 
 	
 	if Input.is_action_just_pressed("star_guardian_changer") and not inputs_disabled:
@@ -80,6 +87,22 @@ func _input(event: InputEvent) -> void:
 			emit_signal("left_mouse_button_released")
 	
 	var can_fuse = !$"../CardManager".played_monster_card_this_turn
+	
+	if event.is_action_pressed("activate_effect"):
+		if $"../BattleManager".is_opponent_turn:
+			return
+
+		var hovered_card = _get_hovered_card()
+		if not is_instance_valid(hovered_card):
+			return
+
+		var bm = get_node_or_null("../BattleManager")
+		if bm and bm.has_method("try_activate_card"):
+			bm.try_activate_card(hovered_card)
+		elif bm and bm.has_method("try_activate_selected_card"):
+			if card_manager_reference:
+				card_manager_reference.card_clicked(hovered_card)
+			bm.try_activate_selected_card()
 	
 	if event.is_action_pressed("select_for_fusion_generic") and can_fuse:
 		if $"../BattleManager".is_opponent_turn:

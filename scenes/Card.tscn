@@ -1,6 +1,6 @@
 [gd_scene load_steps=43 format=3 uid="uid://terlwd0wtt47"]
 
-[ext_resource type="Script" uid="uid://bo2w3sr75lwiu" path="res://Scripts/card.gd" id="1_tgmmg"]
+[ext_resource type="Script" uid="uid://cuj8cgrhbfj0f" path="res://Scripts/card.gd" id="1_tgmmg"]
 [ext_resource type="Texture2D" uid="uid://ra55qxy2rgeg" path="res://_resources/card_design/texture_orange.png" id="2_4dx8l"]
 [ext_resource type="Texture2D" uid="uid://nfhmmh78aiqu" path="res://_resources/card_design/frame_monster.png" id="3_40ytf"]
 [ext_resource type="Texture2D" uid="uid://due3bu6w5x3be" path="res://_resources/_card_artwork/46986414.png" id="3_qbjcq"]
@@ -975,8 +975,11 @@ offset_bottom = 480.0
 texture = ExtResource("2_4dx8l")
 metadata/_edit_use_anchors_ = true
 
-[node name="artwork" type="Sprite2D" parent="."]
-position = Vector2(164, 240)
+[node name="CardArt" type="TextureRect" parent="."]
+offset_left = 34.0
+offset_top = 110.0
+offset_right = 292.0
+offset_bottom = 368.0
 scale = Vector2(1.01, 1.01)
 texture = ExtResource("3_qbjcq")
 
@@ -988,7 +991,7 @@ offset_bottom = 490.0
 texture = ExtResource("3_40ytf")
 metadata/_edit_use_anchors_ = true
 
-[node name="card_name" type="Label" parent="."]
+[node name="CardName" type="Label" parent="."]
 offset_left = 37.0
 offset_top = 25.0
 offset_right = 262.0
@@ -1159,9 +1162,10 @@ metadata/_edit_use_anchors_ = true
 [node name="AnchorCenter" type="Marker2D" parent="."]
 position = Vector2(164.5, 239.5)
 
-[node name="BackOverlay" type="Sprite2D" parent="."]
+[node name="CardBack" type="TextureRect" parent="."]
 visible = false
-position = Vector2(165, 240)
+offset_right = 329.0
+offset_bottom = 480.0
 texture = ExtResource("8_dqwud")
 
 [node name="guardian_star" type="Label" parent="."]
