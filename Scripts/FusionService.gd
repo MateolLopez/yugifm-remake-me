@@ -13,8 +13,8 @@ func find_generic_fusion(card1: Node, card2: Node) -> Node:
 		return card2
 	var t1: Array = _get_tags(card1)
 	var t2: Array = _get_tags(card2)
-	var a1 := int(card1.get("atk"))
-	var a2 := int(card2.get("atk"))
+	var a1 := _to_int(card1.get("atk"))
+	var a2 := _to_int(card2.get("atk"))
 	var candidates: Array = []
 
 	for f in repo.generic_fusions:
@@ -27,7 +27,7 @@ func find_generic_fusion(card1: Node, card2: Node) -> Node:
 		if result_id == "" or not repo.has_card(result_id):
 			continue
 		var result_def := repo.get_card_def(result_id)
-		var result_atk := int(result_def.get("atk", 0))
+		var result_atk := _to_int(result_def.get("atk", 0))
 		if result_atk <= 0:
 			continue
 		# Regla: materiales no pueden tener ATK >= al resultado
@@ -111,3 +111,12 @@ func _multiset_matches(selected: Array, required: Array) -> bool:
 			return false
 		tmp.remove_at(i)
 	return true
+
+func _to_int(v) -> int:
+	if v == null:
+		return 0
+	if typeof(v) == TYPE_INT:
+		return v
+	if typeof(v) == TYPE_FLOAT:
+		return int(v)
+	return str(v).to_int()

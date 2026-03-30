@@ -10,10 +10,23 @@ var cards_by_id: Dictionary = {}
 
 func _ready() -> void:
 	_load_cards_db()
+
 	if override_deck.size() > 0:
 		player_deck = override_deck.duplicate()
+	else:
+		var cb := get_node_or_null("/root/PlayerDeckCB")
+		if cb != null and cb.has_method("get_deck_by_key"):
+			var key := "default"
+			var gs := get_node_or_null("/root/GameState")
+			if gs != null and ("selected_deck_key" in gs):
+				key = str(gs.selected_deck_key)
+			player_deck = cb.get_deck_by_key(key)
+		else:
+			player_deck = player_deck.duplicate()
+
 	player_deck.shuffle()
 	$RichTextLabel.text = str(player_deck.size())
+
 	for i in range(STARTING_HAND_SIZE):
 		draw_card()
 

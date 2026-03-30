@@ -60,7 +60,7 @@ func card_clicked(card: Card) -> void:
 	if card.is_on_field():
 		if bm.is_opponent_turn:
 			return
-		if card in bm.player_cards_that_attacked_this_turn:
+		if card in bm.player_cards_that_attacked_this_turn and not bm._has_kw(card, "MULTI_ATTACK_ALL"):
 			return
 		if bm.spell_targeting:
 			bm.receive_spell_target(card)

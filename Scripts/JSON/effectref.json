@@ -38,7 +38,8 @@
 	"MULTI_ATTACK_ALL": "Puede atacar a cada monstruo oponente una vez por turno.",
 	"DIRECT_ATTACK": "Puede atacar directamente a LP (cuando aplique).",
 	"NAME_COUNTS_AS_HARPIE_LADY": "Se considera «Harpie Lady» (para sinergias por nombre).",
-	"NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF": "El controlador no recibe daño de batalla en batallas que involucren a esta carta."
+	"NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF": "El controlador no recibe daño de batalla en batallas que involucren a esta carta.",
+	"NO_EQUIP": "No puede ser equipado con Equi Spells"
   },
   "templates": {
 	"destroy_target": {
@@ -65,13 +66,25 @@
 	"destroy_by_effect": {
 	  "desc": "Destruye uno o más monstruos según un selector.",
 	  "params_schema": {
-		"selector": "string",
-		"target_side": "SELF|OPPONENT|BOTH",
-		"faceup_only": "bool?",
-		"facedown_only": "bool?",
-		"count": "int?",
-		"choose": "HIGHEST_ATK|LOWEST_ATK|HIGHEST_LEVEL|LOWEST_ATK_FACEUP|HIGHEST_ATK_FACEUP|ALL"
-	  }
+		  "target_side": "SELF|OPPONENT|BOTH",
+		  "zones": ["MONSTER", "SPELL_TRAP", "FIELD"],
+		  "kinds": ["MONSTER", "SPELL", "TRAP"],
+		  "faceup_only": true,
+		  "facedown_only": false,
+		  "count": 1,
+		  "choose": "RANDOM|HIGHEST_ATK|LOWEST_ATK|HIGHEST_LEVEL|ALL"
+		}
+	},
+	"grant_protection_profile_while_faceup": {
+		"desc": "Mientras la fuente permanezca boca arriba en el campo, otorga reglas de protección a sí misma.",
+		"params_schema": {
+			"rules": [
+			{
+			"mode": "UNAFFECTED_BY|CANNOT_BE_DESTROYED_BY",
+			"sources": ["BATTLE", "SPELL", "TRAP", "MONSTER_EFFECT"]
+		}
+		]
+	}
 	},
 	"inflict_effect_damage": {
 	  "desc": "Inflige daño de efecto a un jugador.",
@@ -160,6 +173,15 @@
 		"position": "string"
 	  }
 	},
+	"equip_spell_to_target": {
+  "desc": "Equipa esta carta a un monstruo objetivo y aplica modificaciones.",
+  "params_schema": {
+	"mod": "dict?",
+	"set": "dict?",
+	"grant_keywords": "array?",
+	"requirements": "dict?"
+  }
+},
 	"activate_sacrifice_allies_of_race_to_summon_by_total_levels": {
 	  "desc": "Tributa (envía al cementerio) aliados de una raza (y opcionalmente a sí mismo), suma niveles y luego invoca una carta aleatoria de una raza cuyo nivel sea igual a la suma (cap).",
 	  "params_schema": {
@@ -345,7 +367,8 @@
 			"MULTI_ATTACK_ALL",
 			"DIRECT_ATTACK",
 			"NAME_COUNTS_AS_HARPIE_LADY",
-            "NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF"
+			"NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF",
+			"NO_EQUIP"
 		  ]
 		},
 		"include_future_summons": {
@@ -539,6 +562,25 @@
 		"WHILE_SOURCE_FACE_UP",
         "PERMANENT"
 	  ]
+	},
+	"ProtectionSource": {
+		"enum": [
+			"BATTLE",
+			"SPELL",
+			"TRAP",
+			"MONSTER_EFFECT"
+		]
+	},
+	"ProtectionOutcome": {
+	 	"enum": [
+			"AFFECT",
+			"DESTROY",
+			"TARGET",
+			"BANISH",
+			"SEND_TO_GRAVE",
+			"STAT_MOD",
+			"POSITION_CHANGE"
+		]
 	}
   },
   "selector_schema": {

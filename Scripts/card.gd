@@ -41,6 +41,8 @@ var tags: Array = []
 var keywords: Array = []
 var description: String = ""
 var effects: Array = []
+var equipped_spells: Array = [] 
+var effect_modifiers: Array = []
 
 # -------------------------
 # Guardian Star activa (switchable)
@@ -223,9 +225,9 @@ func _update_kind_visuals() -> void:
 
 func _update_stat_labels() -> void:
 	if is_instance_valid(atk_label):
-		atk_label.text = str(atk)
+		atk_label.text = str(get_effective_atk())
 	if is_instance_valid(def_label):
-		def_label.text = str(def)
+		def_label.text = str(get_effective_def())
 	_update_level_stars()
 
 func _update_level_stars() -> void:
@@ -368,13 +370,19 @@ func get_effects() -> Array:
 func has_keyword(k: String) -> bool:
 	if keywords == null:
 		return false
-	return keywords.has(k)
+	var ku := str(k).to_upper()
+	for it in keywords:
+		if str(it).to_upper() == ku:
+			return true
+	return false
 
 # -------------------------
 # Runtime helpers 
 # -------------------------
 func is_on_field() -> bool:
-	return current_zone == "FIELD" and current_slot != null
+	if current_zone == "FIELD" and current_slot != null:
+		return true
+	return current_zone == "FIELD" and has_meta("ethereal_field_spell") and bool(get_meta("ethereal_field_spell"))
 
 func is_spell_like() -> bool:
 	return kind == "SPELL" or kind == "TRAP"
@@ -421,6 +429,28 @@ func _update_battle_position_visual() -> void:
 
 	global_position += (anchor_global_before - anchor_global_after)
 
+func add_equip_instance(equip_instance: Dictionary) -> void:
+	equipped_spells.append(equip_instance)
+	_update_visuals() 
+
+func remove_equip_instance_by_id(instance_id: String) -> void:
+	for i in range(equipped_spells.size() - 1, -1, -1):
+		if str(equipped_spells[i].get("instance_id", "")) == instance_id:
+			equipped_spells.remove_at(i)
+			break
+	_update_visuals()
+
+func clear_all_equips() -> void:
+	equipped_spells.clear()
+	_update_visuals()
+
+func set_effect_modifiers(mods: Array) -> void:
+	effect_modifiers = mods.duplicate() if mods != null else []
+	_update_visuals()
+
+func clear_effect_modifiers() -> void:
+	effect_modifiers.clear()
+	_update_visuals()
 # -------------------------
 # Utils
 # -------------------------
@@ -464,3 +494,91 @@ func set_fusion_marker(marker: int) -> void:
 		return
 
 	fusion_spiral.material = null
+
+#----------------
+# Equip System
+#----------------
+func get_effective_atk() -> int:
+	var total := atk
+
+	# equips
+	for e in equipped_spells:
+		var mod = e.get("mod", {})
+		total += int(mod.get("atk", 0))
+
+	# efectos (auras, temporales, etc.)
+	for m in effect_modifiers:
+		total += int(m.get("atk", 0))
+
+	return total
+
+func get_effective_def() -> int:
+	var total := def
+
+	for e in equipped_spells:
+		var mod = e.get("mod", {})
+		total += int(mod.get("def", 0))
+
+	for m in effect_modifiers:
+		total += int(m.get("def", 0))
+
+	return total
+
+func get_effective_level() -> int:
+	var total := level
+
+	for e in equipped_spells:
+		var mod = e.get("mod", {})
+		total += int(mod.get("level", 0))
+
+	for m in effect_modifiers:
+		total += int(m.get("level", 0))
+
+	return total
+
+func get_effective_race() -> String:
+	var v := race
+	for e in equipped_spells:
+		var setd = e.get("set", {})
+		var r := str(setd.get("race", ""))
+		if r != "":
+			v = r
+	return v
+
+func get_effective_attribute() -> String:
+	var v := attribute
+	for e in equipped_spells:
+		var setd = e.get("set", {})
+		var a := str(setd.get("attribute", ""))
+		if a != "":
+			v = a
+	return v
+
+func get_effective_name() -> String:
+	var v := cardname
+	for e in equipped_spells:
+		var setd = e.get("set", {})
+		var n := str(setd.get("cardname", ""))
+		if n != "":
+			v = n
+	return v
+
+func get_effective_keywords() -> Array:
+	var out: Array = []
+	if keywords != null:
+		out = keywords.duplicate()
+	for e in equipped_spells:
+		for k in (e.get("grant_keywords", []) as Array):
+			if not out.has(k):
+				out.append(k)
+	return out
+
+func equip_has_keyword(k: String) -> bool:
+	k = k.to_upper()
+	for base_k in (keywords if keywords != null else []):
+		if str(base_k).to_upper() == k:
+			return true
+	for eq_k in get_effective_keywords():
+		if str(eq_k).to_upper() == k:
+			return true
+	return false

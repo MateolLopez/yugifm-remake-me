@@ -246,6 +246,13 @@ offset_bottom = 455.0
 scale = Vector2(2, 2)
 text = "0"
 
+[node name="FieldSpellName" type="RichTextLabel" parent="."]
+offset_left = 1649.0
+offset_top = 501.0
+offset_right = 1689.0
+offset_bottom = 541.0
+text = "--"
+
 [node name="Bgduel" type="Sprite2D" parent="."]
 z_index = -20
 position = Vector2(1036, 482)
@@ -302,5 +309,9 @@ libraries = {
 &"": SubResource("AnimationLibrary_sjiiy")
 }
 autoplay = "animationSpiral"
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="CardContextMenu" type="PopupMenu" parent="UILayer"]
 
 [connection signal="pressed" from="EndTurnButton" to="BattleManager" method="_on_end_turn_button_pressed"]

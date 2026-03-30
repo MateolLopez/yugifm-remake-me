@@ -1,8 +1,20 @@
 [
   {
-    "fusion_id": "blue_eyes_ultimate_dragon",
-    "result_id": "23995346",
-    "required_ids": ["89631139","89631139","89631139"],
-    "exact_count": true
-  }
+	"fusion_id": "blue_eyes_ultimate_dragon",
+	"result_id": "23995346",
+	"required_ids": ["89631139","89631139","89631139"],
+	"exact_count": true
+  },
+{
+	"fusion_id":"skull_knight",
+	"result_id":"02504891",
+	"required_ids":["42431843","28725004"],
+	"exact_count": true
+},
+{
+	"fusion_id":"e_hero_wildedge",
+	"result_id":"10526791",
+	"required_ids":["86188410","59793705"],
+	"exact_count": true
+}
 ]

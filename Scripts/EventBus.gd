@@ -15,6 +15,9 @@ signal opponent_spell_activated(payload: Dictionary)
 signal trap_activated(payload: Dictionary)
 signal opponent_trap_activated(payload: Dictionary)
 
+signal field_spell_activated(payload: Dictionary)
+signal opponent_field_spell_activated(payload: Dictionary)
+
 signal activation_declared(payload: Dictionary)
 signal activation_resolved(payload: Dictionary)
 
@@ -60,6 +63,11 @@ func emit_event(event_name: String, payload: Dictionary = {}) -> void:
 			emit_signal("trap_activated", payload)
 		"ON_OPPONENT_TRAP_ACTIVATE":
 			emit_signal("opponent_trap_activated", payload)
+		
+		"ON_FIELD_SPELL_ACTIVATE":
+			emit_signal("field_spell_activated", payload)
+		"ON_OPPONENT_FIELD_SPELL_ACTIVATE":
+			emit_signal("opponent_field_spell_activated", payload)
 
 		"ON_ACTIVATE":
 			emit_signal("activation_declared", payload)

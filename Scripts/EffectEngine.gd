@@ -6,6 +6,7 @@ var templates: Dictionary = {}
 var keywords: Dictionary = {}
 
 var active_auras: Array = []
+var active_protection_profiles: Array = []
 var field_cards: Array = []
 var field_controller_by_id: Dictionary = {} 
 var once_per_instance_used: Dictionary = {}
@@ -60,16 +61,36 @@ func register_card_entered_field(card: Node, controller: String) -> void:
 	if not card.has_method("get_effects"):
 		return
 
+	print("REGISTER FIELD CARD:", card.cardname if ("cardname" in card) else str(card), " controller=", controller)
+
 	if not field_cards.has(card):
 		field_cards.append(card)
 	field_controller_by_id[str(card.get_instance_id())] = _norm_owner(controller)
 
 	var effs: Array = card.get_effects()
+	print("  EFFECTS COUNT=", effs.size(), " EFFECTS=", effs)
+
 	for e in effs:
 		if typeof(e) != TYPE_DICTIONARY:
+			print("  SKIP NON-DICT EFFECT:", e)
 			continue
-		if str(e.get("trigger", "")).to_upper() == "PASSIVE":
+
+		var trig := str(e.get("trigger", "")).to_upper()
+		var tpl := str(e.get("template", ""))
+		print("  EFFECT trig=", trig, " tpl=", tpl)
+
+		if trig != "PASSIVE":
+			continue
+
+		if tpl == "aura_stat_buff_while_source_faceup":
+			print("  REGISTER AURA:", card.cardname if ("cardname" in card) else str(card))
 			_active_register_aura(card, _norm_owner(controller), e)
+		elif tpl == "grant_protection_profile_while_faceup":
+			print("  REGISTER PROTECTION:", card.cardname if ("cardname" in card) else str(card))
+			_active_register_protection_profile(card, _norm_owner(controller), e)
+
+	_refresh_aura_stat_buffs()
+	print("  ACTIVE_PROTECTION_PROFILES=", active_protection_profiles.size())
 
 func register_card_left_field(card: Node) -> void:
 	if card == null:
@@ -84,13 +105,26 @@ func register_card_left_field(card: Node) -> void:
 		if a.get("card") == card:
 			active_auras.remove_at(i)
 
+	for i in range(active_protection_profiles.size() - 1, -1, -1):
+		var p = active_protection_profiles[i]
+		if p.get("card") == card:
+			active_protection_profiles.remove_at(i)
+
+	_refresh_aura_stat_buffs()
+
 func _active_register_aura(card: Node, controller: String, effect_def: Dictionary) -> void:
+	for a in active_auras:
+		if a.get("card") == card and a.get("effect") == effect_def:
+			return
 	active_auras.append({"card": card, "controller": controller, "effect": effect_def})
 
 func _on_event(event_name: String, payload: Dictionary) -> void:
 	_resolve_triggered_effects(event_name, payload)
 	_resolve_aura_reactions(event_name, payload)
-	
+
+	var ev := str(event_name).to_upper()
+	if ev in ["ON_PLAY", "ON_FLIP", "ON_LEAVE_FIELD", "ON_DESTROY", "ON_SUMMON_BY_EFFECT", "ON_CHANGE_POSITION"]:
+		_refresh_aura_stat_buffs()
 
 func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void:
 	var ev := str(event_name).to_upper()
@@ -106,7 +140,30 @@ func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void
 		if source2 != null and not candidates.has(source2):
 			candidates.append(source2)
 
+	var non_trap_candidates: Array = []
+	var trap_candidates: Array = []
+
 	for card in candidates:
+		if card == null or not is_instance_valid(card):
+			continue
+
+		if bool(payload.get("suppress_trap_reactions", false)):
+			var ck0 := ""
+			if "kind" in card:
+				ck0 = str(card.kind).to_upper()
+			if ck0 == "TRAP":
+				continue
+
+		var ck := ""
+		if "kind" in card:
+			ck = str(card.kind).to_upper()
+
+		if ck == "TRAP":
+			trap_candidates.append(card)
+		else:
+			non_trap_candidates.append(card)
+
+	for card in non_trap_candidates:
 		if card == null or not is_instance_valid(card):
 			continue
 		if not card.has_method("get_effects"):
@@ -125,6 +182,35 @@ func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void
 				continue
 
 			_execute_effect(card, payload, e)
+
+	trap_candidates.sort_custom(func(a, b): return _card_set_order(a) < _card_set_order(b))
+
+	for card in trap_candidates:
+		if card == null or not is_instance_valid(card):
+			continue
+		if not card.has_method("get_effects"):
+			continue
+
+		var effs: Array = card.get_effects()
+		var executed_trap := false
+
+		for e in effs:
+			if typeof(e) != TYPE_DICTIONARY:
+				continue
+
+			var trig := str(e.get("trigger", "")).to_upper()
+			if trig != ev:
+				continue
+
+			if not _passes_controller_filter(card, trig, payload):
+				continue
+
+			_execute_effect(card, payload, e)
+			executed_trap = true
+			break
+
+		if executed_trap:
+			break
 
 func _resolve_aura_reactions(event_name: String, payload: Dictionary) -> void:
 	for a in active_auras:
@@ -158,6 +244,9 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> v
 		"summon_token_from_source_basestats": _tpl_summon_token_from_source_basestats(source, ctx, params)
 		"negate_attack_and_destroy": _tpl_negate_attack_and_destroy(source, ctx, params)
 		"destroy_by_effect": _tpl_destroy_by_effect(source, ctx, params)
+		"equip_spell_to_target": _tpl_equip_spell_to_target(source, ctx, params)
+		"aura_stat_buff_while_source_faceup": _tpl_aura_stat_buff_while_source_faceup(source, ctx, params)
+		"grant_protection_profile_while_faceup": _tpl_grant_protection_profile_while_faceup(source, ctx, params)
 		_:
 			push_warning("EffectEngine: Template no implementado: %s" % template)
 
@@ -226,6 +315,7 @@ func _get_battle_manager(ctx: Dictionary) -> Node:
 			return bm_scene
 	var bm := get_node_or_null("/root/Duel_scene/BattleManager")
 	return bm
+
 func _is_self_only_trigger(ev: String) -> bool:
 	ev = ev.to_upper()
 	return ev in [
@@ -267,6 +357,97 @@ func _passes_controller_filter(card: Node, trigger: String, payload: Dictionary)
 		return card_controller == ev_controller
 
 	return true
+
+func _source_class_from_ctx(effect_ctx: Dictionary) -> String:
+	if bool(effect_ctx.get("is_battle", false)):
+		return "BATTLE"
+
+	var source = effect_ctx.get("source", null)
+	var activation_type := str(effect_ctx.get("activation_type", "")).to_upper()
+
+	if activation_type == "SPELL":
+		return "SPELL"
+	if activation_type == "TRAP":
+		return "TRAP"
+	if activation_type == "MONSTER_EFFECT":
+		return "MONSTER_EFFECT"
+
+	if source != null and is_instance_valid(source):
+		var k := ""
+		if "kind" in source:
+			k = str(source.kind).to_upper()
+
+		if k == "SPELL":
+			return "SPELL"
+		if k == "TRAP":
+			return "TRAP"
+		if k == "MONSTER":
+			return "MONSTER_EFFECT"
+
+	return ""
+
+func _source_faceup_and_active(card: Node) -> bool:
+	if not is_instance_valid(card):
+		return false
+	if not field_cards.has(card):
+		return false
+	if "face_down" in card and bool(card.face_down):
+		return false
+	return true
+
+func is_effect_application_blocked(target: Node, effect_ctx: Dictionary, outcome: String) -> bool:
+	if not is_instance_valid(target):
+		return false
+
+	var source_class := _source_class_from_ctx(effect_ctx)
+	var wanted_outcome := str(outcome).to_upper()
+
+	print("CHECK PROTECTION target=", target.cardname if ("cardname" in target) else str(target), " source_class=", source_class, " outcome=", wanted_outcome, " profiles=", active_protection_profiles.size())
+
+	for p in active_protection_profiles:
+		var source_card = p.get("card", null)
+		if not is_instance_valid(source_card):
+			continue
+
+		
+		if not _source_faceup_and_active(source_card):
+			continue
+		if source_card != target:
+			continue
+
+		var effect_def: Dictionary = p.get("effect", {})
+		var params: Dictionary = effect_def.get("params", {})
+		var rules: Array = params.get("rules", [])
+
+		for rule in rules:
+			if typeof(rule) != TYPE_DICTIONARY:
+				continue
+
+			var mode := str(rule.get("mode", "")).to_upper()
+			var sources: Array = rule.get("sources", [])
+
+			var matches_source := false
+			for s in sources:
+				if str(s).to_upper() == source_class:
+					matches_source = true
+					break
+
+			print("    RULE mode=", mode, " sources=", sources, " matches_source=", matches_source)
+
+			if not matches_source:
+				continue
+
+			if mode == "UNAFFECTED_BY":
+				if wanted_outcome in ["AFFECT", "DESTROY", "TARGET", "BANISH", "SEND_TO_GRAVE", "STAT_MOD", "POSITION_CHANGE"]:
+					print("    BLOCKED BY UNAFFECTED_BY")
+					return true
+
+			elif mode == "CANNOT_BE_DESTROYED_BY":
+				if wanted_outcome == "DESTROY":
+					print("    BLOCKED BY CANNOT_BE_DESTROYED_BY")
+					return true
+
+	return false
 
 func _tpl_summon_token_from_source_basestats(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
@@ -328,6 +509,7 @@ func _tpl_inflict_effect_damage(source: Node, ctx: Dictionary, params: Dictionar
 	target_player = _norm_owner(target_player)
 
 	bm._apply_effect_damage_to_side(target_player, amount, {"source": source})
+
 func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
@@ -337,17 +519,37 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 	if not is_instance_valid(attacker_card):
 		return
 
-	# Debe estar en campo
 	if source != null and source.has_method("is_on_field"):
 		if not source.is_on_field():
 			return
 
 	if bool(params.get("only_if_attacker_is_opponent", false)):
-		var attacker_controller := _norm_owner(ctx.get("controller", "")) 
-		var trap_controller := _norm_owner(_controller_of_card(source))    
-		if attacker_controller == "" or trap_controller == "":
+		var attacker_controller := _norm_owner(ctx.get("controller", ""))
+		var source_controller := _norm_owner(_controller_of_card(source))
+		if attacker_controller == "" or source_controller == "":
 			return
-		if attacker_controller == trap_controller:
+		if attacker_controller == source_controller:
+			return
+
+	var effect_ctx := {
+		"source": source,
+		"controller": _norm_owner(_controller_of_card(source)),
+		"activation_type": ("TRAP" if is_instance_valid(source) and ("kind" in source) and str(source.kind).to_upper() == "TRAP" else ("SPELL" if is_instance_valid(source) and ("kind" in source) and str(source.kind).to_upper() == "SPELL" else "MONSTER_EFFECT"))
+	}
+
+	var eng = null
+	if bm.has_method("_get_effect_engine"):
+		eng = bm._get_effect_engine()
+
+	if eng and eng.has_method("is_effect_application_blocked"):
+		if eng.is_effect_application_blocked(attacker_card, effect_ctx, "AFFECT"):
+			var source_owner0 := _norm_owner(bm._owner_of(source))
+			if bm.has_method("_send_spell_to_graveyard"):
+				bm._send_spell_to_graveyard(source, source_owner0)
+			elif bm.has_method("send_spell_to_graveyard"):
+				bm.send_spell_to_graveyard(source, source_owner0)
+			else:
+				bm.destroy_card(source, source_owner0, "DESTROY_EFFECT", effect_ctx)
 			return
 
 	ctx["prevent_attack"] = true
@@ -357,19 +559,18 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 
 	if destroy_mode == "attacker":
 		var owner := _norm_owner(bm._owner_of(attacker_card))
-		bm.destroy_card(attacker_card, owner, "DESTROY_EFFECT")
+		bm.destroy_card(attacker_card, owner, "DESTROY_EFFECT", effect_ctx)
 	else:
-		# ahora mismo solo soporta sakuretsu (luego extender para mirror force, widespread, etc.)
 		var owner2 := _norm_owner(bm._owner_of(attacker_card))
-		bm.destroy_card(attacker_card, owner2, "DESTROY_EFFECT")
+		bm.destroy_card(attacker_card, owner2, "DESTROY_EFFECT", effect_ctx)
 
-	var trap_owner := _norm_owner(bm._owner_of(source))
+	var source_owner := _norm_owner(bm._owner_of(source))
 	if bm.has_method("_send_spell_to_graveyard"):
-		bm._send_spell_to_graveyard(source, trap_owner)
+		bm._send_spell_to_graveyard(source, source_owner)
 	elif bm.has_method("send_spell_to_graveyard"):
-		bm.send_spell_to_graveyard(source, trap_owner)
+		bm.send_spell_to_graveyard(source, source_owner)
 	else:
-		bm.destroy_card(source, trap_owner, "DESTROY_EFFECT")
+		bm.destroy_card(source, source_owner, "DESTROY_EFFECT", effect_ctx)
 
 func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
@@ -378,8 +579,19 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 
 	var controller := _norm_owner(ctx.get("controller", ""))
 	if controller == "" and source != null and ("owner_side" in source):
-		controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+		if str(source.owner_side).to_upper() == "PLAYER":
+			controller = "Player"
+		else:
+			controller = "Opponent"
 	controller = _norm_owner(controller)
+
+	var activation_type := "MONSTER_EFFECT"
+	if is_instance_valid(source) and ("kind" in source):
+		var sk := str(source.kind).to_upper()
+		if sk == "SPELL":
+			activation_type = "SPELL"
+		elif sk == "TRAP":
+			activation_type = "TRAP"
 
 	var target_side := str(params.get("target_side", "OPPONENT")).to_upper()
 	var faceup_only := bool(params.get("faceup_only", false))
@@ -387,33 +599,125 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 	var choose := str(params.get("choose", "ALL")).to_upper()
 	var count := int(params.get("count", 0))
 
-	var candidates: Array = []
+	var zones: Array = params.get("zones", ["MONSTER"])
+	var kinds: Array = params.get("kinds", ["MONSTER"])
 
+	var candidates: Array = []
 	var sides: Array[String] = []
+
 	if target_side == "SELF":
-		sides = ["PLAYER" if controller == "Player" else "OPPONENT"]
+		if controller == "Player":
+			sides = ["PLAYER"]
+		else:
+			sides = ["OPPONENT"]
 	elif target_side == "OPPONENT":
-		sides = ["OPPONENT" if controller == "Player" else "PLAYER"]
+		if controller == "Player":
+			sides = ["OPPONENT"]
+		else:
+			sides = ["PLAYER"]
 	elif target_side == "BOTH":
 		sides = ["PLAYER", "OPPONENT"]
 	else:
-		sides = ["OPPONENT" if controller == "Player" else "PLAYER"]
+		if controller == "Player":
+			sides = ["OPPONENT"]
+		else:
+			sides = ["PLAYER"]
 
 	for side in sides:
-		var arr: Array = bm.player_cards_on_battlefield if side == "PLAYER" else bm.opponent_cards_on_battlefield
-		for c in arr:
-			if not is_instance_valid(c):
-				continue
-			if bm._card_kind(c) != "MONSTER":
-				continue
+		if zones.has("MONSTER"):
+			var mons: Array = []
+			if side == "PLAYER":
+				mons = bm.player_cards_on_battlefield
+			else:
+				mons = bm.opponent_cards_on_battlefield
 
-			var is_facedown := bool(c.get("face_down")) if c.has_method("get") else false
-			if faceup_only and is_facedown:
-				continue
-			if facedown_only and not is_facedown:
-				continue
+			for c in mons:
+				if not is_instance_valid(c):
+					continue
+				if not kinds.has("MONSTER"):
+					continue
 
-			candidates.append(c)
+				var is_facedown := false
+				if "face_down" in c:
+					is_facedown = bool(c.face_down)
+
+				if faceup_only and is_facedown:
+					continue
+				if facedown_only and not is_facedown:
+					continue
+
+				candidates.append(c)
+
+		if zones.has("SPELL_TRAP"):
+			var slots_root = null
+			if side == "PLAYER":
+				slots_root = bm.get_node_or_null("../CardSlots")
+			else:
+				slots_root = bm.get_node_or_null("../CardSlotsRival")
+
+			if is_instance_valid(slots_root):
+				for s in slots_root.get_children():
+					if not is_instance_valid(s):
+						continue
+
+					var slot_type := str(s.get("card_slot_type"))
+					if slot_type != "SpellTrap" and slot_type != "Spell" and slot_type != "Trap":
+						continue
+
+					if not bool(s.get("card_in_slot")):
+						continue
+
+					var c = null
+					if "card_ref" in s:
+						c = s.card_ref
+					if not is_instance_valid(c):
+						continue
+
+					var ck := ""
+					if "kind" in c:
+						ck = str(c.kind).to_upper()
+
+					if not kinds.has(ck):
+						continue
+
+					var is_facedown2 := false
+					if "face_down" in c:
+						is_facedown2 = bool(c.face_down)
+
+					if faceup_only and is_facedown2:
+						continue
+					if facedown_only and not is_facedown2:
+						continue
+
+					candidates.append(c)
+
+		if zones.has("FIELD"):
+			var fs = bm.active_field_spell
+			if is_instance_valid(fs):
+				var fs_controller := _norm_owner(bm.active_field_spell_controller)
+				var belongs := false
+
+				if side == "PLAYER" and fs_controller == "Player":
+					belongs = true
+				elif side == "OPPONENT" and fs_controller == "Opponent":
+					belongs = true
+
+				if belongs:
+					var fs_kind := ""
+					if "kind" in fs:
+						fs_kind = str(fs.kind).to_upper()
+
+					if kinds.has(fs_kind):
+						var fs_facedown := false
+						if "face_down" in fs:
+							fs_facedown = bool(fs.face_down)
+
+						if faceup_only and fs_facedown:
+							pass
+						elif facedown_only and not fs_facedown:
+							pass
+						else:
+							candidates.append(fs)
 
 	if candidates.is_empty():
 		return
@@ -422,24 +726,248 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 
 	if choose == "ALL" or count == 0:
 		to_destroy = candidates
+	elif choose == "RANDOM":
+		candidates.shuffle()
+		var n1 = max(1, count)
+		for i in range(min(n1, candidates.size())):
+			to_destroy.append(candidates[i])
 	else:
 		match choose:
 			"HIGHEST_ATK":
-				candidates.sort_custom(func(a,b): return int(a.get("atk")) > int(b.get("atk")))
+				candidates.sort_custom(func(a, b):
+					var av := 0
+					var bv := 0
+					if "atk" in a:
+						av = int(a.atk)
+					if "atk" in b:
+						bv = int(b.atk)
+					return av > bv
+				)
 			"LOWEST_ATK":
-				candidates.sort_custom(func(a,b): return int(a.get("atk")) < int(b.get("atk")))
+				candidates.sort_custom(func(a, b):
+					var av := 0
+					var bv := 0
+					if "atk" in a:
+						av = int(a.atk)
+					if "atk" in b:
+						bv = int(b.atk)
+					return av < bv
+				)
 			"HIGHEST_LEVEL":
-				candidates.sort_custom(func(a,b): return int(a.get("level")) > int(b.get("level")))
+				candidates.sort_custom(func(a, b):
+					var av := 0
+					var bv := 0
+					if "level" in a:
+						av = int(a.level)
+					if "level" in b:
+						bv = int(b.level)
+					return av > bv
+				)
 			_:
-				candidates.sort_custom(func(a,b): return int(a.get("atk")) > int(b.get("atk")))
+				candidates.shuffle()
 
-		var n = max(1, count)
-		for i in range(min(n, candidates.size())):
+		var n2 = max(1, count)
+		for i in range(min(n2, candidates.size())):
 			to_destroy.append(candidates[i])
 
-	# Destruir por efecto
-	for m in to_destroy:
-		if not is_instance_valid(m):
+	for c in to_destroy:
+		if not is_instance_valid(c):
 			continue
-		var owner := _norm_owner(bm._owner_of(m))
-		bm.destroy_card(m, owner, "DESTROY_EFFECT")
+
+		var effect_ctx := {
+			"source": source,
+			"controller": controller,
+			"activation_type": activation_type
+		}
+
+		if c == bm.active_field_spell:
+			var eng = bm._get_effect_engine()
+			if eng and eng.has_method("is_effect_application_blocked"):
+				if eng.is_effect_application_blocked(c, effect_ctx, "DESTROY"):
+					continue
+
+			c.set_meta("ethereal_field_spell", false)
+			bm._unregister_card_with_effect_engine(c)
+			var fs_owner := _norm_owner(bm.active_field_spell_controller)
+			bm.active_field_spell = null
+			bm.active_field_spell_controller = ""
+			bm._update_field_spell_name_ui()
+			bm._send_spell_to_graveyard(c, fs_owner)
+			continue
+
+		var ck2 := ""
+		if "kind" in c:
+			ck2 = str(c.kind).to_upper()
+
+		if ck2 == "MONSTER":
+			var owner := _norm_owner(bm._owner_of(c))
+			bm.destroy_card(c, owner, "DESTROY_EFFECT", effect_ctx)
+		elif ck2 == "SPELL" or ck2 == "TRAP":
+			var eng2 = bm._get_effect_engine()
+			if eng2 and eng2.has_method("is_effect_application_blocked"):
+				if eng2.is_effect_application_blocked(c, effect_ctx, "DESTROY"):
+					continue
+
+			var owner2 := _norm_owner(bm._owner_of(c))
+			bm._send_spell_to_graveyard(c, owner2)
+
+func _tpl_equip_spell_to_target(source: Node, ctx: Dictionary, _params: Dictionary) -> void:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return
+
+	var controller := _norm_owner(ctx.get("controller", ""))
+	if controller == "":
+		return
+
+	if bm.has_method("start_equip_from_hand"):
+		bm.start_equip_from_hand(source, controller)
+
+func _tpl_aura_stat_buff_while_source_faceup(source: Node, ctx: Dictionary, params: Dictionary) -> void:
+	_refresh_aura_stat_buffs()
+
+func _refresh_aura_stat_buffs() -> void:
+	var monsters: Array = []
+	for c in field_cards:
+		if not is_instance_valid(c):
+			continue
+		var k := str(c.kind).to_upper() if ("kind" in c) else ""
+		if k != "MONSTER":
+			continue
+		if not c.has_method("is_on_field") or not c.is_on_field():
+			continue
+		monsters.append(c)
+
+	var acc: Dictionary = {}  # key: target instance_id => { "atk":int, "def":int, "mods":Array }
+
+	for a in active_auras:
+		var src = a.get("card", null)
+		if not is_instance_valid(src):
+			continue
+		if not src.has_method("is_on_field") or not src.is_on_field():
+			continue
+
+		var src_facedown := bool(src.face_down) if ("face_down" in src) else false
+		if src_facedown:
+			continue
+
+		var effect_def: Dictionary = a.get("effect", {})
+		if str(effect_def.get("template","")) != "aura_stat_buff_while_source_faceup":
+			continue
+
+		var params: Dictionary = effect_def.get("params", {})
+
+		var target_side := str(params.get("target_side","SELF")).to_upper() # SELF / OPPONENT / BOTH
+		var filter_attribute := str(params.get("filter_attribute","")).to_upper()
+		var atk_delta := int(params.get("atk_delta", 0))
+		var def_delta := int(params.get("def_delta", 0))
+
+		var src_controller := _norm_owner(_controller_of_card(src))
+		if src_controller == "":
+			continue
+
+		for t in monsters:
+			if not is_instance_valid(t):
+				continue
+
+			var t_controller := _norm_owner(_controller_of_card(t))
+			if t_controller == "":
+				continue
+
+			var ok_side := true
+			if target_side == "SELF":
+				ok_side = (t_controller == src_controller)
+			elif target_side == "OPPONENT":
+				ok_side = (t_controller != src_controller)
+			elif target_side == "BOTH":
+				ok_side = true
+			if not ok_side:
+				continue
+
+			if filter_attribute != "":
+				var a2 := str(t.attribute).to_upper() if ("attribute" in t) else ""
+				if a2 != filter_attribute:
+					continue
+
+			var tid := str(t.get_instance_id())
+			if not acc.has(tid):
+				acc[tid] = {"atk": 0, "def": 0, "mods": []}
+
+			acc[tid]["atk"] = int(acc[tid]["atk"]) + atk_delta
+			acc[tid]["def"] = int(acc[tid]["def"]) + def_delta
+			acc[tid]["mods"].append({
+				"src_id": str(src.get_instance_id()),
+				"atk": atk_delta,
+				"def": def_delta
+			})
+
+	for t in monsters:
+		if not is_instance_valid(t):
+			continue
+		var tid := str(t.get_instance_id())
+		var mods: Array = []
+		if acc.has(tid):
+			mods = acc[tid]["mods"]
+
+		if t.has_method("set_effect_modifiers"):
+			t.set_effect_modifiers(mods)
+		elif t.has_method("clear_effect_modifiers"):
+			t.clear_effect_modifiers()
+
+func _active_register_protection_profile(card: Node, controller: String, effect_def: Dictionary) -> void:
+	for p in active_protection_profiles:
+		if p.get("card") == card and p.get("effect") == effect_def:
+			return
+	active_protection_profiles.append({
+		"card": card,
+		"controller": controller,
+		"effect": effect_def
+	})
+	print("REGISTER PROTECTION:", card.cardname, " profiles=", active_protection_profiles.size())
+
+func _aura_instance_id(source: Node, effect_def: Dictionary) -> String:
+	var params: Dictionary = effect_def.get("params", {})
+	var aura_id := str(params.get("aura_id", ""))
+	if aura_id == "":
+		var sig := "%s|%s|%s|%s|%s|%s" % [
+			str(params.get("target_side", "")),
+			str(params.get("filter_attribute", "")),
+			str(params.get("filter_race", "")),
+			str(params.get("filter_tag", "")),
+			str(params.get("atk_delta", 0)),
+			str(params.get("def_delta", 0))
+		]
+		aura_id = sig
+
+	return "aura|%s|%s" % [str(source.get_instance_id()), aura_id]
+
+func _card_set_order(card: Node) -> int:
+	if not is_instance_valid(card):
+		return 999999999
+	if card.has_meta("set_order"):
+		return int(card.get_meta("set_order"))
+	return 999999999
+
+func _apply_aura_as_virtual_equip(target: Node, instance_id: String, source: Node, atk_delta: int, def_delta: int) -> void:
+	var equips: Array = target.get("equipped_spells") if ("equipped_spells" in target) else []
+	for e in equips:
+		if typeof(e) == TYPE_DICTIONARY and str(e.get("instance_id", "")) == instance_id:
+			return
+
+	var equip_instance := {
+		"instance_id": instance_id,
+		"spell_id": "",
+		"spell_name": "AURA",
+		"mod": {"atk": atk_delta, "def": def_delta},
+		"set": {},
+		"grant_keywords": [],
+		"meta": {
+			"is_aura": true,
+			"source_id": str(source.get_instance_id())
+		}
+	}
+
+	target.add_equip_instance(equip_instance)
+
+func _tpl_grant_protection_profile_while_faceup(_source: Node, _ctx: Dictionary, _params: Dictionary) -> void:
+	return

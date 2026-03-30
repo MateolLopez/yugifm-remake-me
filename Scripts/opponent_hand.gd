@@ -29,7 +29,17 @@ func add_card_to_hand(card: Node2D, speed: float) -> void:
 		card.set_show_back_only(true)
 	if card.has_method("set_face_down"):
 		card.set_face_down(true)
+	
+	if card.has_method("move_to_zone"):
+		card.move_to_zone("HAND")
+	elif "current_zone" in card:
+		card.current_zone = "HAND"
 
+	if card.has_method("clear_field_slot"):
+		card.clear_field_slot()
+	elif "current_slot" in card:
+		card.current_slot = null
+	
 	_set_card_interaction(card, false)
 
 	var mgr := get_node_or_null("../CardManager")
@@ -60,9 +70,16 @@ func animate_card_to_position(card: Node2D, new_position: Vector2, speed: float)
 func remove_card_from_hand(card: Node2D) -> void:
 	if card in opponent_hand:
 		opponent_hand.erase(card)
+
 	if is_instance_valid(card):
 		if card.has_method("set_in_hand_mask"):
 			card.set_in_hand_mask(false)
+
+		if card.has_method("move_to_zone"):
+			card.move_to_zone("NONE")
+		elif "current_zone" in card:
+			card.current_zone = "NONE"
+
 	update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
 
 func cleanup_invalid_cards() -> void:

@@ -1,31 +1,651 @@
 [
   {
-	"id": "86988864",
+	"id": "00032864",
 	"kind": "MONSTER",
-	"cardname": "3-Hump Lacooda",
-	"attribute": null,
-	"race": "BEAST",
-	"level": null,
-	"atk": null,
-	"def": null,
-	"guardian_star": null,
-	"tags": [],
+	"cardname": "The 13th Grave",
+	"attribute": "DARK",
+	"race": "Zombie",
+	"level": 3,
+	"atk": 1200,
+	"def": 900,
+	"guardian_star": ["MOON","PLUTO"],
+	"tags": ["zombie","dark","skull"],
 	"keywords": [],
-	"description": null,
+	"description": "Un zombie salido de la 13ava tumba, la cual se supone estaba vacía.",
+	"effects": []
+  },
+  {
+	"id": "00732302",
+	"kind": "MONSTER",
+	"cardname": "Temple of Skulls",
+	"attribute": "DARK",
+	"race": "Zombie",
+	"level": 4,
+	"atk": 900,
+	"def": 1300,
+	"guardian_star": ["MERCURY","PLUTO"],
+	"tags": ["zombie","dark","skull","construct"],
+	"keywords": [],
+	"description": "Un extraño templo hecho de craneos y huesos, se dice que absorve la escencia vital de aquellos que se adentran en él.",
+	"effects": []
+  },
+  {
+	"id": "00756652",
+	"kind": "MONSTER",
+	"cardname": "Doron",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 2,
+	"atk": 900,
+	"def": 500,
+	"guardian_star": ["NEPTUNE","MOON"],
+	"tags": ["warrior","monk","earth","doppel"],
+	"keywords": [],
+	"description": "Un guerrero impredecible, tiene la capacidad de crear ilusiones de sí mismo para confundir a su oponente y atacar desde distintos ángulos.",
+	"effects": []
+  },
+  {
+	"id": "01641882",
+	"kind": "MONSTER",
+	"cardname": "Fusionist",
+	"attribute": "EARTH",
+	"race": "Beast",
+	"level": 3,
+	"atk": 900,
+	"def": 700,
+	"guardian_star": ["JUPITER","MOON"],
+	"tags": ["beast","winged","w-beast","earth"],
+	"keywords": [],
+	"description": "Un gato con alas y una extraña cola, sus capacidades de vuelo son superiores a las de muchas aves.",
+	"effects": []
+  },
+  {
+	"id": "01784619",
+	"kind": "MONSTER",
+	"cardname": "Uraby",
+	"attribute": "EARTH",
+	"race": "Dinosaur",
+	"level": 4,
+	"atk": 1500,
+	"def": 800,
+	"guardian_star": ["URANUS","MARS"],
+	"tags": ["dinosaur","earth"],
+	"keywords": [],
+	"description": "Rápido en sus movimientos, este dinosaurio destroza a sus enemigos con sus afiladas garras.",
+	"effects": []
+  },
+  {
+	"id": "01929294",
+	"kind": "MONSTER",
+	"cardname": "Key Mace",
+	"attribute": "LIGHT",
+	"race": "Fairy",
+	"level": 1,
+	"atk": 400,
+	"def": 300,
+	"guardian_star": ["SUN","SATURN"],
+	"tags": ["fairy","light","clown","elf"],
+	"keywords": [],
+	"description": "Un pequeño ángel que derrite los corazones de sus enemigos con su lindura.",
+	"effects": []
+  },
+  {
+	"id": "02134346",
+	"kind": "MONSTER",
+	"cardname": "Asura Priest",
+	"attribute": "LIGHT",
+	"race": "Fairy",
+	"level": 4,
+	"atk": 1700,
+	"def": 1200,
+	"guardian_star": ["SUN","VENUS"],
+	"tags": ["fairy","light","spirit","monk"],
+	"keywords": ["MULTI_ATTACK_ALL"],
+	"description": "Considerado la encarnación de la ira de Asura, cuando despliega sus puños ningún oponente sale ileso.",
+	"effects": []
+  },
+  {
+	"id": "02504891",
+	"kind": "MONSTER",
+	"cardname": "Skull Knight",
+	"attribute": "DARK",
+	"race": "Spellcaster",
+	"level": 7,
+	"atk": 2650,
+	"def": 2250,
+	"guardian_star": ["MERCURY","NEPTUNE"],
+	"tags": ["dark","knight","skull","spellcaster","monk"],
+	"keywords": [],
+	"description": "Considerado la encarnación de la ira de Asura, cuando despliega sus puños ningún oponente sale ileso.",
+	"effects": []
+  },
+  {
+	"id": "02830619",
+	"kind": "MONSTER",
+	"cardname": "Flame Viper",
+	"attribute": "EARTH",
+	"race": "Pyro",
+	"level": 2,
+	"atk": 400,
+	"def": 450,
+	"guardian_star": ["MARS","PLUTO"],
+	"tags": ["fire","pyro","snake","reptile","earth"],
+	"keywords": [],
+	"description": "Una serpiente que se mueve a gran velocidad y ataca disparando fuego desde su boca.",
+	"effects": []
+  },
+  {
+	"id": "05628232",
+	"kind": "MONSTER",
+	"cardname": "Flying Penguin",
+	"attribute": "WATER",
+	"race": "Aqua",
+	"level": 4,
+	"atk": 1200,
+	"def": 1000,
+	"guardian_star": ["NEPTUNE","JUPITER"],
+	"tags": ["aqua","water","w-beast","penguin"],
+	"keywords": [],
+	"description": "Un extraño pinguino que vuela utilizando las alas de su cabeza.",
+	"effects": []
+  },
+  {
+	"id": "06367785",
+	"kind": "MONSTER",
+	"cardname": "Eldeen",
+	"attribute": "LIGHT",
+	"race": "Spellcaster",
+	"level": 3,
+	"atk": 950,
+	"def": 1000,
+	"guardian_star": ["MERCURY","MOON"],
+	"tags": ["light","spellcaster"],
+	"keywords": [],
+	"description": "Usa su báculo para atacar a sus enemigos con variados hechizos.",
+	"effects": []
+  },
+  {
+	"id": "00423705",
+	"kind": "MONSTER",
+	"cardname": "Gearfried the Iron Knight",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 1800,
+	"def": 1600,
+	"guardian_star": ["JUPITER","URANUS"],
+	"tags": ["warrior","knight","armored","earth"],
+	"keywords": ["NO_EQUIP"],
+	"description": "Un caballero que restringe su poder utilizando una armadura mágica, juró no volver a empuñar un arma jamás.",
+	"effects": []
+  },
+  {
+	"id": "07489323",
+	"kind": "MONSTER",
+	"cardname": "Milus Radiant",
+	"attribute": "EARTH",
+	"race": "Beast",
+	"level": 1,
+	"atk": 300,
+	"def": 250,
+	"guardian_star": ["JUPITER","NEPTUNE"],
+	"tags": ["beast","earth"],
+	"keywords": [],
+	"description": "Muchos confunden a esta criatura creyendo que es una pequeña y adorable mascota, sin embargo es una bestia realmente peligrosa.",
 	"effects": [
 	  {
-		"trigger": "ON_ACTIVATE",
-		"template": "activate_sacrifice_allies_of_race_to_summon_by_total_levels",
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "SELF",
+		"filter_attribute": "EARTH",
+		"atk_delta": 500,
+		"def_delta": 500
+	  }
+	},
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "WIND",
+		"atk_delta": -400,
+		"def_delta": -400
+	  }
+	}
+	]
+  },
+{
+  "id": "80741828",
+  "kind": "MONSTER",
+  "cardname": "Witch's Apprentice",
+  "attribute": "DARK",
+  "race": "Spellcaster",
+  "level": 2,
+  "atk": 550,
+  "def": 500,
+  "guardian_star": ["MERCURY","MOON"],
+  "tags": ["spellcaster","dark","angel","witch"],
+  "keywords": [],
+  "description": "Su presencia inspira a los aliados de OSCURIDAD y debilita a todo ser de LUZ.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "SELF",
+		"filter_attribute": "DARK",
+		"atk_delta": 500,
+		"def_delta": 500
+	  }
+	},
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "LIGHT",
+		"atk_delta": -400,
+		"def_delta": -400
+	  }
+	}
+  ]
+},
+{
+  "id": "68658728",
+  "kind": "MONSTER",
+  "cardname": "Little Chimera",
+  "attribute": "FIRE",
+  "race": "Beast",
+  "level": 2,
+  "atk": 600,
+  "def": 500,
+  "guardian_star": ["MARS","SUN"],
+  "tags": ["beast","fire","w-beast","winged"],
+  "keywords": [],
+  "description": "Esta fiera potencia a los monstruos FUEGO aliados y debilita a todos los seres de AGUA.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "SELF",
+		"filter_attribute": "FIRE",
+		"atk_delta": 500,
+		"def_delta": 500
+	  }
+	},
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "WATER",
+		"atk_delta": -400,
+		"def_delta": -400
+	  }
+	}
+  ]
+},
+{
+  "id": "08201910",
+  "kind": "MONSTER",
+  "cardname": "Star Boy",
+  "attribute": "WATER",
+  "race": "Aqua",
+  "level": 2,
+  "atk": 550,
+  "def": 500,
+  "guardian_star": ["NEPTUNE","JUPITER"],
+  "tags": ["aqua","water","star","tentacle"],
+  "keywords": [],
+  "description": "Criatura alienigena que potencia a los monstruos AGUA aliados y debilita a los seres de FUEGO.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "SELF",
+		"filter_attribute": "WATER",
+		"atk_delta": 500,
+		"def_delta": 500
+	  }
+	},
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "FIRE",
+		"atk_delta": -400,
+		"def_delta": -400
+	  }
+	}
+  ]
+},
+{
+  "id": "12644061",
+  "kind": "MONSTER",
+  "cardname": "Bladefly",
+  "attribute": "WIND",
+  "race": "Insect",
+  "level": 2,
+  "atk": 600,
+  "def": 400,
+  "guardian_star": ["SATURN","JUPITER"],
+  "tags": ["insect","wind"],
+  "keywords": [],
+  "description": "Un insecto agresivo que potencia a los monstruos VIENTO aliados y debilita a los seres de TIERRA.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "SELF",
+		"filter_attribute": "WIND",
+		"atk_delta": 500,
+		"def_delta": 500
+	  }
+	},
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "EARTH",
+		"atk_delta": -400,
+		"def_delta": -400
+	  }
+	}
+  ]
+},
+{
+  "id": "67629977",
+  "kind": "MONSTER",
+  "cardname": "Hoshiningen",
+  "attribute": "LIGHT",
+  "race": "Fairy",
+  "level": 2,
+  "atk": 500,
+  "def": 700,
+  "guardian_star": ["SUN","VENUS"],
+  "tags": ["fairy","light","star"],
+  "keywords": [],
+  "description": "Un ser alienigena que potencia a los monstruos LUZ aliados y debilita a los seres de OSCURIDAD.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "SELF",
+		"filter_attribute": "LIGHT",
+		"atk_delta": 500,
+		"def_delta": 500
+	  }
+	},
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "DARK",
+		"atk_delta": -400,
+		"def_delta": -400
+	  }
+	}
+  ]
+},
+{
+  "id": "07526150",
+  "kind": "MONSTER",
+  "cardname": "Golgoil",
+  "attribute": "EARTH",
+  "race": "Machine",
+  "level": 4,
+  "atk": 900,
+  "def": 1600,
+  "guardian_star": ["VENUS","NEPTUNE"],
+  "tags": ["machine","earth","iron","golem","armored"],
+  "keywords": [],
+  "description": "Un masivo golem de hierro que se desplaza a traves de grietas dimensionales.",
+  "effects": []
+},
+{
+  "id": "07670542",
+  "kind": "MONSTER",
+  "cardname": "Bio Plant",
+  "attribute": "DARK",
+  "race": "Fiend",
+  "level": 3,
+  "atk": 600,
+  "def": 1300,
+  "guardian_star": ["JUPITER","MOON"],
+  "tags": ["fiend","plant","wood","mutant"],
+  "keywords": [],
+  "description": "Monstruosa criatura nacida de un experimento fallido.",
+  "effects": []
+},
+{
+  "id": "07805359",
+  "kind": "MONSTER",
+  "cardname": "Niwatori",
+  "attribute": "EARTH",
+  "race": "Winged-beast",
+  "level": 3,
+  "atk": 900,
+  "def": 800,
+  "guardian_star": ["JUPITER","VENUS"],
+  "tags": ["w-beast","earth"],
+  "keywords": [],
+  "description": "Traga a sus enemigos enteros y utiliza su esencia como energía.",
+  "effects": []
+},
+{
+  "id": "08327462",
+  "kind": "MONSTER",
+  "cardname": "Skullbird",
+  "attribute": "WIND",
+  "race": "Winged-beast",
+  "level": 6,
+  "atk": 1900,
+  "def": 1700,
+  "guardian_star": ["STURN","VENUS"],
+  "tags": ["w-beast","wind","winged","skull"],
+  "keywords": [],
+  "description": "El aliento de esta ave roba la fuerza vital de sus presas.",
+  "effects": []
+},
+{
+  "id": "08353769",
+  "kind": "MONSTER",
+  "cardname": "Air Eater",
+  "attribute": "WIND",
+  "race": "Fiend",
+  "level": 6,
+  "atk": 2100,
+  "def": 1600,
+  "guardian_star": ["MOON","SATURN"],
+  "tags": ["wind","winged","machine","fiend","metal"],
+  "keywords": [],
+  "description": "Sofoca a sus presas absorbiendo todo el oxígeno del area.",
+  "effects": []
+},
+{
+  "id": "08471389",
+  "kind": "MONSTER",
+  "cardname": "Giga-tech Wolf",
+  "attribute": "EARTH",
+  "race": "Machine",
+  "level": 4,
+  "atk": 1200,
+  "def": 1400,
+  "guardian_star": ["JUPITER","URANUS"],
+  "tags": ["earth","machine","beast","wolf","metal"],
+  "keywords": [],
+  "description": "Un lobo hecho completamente de acero, sus garras y colmillos puede atravesar cualquier metal.",
+  "effects": []
+},
+{
+  "id": "08944575",
+  "kind": "MONSTER",
+  "cardname": "The Drdek",
+  "attribute": "DARK",
+  "race": "Fiend",
+  "level": 3,
+  "atk": 700,
+  "def": 800,
+  "guardian_star": ["MOON","SATURN"],
+  "tags": ["dark","fiend","hand","eye"],
+  "keywords": [],
+  "description": "Una criatura extraña cuya pata parece una mano bestial, posee la capacidad de dar saltos vertiginosos y ataca ferozmente a sus oponentes usando sus garras",
+  "effects": []
+},
+  {
+	"id": "09076207",
+	"kind": "MONSTER",
+	"cardname": "Armed Ninja",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 1,
+	"atk": 300,
+	"def": 300,
+	"guardian_star": ["NEPTUNE","MARS"],
+	"tags": ["earth","ninja"],
+	"keywords": [],
+	"description": "Un ninja azul que ataca desde las sombras con su guadaña, es capaz de destruir ",
+	"effects": [
+	  {
+		"trigger": "ON_FLIP",
+		"template": "destroy_by_effect",
 		"params": {
-		  "race": "BEAST",
-		  "include_self": true,
-		  "level_cap": 12,
-		  "summon_controller": "SELF",
-		  "summon_race": "BEAST"
-		}
+			"target_side": "OPPONENT",
+			"zones": ["SPELL_TRAP","FIELD"],
+			"kinds": ["SPELL", "TRAP"],
+			"choose": "RANDOM",
+			"count": 1
+		  }
 	  }
 	]
   },
+{
+  "id": "09430387",
+  "kind": "MONSTER",
+  "cardname": "LALA Li-oon",
+  "attribute": "WIND",
+  "race": "Thunder",
+  "level": 2,
+  "atk": 600,
+  "def": 600,
+  "guardian_star": ["PLUTO","MOON"],
+  "tags": ["wind","thunder","cloud"],
+  "keywords": [],
+  "description": "Protegida por sus truenos, esta peligrosa nube ataca a sus objetivos con lluvias ácidas.",
+  "effects": []
+},
+{
+  "id": "09540040",
+  "kind": "MONSTER",
+  "cardname": "Boulder Tortoise",
+  "attribute": "EARTH",
+  "race": "Aqua",
+  "level": 6,
+  "atk": 1450,
+  "def": 2200,
+  "guardian_star": ["URANUS","NEPTUNE"],
+  "tags": ["earth","rock","aqua","turtle"],
+  "keywords": [],
+  "description": "Una tortuga de roca con un factor defensivo extremadamente alto.",
+  "effects": []
+},
+{
+  "id": "10262698",
+  "kind": "MONSTER",
+  "cardname": "The Statue of Easter Island",
+  "attribute": "EARTH",
+  "race": "Rock",
+  "level": 4,
+  "atk": 1100,
+  "def": 1400,
+  "guardian_star": ["URANUS","VENUS"],
+  "tags": ["earth","rock","statue","canon"],
+  "keywords": [],
+  "description": "Un monumento de piedra de la Isla Oriental que lanza ráfagas de láser desde su boca tallada en la piedra.",
+  "effects": []
+},
+{
+  "id": "10526791",
+  "kind": "MONSTER",
+  "cardname": "E. HERO Wildedge",
+  "attribute": "EARTH",
+  "race": "Warrior",
+  "level": 8,
+  "atk": 2600,
+  "def": 2300,
+  "guardian_star": ["URANUS","JUPITER"],
+  "tags": ["hero","armored","earth"],
+  "keywords": ["PIERCING","MULTI_ATTACK_ALL"],
+  "description": "Un héroe capaz de atacara a todos sus oponentes sin cansarse, sus cuchillas pueden atravesar cualquier defensa.",
+  "effects": [
+		{
+		  "trigger": "PASSIVE",
+		  "template": "grant_protection_profile_while_faceup",
+		  "params": {
+			"rules": [
+			  {
+				"mode": "UNAFFECTED_BY",
+				"sources": ["TRAP"]
+			  }
+			]
+		  }
+		}
+	]
+},
+{
+  "id": "12146024",
+  "kind": "MONSTER",
+  "cardname": "Bolt Escargot",
+  "attribute": "WATER",
+  "race": "Thunder",
+  "level": 5,
+  "atk": 1400,
+  "def": 1500,
+  "guardian_star": ["PLUTO","JUPITER"],
+  "tags": ["water","thunder","snail"],
+  "keywords": [],
+  "description": "Atrapa a sus presas con una baba pegajosa que aplica descargas electricas a quienes quedan atrapados en ella.",
+  "effects": []
+},
+{
+  "id": "12146024",
+  "kind": "MONSTER",
+  "cardname": "Leghul",
+  "attribute": "EARTH",
+  "race": "Insect",
+  "level": 1,
+  "atk": 300,
+  "def": 350,
+  "guardian_star": ["JUPITER","MOON"],
+  "tags": ["earth","insect"],
+  "keywords": ["DIRECT_ATTACK"],
+  "description": "Este insecto se escabulle entre las defensas rivales para acertar precisos golpes directos.",
+  "effects": []
+},
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   {
 	"id": "83994646",
 	"kind": "MONSTER",
@@ -978,30 +1598,6 @@
 	]
   },
   {
-	"id": "09076207",
-	"kind": "MONSTER",
-	"cardname": "Armed Ninja",
-	"attribute": null,
-	"race": "WARRIOR",
-	"level": null,
-	"atk": null,
-	"def": null,
-	"guardian_star": null,
-	"tags": [],
-	"keywords": [],
-	"description": null,
-	"effects": [
-	  {
-		"trigger": "ON_PLAY",
-		"template": "destroy_random_opponent_spelltrap",
-		"params": {
-		  "kind": "SPELL",
-		  "prefer_faceup": true
-		}
-	  }
-	]
-  },
-  {
 	"id": "84430950",
 	"kind": "MONSTER",
 	"cardname": "Armed Samurai - Ben Kei",
@@ -1096,23 +1692,6 @@
 		}
 	  }
 	]
-  },
-  {
-	"id": "02134346",
-	"kind": "MONSTER",
-	"cardname": "Asura Priest",
-	"attribute": null,
-	"race": "FAIRY",
-	"level": null,
-	"atk": null,
-	"def": null,
-	"guardian_star": null,
-	"tags": [],
-	"keywords": [
-      "MULTI_ATTACK_ALL"
-	],
-	"description": null,
-	"effects": []
   },
   {
 	"id": "88236094",
@@ -5524,31 +6103,6 @@
 		"template": "destroy_target",
 		"params": {
 		  "target": "OPPONENT_RANDOM_MONSTER"
-		}
-	  }
-	]
-  },
-  {
-	"id": "10526791",
-	"kind": "MONSTER",
-	"cardname": "Elemental HERO Wildedge",
-	"attribute": null,
-	"race": "WARRIOR",
-	"level": null,
-	"atk": null,
-	"def": null,
-	"guardian_star": null,
-	"tags": [],
-	"keywords": [
-      "PIERCING"
-	],
-	"description": null,
-	"effects": [
-	  {
-		"trigger": "PASSIVE",
-		"template": "custom_raw",
-		"params": {
-		  "raw": "each turn Can attack each opponent monster once each."
 		}
 	  }
 	]
@@ -11416,5 +11970,189 @@
 	  }
 	}
   ]
-}
+},
+{
+  "id": "40619825",
+  "kind": "SPELL",
+  "cardname": "Axe of Despair",
+  "race": "EQUIP",
+  "tags": ["equip","axe-of-despair","archfiend"],
+  "keywords": [],
+  "description": "Hacha maldita que otorga 1000 ATK a cualquier portador.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "equip_spell_to_target",
+	  "params": {
+		"mod": { "atk": 1000 },
+		"requirements": {}
+	  }
+	}
+  ]
+},
+{
+  "id": "32437102",
+  "kind": "SPELL",
+  "cardname": "Dragonic Attack",
+  "race": "EQUIP",
+  "tags": ["equip","dragonic-attack"],
+  "keywords": [],
+  "description": "Un guerrero equipado con esta carta obtiene 500 ATK/DEF y se convierte en DRAGON.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "equip_spell_to_target",
+	  "params": {
+		"mod": { "atk": 500, "def": 500 },
+		"set": { "race": "DRAGON" },
+		"requirements": { "race": "WARRIOR" }
+	  }
+	}
+  ]
+},
+{
+  "id": "01435851",
+  "kind": "SPELL",
+  "cardname": "Dragon's Treasure",
+  "race": "EQUIP",
+  "tags": ["equip","dragons-treasure"],
+  "keywords": [],
+  "description": "Equipar: Un tesoro que sólo puede ser portado por los verdaderos dragones, otorga 500 ATK/DEF.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "equip_spell_to_target",
+	  "params": {
+		"mod": { "atk": 500, "def": 500 },
+		"requirements": { "tag": "dragon" }
+	  }
+	}
+  ]
+},
+{
+  "id": "56594520",
+  "kind": "SPELL",
+  "cardname": "Gaia Power",
+  "race": "FIELD",
+  "tags": ["field"],
+  "keywords": [],
+  "description": "Potencia el atk de los monstruos EARTH a cambio de reducir sus defensas.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "EARTH",
+		"atk_delta": 500,
+		"def_delta": -500
+	  }
+	}
+  ]
+},
+{
+  "id": "81777047",
+  "kind": "SPELL",
+  "cardname": "Luminous Spark",
+  "race": "FIELD",
+  "tags": ["field"],
+  "keywords": [],
+  "description": "Potencia el atk de los monstruos LIGHT a cambio de reducir sus defensas.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "LIGHT",
+		"atk_delta": 500,
+		"def_delta": -500
+	  }
+	}
+  ]
+},
+{
+  "id": "19384334",
+  "kind": "SPELL",
+  "cardname": "Molten Destruction",
+  "race": "FIELD",
+  "tags": ["field"],
+  "keywords": [],
+  "description": "Potencia el atk de los monstruos FIRE a cambio de reducir sus defensas.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "FIRE",
+		"atk_delta": 500,
+		"def_delta": -500
+	  }
+	}
+  ]
+},
+{
+  "id": "18161786",
+  "kind": "SPELL",
+  "cardname": "Mystic Plasma Zone",
+  "race": "FIELD",
+  "tags": ["field"],
+  "keywords": [],
+  "description": "Potencia el atk de los monstruos DARK a cambio de reducir sus defensas.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "DARK",
+		"atk_delta": 500,
+		"def_delta": -500
+	  }
+	}
+  ]
+},
+{
+  "id": "82999629",
+  "kind": "SPELL",
+  "cardname": "Umiiruka",
+  "race": "FIELD",
+  "tags": ["field"],
+  "keywords": [],
+  "description": "Potencia el atk de los monstruos WATER a cambio de reducir sus defensas.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "WATER",
+		"atk_delta": 500,
+		"def_delta": -500
+	  }
+	}
+  ]
+},
+{
+  "id": "45778932",
+  "kind": "SPELL",
+  "cardname": "Rising Air Current",
+  "race": "FIELD",
+  "tags": ["field"],
+  "keywords": [],
+  "description": "Potencia el atk de los monstruos WIND a cambio de reducir sus defensas.",
+  "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"target_side": "BOTH",
+		"filter_attribute": "WIND",
+		"atk_delta": 500,
+		"def_delta": -500
+	  }
+	}
+  ]
+},
 ]

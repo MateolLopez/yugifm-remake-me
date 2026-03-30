@@ -3,7 +3,14 @@ extends Node
 
 func _ready() -> void:
 	if GameState.current_opponent_id == "" or GameState.current_opponent_id == null:
-		GameState.current_opponent_id = "kaiba"
+		var opp := str(GameState.current_opponent_id) if GameState.current_opponent_id != null else ""
+		opp = opp.strip_edges()
+
+		if opp == "":
+			opp = "kaiba"
+
+		if (GameState.current_opponent_id == null) or str(GameState.current_opponent_id).strip_edges() == "":
+			GameState.current_opponent_id = opp
 
 	if not battle_scene:
 		push_error("Asigna Battle Scene en DuelLoader.tscn")
@@ -23,7 +30,7 @@ func _ready() -> void:
 	else:
 		push_warning("No se encontró nodo 'Deck' en la BattleScene. Ajustá el path.")
 
-	var opponent_deck_node = battle.get_node_or_null("DeckRival/Deck") # 
+	var opponent_deck_node = battle.get_node_or_null("DeckRival/Deck") 
 	if opponent_deck_node:
 		opponent_deck_node.set("override_deck", opponent_deck)
 	else:

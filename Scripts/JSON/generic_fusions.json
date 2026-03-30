@@ -1,8 +1,51 @@
 [
-  {
-    "fusion_id": "celtic_guardian",
-    "result_id": "14261867",
-    "required_groups": [["elf"],["warrior"]],
-    "priority": 1.0
-  }
+ {
+	"fusion_id":"golgoil",
+	"result_id":"07526150",
+	"required_groups":[["machine","iron"],["golem"]],
+	"priority": 0.6
+},
+{
+	"fusion_id": "celtic_guardian",
+	"result_id": "14261867",
+	"required_groups": [["elf"],["warrior"]],
+	"priority": 1.0
+},
+{
+	"fusion_id": "gigatech-wolf",
+	"result_id": "08471389",
+	"required_groups": [["machine","metal"],["wolf","beast"]],
+	"priority": 1.2
+},
+{
+	"fusion_id": "uraby",
+	"result_id": "01784619",
+	"required_groups": [["dinosaur","dino"],["dark","wild"]],
+	"priority": 1.5
+},
+{
+	"fusion_id":"asura_priest",
+	"result_id":"02134346",
+	"required_groups":[["light","fairy"],["monk"]],
+	"priority": 1.7
+},
+{
+	"fusion_id": "gearfried_iron_k",
+	"result_id": "00423705",
+	"required_groups":[["knight","warrior"],["armor","armored"]],
+	"priority": 1.8
+},
+{
+	"fusion_id": "skull_bird",
+	"result_id": "08327462",
+	"required_groups":[["w-beast","bird","winged"],["skull","bone"]],
+	"priority": 1.9
+},
+{
+	"fusion_id":"boulder_tortoise",
+	"result_id":"09540040",
+	"required_groups":[["rock"],["turtle"]],
+	"priority":1.45
+}
+
 ]
