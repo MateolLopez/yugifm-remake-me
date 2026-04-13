@@ -40,6 +40,12 @@ var pending_equip_card: Node = null
 var pending_equip_controller: String = ""
 var reaction_set_order_counter: int = 0
 
+#Card Reveal vars
+var reveal_overlay_active := false
+var reveal_overlay_cards: Array = []
+var reveal_overlay_original_states: Array = []
+var reveal_overlay_waiting_ack := false
+
 signal attack_declared(attacker, defender, attacker_owner)
 signal monster_played(monster, cardowner)
 signal spell_activated(spell, cardowner)
@@ -47,6 +53,31 @@ signal trap_activated(trap, cardowner)
 signal turn_started(turn_owner)
 signal turn_ended(turn_owner)
 
+func _ready() -> void:
+	add_to_group("battle_manager")
+	battle_timer = $"../BattleTimer"
+	battle_timer.one_shot = true
+	battle_timer.wait_time = 0.5
+
+	var accept_btn = get_node_or_null("../RevealAckPanel/ButtonAccept")
+	if accept_btn and not accept_btn.pressed.is_connected(_on_reveal_ack_accept_pressed):
+		accept_btn.pressed.connect(_on_reveal_ack_accept_pressed)
+
+	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot")
+	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot2")
+	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot3")
+	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot4")
+	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot5")
+	
+	player_hp = _starting_hp()
+	$"../PlayerHP".text = str(player_hp)
+	opponent_hp = _starting_hp()
+	$"../OpponentHP".text = str(opponent_hp)
+	_update_field_spell_name_ui()
+
+# =========================
+# Base / Rules Helpers
+# =========================
 
 func _rules_value(key: String, fallback):
 	var rules = get_node_or_null("/root/DuelRules")
@@ -67,13 +98,6 @@ func _norm_owner(owner_value) -> String:
 	if s == "OPPONENT":
 		return "Opponent"
 	return "Player" if str(owner_value) == "" else str(owner_value)
-
-func _is_field_spell(card: Node) -> bool:
-	if not is_instance_valid(card):
-		return false
-	if str(_card_kind(card)).to_upper() != "SPELL":
-		return false
-	return str(card.race).to_upper() == "FIELD"
 
 func _card_kind(card) -> String:
 	if not is_instance_valid(card):
@@ -109,15 +133,6 @@ func _card_owner_side(card) -> String:
 		return _norm_owner(card.card_owner)
 	return ""
 
-func _set_card_owner_side(card, cardowner: String) -> void:
-	if not is_instance_valid(card):
-		return
-	var upper_owner := cardowner.to_upper()
-	if "owner_side" in card:
-		card.owner_side = upper_owner
-	elif "card_owner" in card:
-		card.card_owner = cardowner
-
 func _is_card_face_down(card) -> bool:
 	if not is_instance_valid(card):
 		return false
@@ -126,6 +141,15 @@ func _is_card_face_down(card) -> bool:
 	if "is_facedown" in card:
 		return bool(card.is_facedown)
 	return false
+
+func _set_card_owner_side(card, cardowner: String) -> void:
+	if not is_instance_valid(card):
+		return
+	var upper_owner := cardowner.to_upper()
+	if "owner_side" in card:
+		card.owner_side = upper_owner
+	elif "card_owner" in card:
+		card.card_owner = cardowner
 
 func _set_card_face_down(card, value: bool) -> void:
 	if not is_instance_valid(card):
@@ -176,23 +200,84 @@ func _max_hand_size() -> int:
 func _starting_hp() -> int:
 	return int(_rules_value("starting_hp", DEFAULT_STARTING_HP))
 
-func _ready() -> void:
-	add_to_group("battle_manager")
-	battle_timer = $"../BattleTimer"
-	battle_timer.one_shot = true
-	battle_timer.wait_time = 0.5
+func _refresh_effect_engine_continuous_buffs() -> void:
+	var eng = _get_effect_engine()
+	if eng and eng.has_method("_refresh_aura_stat_buffs"):
+		eng._refresh_aura_stat_buffs()
 
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot")
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot2")
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot3")
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot4")
-	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot5")
-	
-	player_hp = _starting_hp()
-	$"../PlayerHP".text = str(player_hp)
-	opponent_hp = _starting_hp()
-	$"../OpponentHP".text = str(opponent_hp)
-	_update_field_spell_name_ui()
+func _grave_entry_from_card(card: Node) -> Dictionary:
+	if not is_instance_valid(card):
+		return {}
+
+	var entry := {
+		"id": str(card.id) if ("id" in card) else "",
+		"cardname": str(card.cardname) if ("cardname" in card) else "",
+		"kind": str(card.kind).to_upper() if ("kind" in card) else "",
+		"attribute": str(card.attribute).to_upper() if ("attribute" in card) else "",
+		"race": str(card.race).to_upper() if ("race" in card) else "",
+		"tags": [],
+		"keywords": []
+	}
+
+	if "tags" in card and typeof(card.tags) == TYPE_ARRAY:
+		entry["tags"] = card.tags.duplicate()
+
+	if "keywords" in card and typeof(card.keywords) == TYPE_ARRAY:
+		entry["keywords"] = card.keywords.duplicate()
+
+	return entry
+
+# =========================
+# Turn Flow
+# =========================
+
+func _get_duel_bus():
+	var bus = get_node_or_null("/root/DuelEventBus")
+	if bus == null:
+		bus = get_node_or_null("/root/EventBus")
+	return bus
+
+func _emit_duel_event(event_name: String, payload: Dictionary = {}) -> void:
+	var bus = _get_duel_bus()
+	if bus and bus.has_method("emit_event"):
+		bus.emit_event(event_name, payload)
+
+func _get_effect_engine():
+	var eng = get_node_or_null("/root/DuelEffectEngine")
+	if eng == null:
+		eng = get_node_or_null("/root/EffectEngine")
+	return eng
+
+func _register_card_with_effect_engine(card, controller: String) -> void:
+	var eng = _get_effect_engine()
+	if eng and eng.has_method("register_card_entered_field"):
+		eng.register_card_entered_field(card, controller)
+
+func _unregister_card_with_effect_engine(card) -> void:
+	var eng = _get_effect_engine()
+	if eng and eng.has_method("register_card_left_field"):
+		eng.register_card_left_field(card)
+
+func _set_field_spell_name_ui(value: String) -> void:
+	if not is_instance_valid(_ui_field_spell_name):
+		_ui_field_spell_name = get_node_or_null("../FieldSpellName") as RichTextLabel
+		if not is_instance_valid(_ui_field_spell_name):
+			var root := get_tree().current_scene
+			if is_instance_valid(root):
+				_ui_field_spell_name = root.get_node_or_null("FieldSpellName") as RichTextLabel
+		if not is_instance_valid(_ui_field_spell_name):
+			return
+
+	_ui_field_spell_name.text = value
+
+func _update_field_spell_name_ui() -> void:
+	if not is_instance_valid(_ui_field_spell_name):
+		return
+
+	if is_instance_valid(active_field_spell) and ("cardname" in active_field_spell):
+		_ui_field_spell_name.text = str(active_field_spell.cardname)
+	else:
+		_ui_field_spell_name.text = "--"
 
 func _clear_multi_for(card):
 	multi_mode.erase(card)
@@ -206,6 +291,7 @@ func _cleanup_multi_garbage():
 
 func _on_end_turn_button_pressed() -> void:
 	_emit_duel_event("TURN_END", {"turn_owner":"Player", "controller":"Player", "battle_manager": self})
+	_process_timed_keywords_on_turn_end("Player")
 	_process_scheduled_destruction_on_turn_end("Player")
 	for k in multi_mode.keys():
 		if is_instance_valid(k) and (k in player_cards_on_battlefield):
@@ -291,6 +377,11 @@ func attack(atk_card, defending, attacker):
 		return
 	if not is_instance_valid(atk_card):
 		return
+	if _has_kw(atk_card, "PARALYZED"):
+		if attacker == "Player":
+			$"../InputManager".inputs_disabled = false
+			enable_end_turn_button(true)
+		return
 
 	if _is_card_face_down(atk_card):
 		reveal_card(atk_card)
@@ -319,7 +410,6 @@ func attack(atk_card, defending, attacker):
 			if typeof(per_attacker) != TYPE_DICTIONARY:
 				per_attacker = {}
 			if bool(per_attacker.get(d_id, false)):
-				print("MULTI_ATTACK_ALL: ya atacó a este objetivo este turno.")
 				return
 
 	var battle_ctx := {
@@ -429,9 +519,8 @@ func _place_card_in_slot(card: Node2D, slot: Node2D) -> void:
 	var kind := _card_kind(card)
 
 	_set_card_slot(card, slot)
-	slot.card_in_slot = true
-	if "card_ref" in slot:
-		slot.card_ref = card
+	slot.set("card_in_slot", true)
+	slot.set_meta("card_ref", card)
 
 	var should_reveal := false
 	if kind == "TRAP":
@@ -479,15 +568,7 @@ func _place_card_in_slot(card: Node2D, slot: Node2D) -> void:
 			if "played_spellortrap_card_this_turn" in cm_track:
 				cm_track.played_spellortrap_card_this_turn = true
 
-	if kind == "MONSTER":
-		if not _is_card_face_down(card):
-			_emit_duel_event("ON_PLAY", {
-				"battle_manager": self,
-				"source": card,
-				"controller": cardowner,
-				"turn_owner": ("Opponent" if is_opponent_turn else "Player")
-			})
-	elif kind == "TRAP":
+	if kind == "TRAP":
 		_emit_duel_event("ON_PLAY", {
 			"battle_manager": self,
 			"source": card,
@@ -502,7 +583,6 @@ func _place_card_in_slot(card: Node2D, slot: Node2D) -> void:
 		reveal_card(card)
 		if kind == "MONSTER":
 			_trigger_on_play_effects(card, cardowner)
-
 
 func _has_immediate_effect(card) -> bool:
 	if not is_instance_valid(card):
@@ -534,15 +614,25 @@ func _trigger_on_play_effects(card, card_owner: String) -> void:
 	})
 
 func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power):
-	var defender_owner := _norm_owner(_owner_of(defending))
-	if defender_owner == "":
-		defender_owner = ("Opponent" if attacker == "Player" else "Player")
+	var defender_owner := ("Opponent" if attacker == "Player" else "Player")
 	var result_str = "lose"
 
 	var has_piercing := _has_kw(atk_card, "PIERCING") or bool(atk_card.get_meta("piercing_damage", false))
 
 	if atk_power > def_power:
-		destroy_card(defending, defender_owner, "DESTROY_BATTLE")
+		var destroyed_atk := int(defending.get_effective_atk() if defending.has_method("get_effective_atk") else defending.atk)
+		var destroyed_ref = defending
+		var destroyed_ok := destroy_card(defending, defender_owner, "DESTROY_BATTLE")
+		if destroyed_ok:
+			_emit_duel_event("ON_DESTROY_MONSTER_BY_BATTLE", {
+				"battle_manager": self,
+				"source": atk_card,
+				"attacker": atk_card,
+				"destroyed": destroyed_ref,
+				"destroyed_atk": destroyed_atk,
+				"controller": _norm_owner(attacker),
+				"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+			})
 		result_str = "win"
 	elif atk_power == def_power:
 		result_str = "tie"
@@ -612,7 +702,6 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 				opponent_cards_that_attacked_this_turn.append(atk_card)
 
 func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power) -> void:
-	# El parámetro _attacker (Player/Opponent) es la fuente de verdad.
 	var attacker_owner: String = _norm_owner(_attacker)
 	var defender_owner: String = _norm_owner(_owner_of(defending))
 	if defender_owner == "":
@@ -621,7 +710,6 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 	var atk_i: int = int(atk_power)
 	var def_i: int = int(def_power)
 
-	# Empate: ambos se destruyen, sin daño
 	if atk_i == def_i:
 		destroy_card_tie(atk_card, defending)
 		await _trigger_on_attack(atk_card, attacker_owner, {
@@ -632,7 +720,6 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 		})
 		_clear_bonuses([atk_card, defending])
 
-		# Registrar ataque del turno (normal o multi)
 		if attacker_owner == "Player":
 			if _has_kw(atk_card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
 				var a_id := str(atk_card.get_instance_id())
@@ -664,11 +751,21 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 	var damage: int = atk_i - def_i if attacker_won else def_i - atk_i
 
 	if attacker_won:
-		# El defensor pierde LP y su monstruo se destruye
 		_apply_battle_damage_to_side(defender_owner, damage, atk_card, defending)
-		destroy_card(defending, defender_owner, "DESTROY_BATTLE")
+		var destroyed_atk := int(defending.get_effective_atk() if defending.has_method("get_effective_atk") else defending.atk)
+		var destroyed_ref = defending
+		var destroyed_ok := destroy_card(defending, defender_owner, "DESTROY_BATTLE")
+		if destroyed_ok:
+			_emit_duel_event("ON_DESTROY_MONSTER_BY_BATTLE", {
+				"battle_manager": self,
+				"source": atk_card,
+				"attacker": atk_card,
+				"destroyed": destroyed_ref,
+				"destroyed_atk": destroyed_atk,
+				"controller": attacker_owner,
+				"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+			})
 	else:
-		# El atacante pierde LP y su monstruo se destruye
 		_apply_battle_damage_to_side(attacker_owner, damage, atk_card, defending)
 		destroy_card(atk_card, attacker_owner, "DESTROY_BATTLE")
 
@@ -678,7 +775,6 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 			_enable_player_input()
 		return
 
-	# Volver a posición
 	var return_pos2: Vector2 = _anchored_slot_position(atk_card)
 	var t2b := get_tree().create_tween()
 	t2b.tween_property(atk_card, "global_position", return_pos2, CARD_MOVE_SPEED)
@@ -697,7 +793,6 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 
 	_clear_bonuses([atk_card, defending])
 
-	# Registrar ataque del turno (normal o multi)
 	if attacker_owner == "Player":
 		if _has_kw(atk_card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
 			var a_id := str(atk_card.get_instance_id())
@@ -760,10 +855,32 @@ func direct_attack(atk_card, attacker):
 		return
 	if not is_instance_valid(atk_card):
 		return
+	if _has_kw(atk_card, "PARALYZED"):
+		return
 	if _card_kind(atk_card) != "MONSTER":
 		return
 
 	reveal_card(atk_card)
+
+	var battle_ctx := {
+		"battle_manager": self,
+		"source": atk_card,
+		"attacker": atk_card,
+		"defender": null,
+		"attacker_owner": attacker,
+		"controller": attacker,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player"),
+		"prevent_attack": false,
+		"attack_negated": false,
+		"suppress_trap_reactions": _attacker_suppresses_traps(atk_card)
+	}
+
+	emit_signal("attack_declared", atk_card, null, attacker)
+	_emit_duel_event("ON_ATTACK_DECLARATION", battle_ctx)
+
+	if bool(battle_ctx.get("prevent_attack", false)) or bool(battle_ctx.get("attack_negated", false)):
+		_release_player_input_if_needed(attacker)
+		return
 
 	var effective_atk: int = int(atk_card.get_effective_atk() if atk_card.has_method("get_effective_atk") else atk_card.atk)
 
@@ -942,7 +1059,7 @@ func _activate_field_spell(spell_card: Node, controller: String, ctx: Dictionary
 	if is_instance_valid(slot):
 		slot.card_in_slot = false
 		if "card_ref" in slot:
-			slot.card_ref = null
+			slot.set_meta("card_ref", null)
 		var slot_shape = slot.get_node_or_null("Area2D/CollisionShape2D")
 		if slot_shape:
 			slot_shape.disabled = false
@@ -1006,6 +1123,13 @@ func _activate_field_spell(spell_card: Node, controller: String, ctx: Dictionary
 	_emit_duel_event("ON_FIELD_SPELL_ACTIVATE", payload)
 	_emit_duel_event("ON_ACTIVATE", payload)
 
+func _is_field_spell(card: Node) -> bool:
+	if not is_instance_valid(card):
+		return false
+	if str(_card_kind(card)).to_upper() != "SPELL":
+		return false
+	return str(card.race).to_upper() == "FIELD"
+
 func _send_spell_to_graveyard(spell_card, who: String) -> void:
 	if not is_instance_valid(spell_card):
 		return
@@ -1014,48 +1138,23 @@ func _send_spell_to_graveyard(spell_card, who: String) -> void:
 	if slot:
 		slot.card_in_slot = false
 		if "card_ref" in slot:
-			slot.card_ref = null
+			slot.set_meta("card_ref", null)
 		var slot_shape = slot.get_node_or_null("Area2D/CollisionShape2D")
 		if slot_shape:
 			slot_shape.disabled = false
 
 	var norm_who := _norm_owner(who)
+	var grave_entry := _grave_entry_from_card(spell_card)
+
 	if norm_who == "Player":
-		player_graveyard.append(spell_card)
+		player_graveyard.append(grave_entry)
 	else:
-		opponent_graveyard.append(spell_card)
+		opponent_graveyard.append(grave_entry)
 
 	_unregister_card_with_effect_engine(spell_card)
 	_clear_card_slot(spell_card)
 	spell_card.queue_free()
 	_clean_battlefield_lists()
-
-func _get_duel_bus():
-	var bus = get_node_or_null("/root/DuelEventBus")
-	if bus == null:
-		bus = get_node_or_null("/root/EventBus")
-	return bus
-
-func _emit_duel_event(event_name: String, payload: Dictionary = {}) -> void:
-	var bus = _get_duel_bus()
-	if bus and bus.has_method("emit_event"):
-		bus.emit_event(event_name, payload)
-
-func _get_effect_engine():
-	var eng = get_node_or_null("/root/DuelEffectEngine")
-	if eng == null:
-		eng = get_node_or_null("/root/EffectEngine")
-	return eng
-
-func _register_card_with_effect_engine(card, controller: String) -> void:
-	var eng = _get_effect_engine()
-	if eng and eng.has_method("register_card_entered_field"):
-		eng.register_card_entered_field(card, controller)
-
-func _unregister_card_with_effect_engine(card) -> void:
-	var eng = _get_effect_engine()
-	if eng and eng.has_method("register_card_left_field"):
-		eng.register_card_left_field(card)
 
 func _activation_type_for_card(card) -> String:
 	match _card_kind(card):
@@ -1136,13 +1235,15 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 
 	var slot = _card_slot(card)
 
+	var grave_entry := _grave_entry_from_card(card)
+
 	if card_owner == "Player":
 		card.defeated = true
 		var cshape = card.get_node_or_null("Area2D/CollisionShape2D")
 		if cshape:
 			cshape.disabled = true
 		if card in player_cards_on_battlefield:
-			player_graveyard.append(card)
+			player_graveyard.append(grave_entry)
 			player_cards_on_battlefield.erase(card)
 			if slot:
 				var slot_shape = slot.get_node_or_null("Area2D/CollisionShape2D")
@@ -1150,13 +1251,13 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 					slot_shape.disabled = false
 	else:
 		if card in opponent_cards_on_battlefield:
-			opponent_graveyard.append(card)
+			opponent_graveyard.append(grave_entry)
 			opponent_cards_on_battlefield.erase(card)
 
 	if slot:
 		slot.card_in_slot = false
 		if "card_ref" in slot:
-			slot.card_ref = null
+			slot.set_meta("card_ref", null)
 		if slot.get_parent() == $"../CardSlotsRival":
 			if not empty_monster_card_slots.has(slot):
 				empty_monster_card_slots.append(slot)
@@ -1170,6 +1271,7 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 	_clear_card_slot(card)
 	card.queue_free()
 	_clean_battlefield_lists()
+	_refresh_effect_engine_continuous_buffs()
 	return true
 
 func yield_to_refill_opponent_hand():
@@ -1195,6 +1297,8 @@ func enemy_card_selected(defending_card) -> void:
 	if _card_kind(attacker) != "MONSTER":
 		return
 	if attacker.in_defense:
+		return
+	if _has_kw(attacker, "PARALYZED"):
 		return
 	if attacker in player_cards_that_attacked_this_turn and not _has_kw(attacker, "MULTI_ATTACK_ALL"):
 		return
@@ -1242,6 +1346,7 @@ func try_play_highest_atk_card():
 
 func end_opponent_turn():
 	_emit_duel_event("TURN_END", {"turn_owner":"Opponent", "controller":"Opponent", "turn_index": turn_index, "battle_manager": self})
+	_process_timed_keywords_on_turn_end("Opponent")
 	_process_scheduled_destruction_on_turn_end("Opponent")
 	var player_deck = $"../Deck"
 	var player_hand_node = $"../PlayerHand"
@@ -1261,7 +1366,6 @@ func end_opponent_turn():
 	_emit_duel_event("TURN_START", {"turn_owner":"Player", "controller":"Player", "turn_index": turn_index, "battle_manager": self,})
 	$"../EndTurnButton".disabled = false
 	$"../EndTurnButton".visible = true
-
 
 func reveal_card(card: Node):
 	if not is_instance_valid(card):
@@ -1336,15 +1440,28 @@ func _apply_effect_damage_to_side(target_owner: String, amount: int, ctx: Dictio
 	_emit_duel_event("ON_INFLICT_EFFECT_DAMAGE", {"battle_manager": self, "source": ctx.get("source", null), "target_player": target_owner, "amount": amount, "turn_owner": ("Opponent" if is_opponent_turn else "Player")})
 	_check_end_duel()
 
-func recover_lp_to_side(target_owner: String, amount: int, _ctx: Dictionary = {}) -> void:
+func recover_lp_to_side(target_owner: String, amount: int, ctx: Dictionary = {}) -> void:
 	if amount <= 0:
 		return
+
+	target_owner = _norm_owner(target_owner)
+
 	if target_owner == "Player":
 		player_hp += amount
 		$"../PlayerHP".text = str(player_hp)
 	elif target_owner == "Opponent":
 		opponent_hp += amount
 		$"../OpponentHP".text = str(opponent_hp)
+	else:
+		return
+
+	_emit_duel_event("ON_RECOVER_LP", {
+		"battle_manager": self,
+		"source": ctx.get("source", null),
+		"target_player": target_owner,
+		"amount": amount,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+	})
 
 func _check_end_duel() -> bool:
 	if duel_finished:
@@ -1389,7 +1506,6 @@ func _anchored_target_position(attacker: Node2D, defender: Node2D, y_offset := 0
 	var atk_delta := atk_anchor.to_global(Vector2.ZERO) - attacker.to_global(Vector2.ZERO)
 	return def_center.global_position - atk_delta + Vector2(0, y_offset)
 
-
 func reveal_all_set_monsters_for_side(side: String) -> void:
 	var norm_side := _norm_owner(side)
 	var cards: Array = player_cards_on_battlefield if norm_side == "Player" else opponent_cards_on_battlefield
@@ -1430,6 +1546,59 @@ func apply_keyword_to_card_if_matches_side(source_card, target_card, target_side
 		if keyword not in kws:
 			kws.append(keyword)
 			target_card.set_meta("runtime_keywords", kws)
+
+func apply_keyword_to_target(target: Node, keyword: String, duration: String, effect_controller: String = "") -> void:
+	if not is_instance_valid(target):
+		return
+
+	keyword = str(keyword).to_upper()
+	duration = str(duration).to_upper()
+
+	var runtime_keywords: Array = []
+	if target.has_meta("runtime_keywords"):
+		runtime_keywords = target.get_meta("runtime_keywords")
+	if not runtime_keywords.has(keyword):
+		runtime_keywords.append(keyword)
+	target.set_meta("runtime_keywords", runtime_keywords)
+
+	var timed_effects: Array = []
+	if target.has_meta("timed_keywords"):
+		timed_effects = target.get_meta("timed_keywords")
+
+	var owner := _norm_owner(_owner_of(target))
+
+	match duration:
+		"UNTIL_TURN_END":
+			timed_effects.append({
+				"keyword": keyword,
+				"expire_turn_index": turn_index,
+				"expire_on_turn_owner": ("Opponent" if is_opponent_turn else "Player")
+			})
+		"UNTIL_NEXT_OWNER_TURN_END":
+			timed_effects.append({
+				"keyword": keyword,
+				"expire_turn_index": turn_index + 1,
+				"expire_on_turn_owner": effect_controller
+			})
+		"UNTIL_NEXT_TARGET_TURN_END":
+			timed_effects.append({
+				"keyword": keyword,
+				"expire_turn_index": turn_index + 1,
+				"expire_on_turn_owner": owner
+			})
+		"UNTIL_LEAVE_FIELD":
+			timed_effects.append({
+				"keyword": keyword,
+				"expire_on_leave_field": true
+			})
+		"PERMANENT_WHILE_FACEUP":
+			timed_effects.append({
+				"keyword": keyword,
+				"expire_on_leave_field": true,
+				"expire_if_face_down": true
+			})
+
+	target.set_meta("timed_keywords", timed_effects)
 
 func summon_token_from_source_basestats(source_card, params: Dictionary, ctx: Dictionary = {}) -> void:
 	if not is_instance_valid(source_card):
@@ -1589,17 +1758,14 @@ func try_play_monster_from_hand(card, facedown: bool) -> void:
 		return
 
 	if str(_card_kind(card)).to_upper() != "MONSTER":
-		print("try_play_monster_from_hand: no es MONSTER -> ", str(card.cardname))
 		return
 
 	var cm := get_node_or_null("../CardManager")
 	if cm != null and ("played_monster_card_this_turn" in cm) and bool(cm.played_monster_card_this_turn):
-		print("try_play_monster_from_hand: ya jugaste un monstruo este turno.")
 		return
 
 	var slots_root := get_node_or_null("../CardSlots")
 	if not is_instance_valid(slots_root):
-		print("try_play_monster_from_hand: no existe ../CardSlots")
 		return
 
 	var free_slot: Node2D = null
@@ -1614,7 +1780,6 @@ func try_play_monster_from_hand(card, facedown: bool) -> void:
 		break
 
 	if free_slot == null:
-		print("try_play_monster_from_hand: no hay slots Monster libres.")
 		return
 
 	var ph := get_node_or_null("../PlayerHand")
@@ -1654,17 +1819,14 @@ func try_activate_from_hand(card) -> void:
 		return
 
 	if str(card.kind).to_upper() != "SPELL":
-		print("activate_from_hand: solo SPELL desde mano (por ahora). card=", card.cardname)
 		return
 
 	var cm := get_node_or_null("../CardManager")
 	if cm != null and ("played_spellortrap_card_this_turn" in cm) and bool(cm.played_spellortrap_card_this_turn):
-		print("activate_from_hand: ya consumiste la acción de spell/trap desde mano este turno.")
 		return
 
 	var spell_subtype := str(card.race).to_upper()
 	if spell_subtype == "CONTINUOUS":
-		print("activate_from_hand: CONTINUOUS requiere slot (pendiente).")
 		return
 
 	if spell_subtype == "FIELD":
@@ -1692,7 +1854,6 @@ func try_activate_from_hand(card) -> void:
 			has_activate = true
 			break
 	if not has_activate:
-		print("activate_from_hand: la carta no tiene ON_ACTIVATE. card=", card.cardname)
 		return
 
 	if _is_field_spell(card):
@@ -1811,17 +1972,14 @@ func try_set_from_hand(card) -> void:
 
 	var kind := str(_card_kind(card)).to_upper()
 	if kind != "SPELL" and kind != "TRAP":
-		print("try_set_from_hand: no es SPELL/TRAP -> ", str(card.cardname))
 		return
 
 	var cm := get_node_or_null("../CardManager")
 	if cm != null and ("played_spellortrap_card_this_turn" in cm) and bool(cm.played_spellortrap_card_this_turn):
-		print("try_set_from_hand: ya jugaste un SPELL/TRAP este turno.")
 		return
 
 	var slots_root := get_node_or_null("../CardSlots")
 	if not is_instance_valid(slots_root):
-		print("try_set_from_hand: no existe ../CardSlots")
 		return
 
 	var free_slot: Node2D = null
@@ -1838,7 +1996,6 @@ func try_set_from_hand(card) -> void:
 		break
 
 	if free_slot == null:
-		print("try_set_from_hand: no hay slots Spell/Trap libres.")
 		return
 
 	var ph := get_node_or_null("../PlayerHand")
@@ -1957,17 +2114,31 @@ func _equip_requirements_ok(target: Node, params: Dictionary) -> bool:
 
 	return true
 
-func _has_kw(card: Node, kw:String) -> bool:
+func _has_kw(card: Node, kw: String) -> bool:
 	if not is_instance_valid(card):
 		return false
+
+	var want := str(kw).to_upper()
+
 	if card.has_method("equip_has_keyword"):
-		return bool(card.call("equip_has_keyword",kw))
+		if bool(card.call("equip_has_keyword", want)):
+			return true
+
 	if card.has_method("has_keyword"):
-		return bool(card.call("has_keyword",kw))
+		if bool(card.call("has_keyword", want)):
+			return true
+
 	if "keywords" in card and typeof(card.keywords) == TYPE_ARRAY:
 		for k in card.keywords:
-			if str(k).to_upper() == str(kw).to_upper():
+			if str(k).to_upper() == want:
 				return true
+
+	if card.has_meta("runtime_keywords"):
+		var runtime_keywords: Array = card.get_meta("runtime_keywords")
+		for k in runtime_keywords:
+			if str(k).to_upper() == want:
+				return true
+
 	return false
 
 func _release_player_input_if_needed(attacker: String) -> void:
@@ -1977,27 +2148,6 @@ func _release_player_input_if_needed(attacker: String) -> void:
 	if im != null and bool(im.get("inputs_disabled")):
 		im.inputs_disabled = false
 	enable_end_turn_button(true)
-
-func _set_field_spell_name_ui(value: String) -> void:
-	if not is_instance_valid(_ui_field_spell_name):
-		_ui_field_spell_name = get_node_or_null("../FieldSpellName") as RichTextLabel
-		if not is_instance_valid(_ui_field_spell_name):
-			var root := get_tree().current_scene
-			if is_instance_valid(root):
-				_ui_field_spell_name = root.get_node_or_null("FieldSpellName") as RichTextLabel
-		if not is_instance_valid(_ui_field_spell_name):
-			return
-
-	_ui_field_spell_name.text = value
-
-func _update_field_spell_name_ui() -> void:
-	if not is_instance_valid(_ui_field_spell_name):
-		return
-
-	if is_instance_valid(active_field_spell) and ("cardname" in active_field_spell):
-		_ui_field_spell_name.text = str(active_field_spell.cardname)
-	else:
-		_ui_field_spell_name.text = "--"
 
 func _attacker_suppresses_traps(attacker_card: Node) -> bool:
 	if not is_instance_valid(attacker_card):
@@ -2013,3 +2163,191 @@ func _attacker_suppresses_traps(attacker_card: Node) -> bool:
 	}
 
 	return bool(eng.is_effect_application_blocked(attacker_card, effect_ctx, "AFFECT"))
+
+func _process_timed_keywords_on_turn_end(turn_owner: String) -> void:
+	var all_cards: Array = []
+	all_cards.append_array(player_cards_on_battlefield)
+	all_cards.append_array(opponent_cards_on_battlefield)
+
+	for c in all_cards:
+		if not is_instance_valid(c):
+			continue
+		if not c.has_meta("timed_keywords"):
+			continue
+
+		var timed_keywords: Array = c.get_meta("timed_keywords")
+		var kept: Array = []
+		var runtime_keywords: Array = c.get_meta("runtime_keywords") if c.has_meta("runtime_keywords") else []
+
+		for item in timed_keywords:
+			if typeof(item) != TYPE_DICTIONARY:
+				continue
+
+			var expire := false
+
+			if item.get("expire_on_turn_owner", "") == turn_owner and int(item.get("expire_turn_index", -1)) <= turn_index:
+				expire = true
+
+			if expire:
+				var kw := str(item.get("keyword", "")).to_upper()
+				runtime_keywords = runtime_keywords.filter(func(x): return str(x).to_upper() != kw)
+			else:
+				kept.append(item)
+
+		c.set_meta("timed_keywords", kept)
+		c.set_meta("runtime_keywords", runtime_keywords)
+
+func reveal_hidden_cards_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -> void:
+	print("ENTER reveal_hidden_cards_by_effect source=", source.cardname if is_instance_valid(source) and ("cardname" in source) else "<null>", " params=", params)
+
+	var controller := _norm_owner(ctx.get("controller", ""))
+	var target_side := str(params.get("target_side", "OPPONENT")).to_upper()
+	var source_zone := str(params.get("source_zone", "SET_SPELL_TRAP")).to_upper()
+	var choose := str(params.get("choose", "ALL")).to_upper()
+	var count := int(params.get("count", 0))
+	var reveal_to := str(params.get("reveal_to", "PLAYER_ONLY")).to_upper()
+	var require_ack := bool(params.get("require_ack", true))
+
+	print("REVEAL controller=", controller, " target_side=", target_side, " source_zone=", source_zone, " choose=", choose, " count=", count, " reveal_to=", reveal_to, " require_ack=", require_ack)
+
+	var target_sides: Array[String] = []
+
+	if target_side == "SELF":
+		target_sides = ["PLAYER" if controller == "Player" else "OPPONENT"]
+	elif target_side == "OPPONENT":
+		target_sides = ["OPPONENT" if controller == "Player" else "PLAYER"]
+	elif target_side == "BOTH":
+		target_sides = ["PLAYER", "OPPONENT"]
+	else:
+		target_sides = ["OPPONENT" if controller == "Player" else "PLAYER"]
+
+	var candidates: Array = []
+
+	for side in target_sides:
+		if source_zone == "SET_SPELL_TRAP":
+			var slots_root = $"../CardSlots" if side == "PLAYER" else $"../CardSlotsRival"
+			print("REVEAL checking slots_root=", slots_root)
+
+			if not is_instance_valid(slots_root):
+				continue
+
+			for s in slots_root.get_children():
+				if not is_instance_valid(s):
+					continue
+
+				var slot_type := str(s.get("card_slot_type"))
+				print("  SLOT name=", s.name, " type=", slot_type, " in_slot=", bool(s.get("card_in_slot")))
+
+				if slot_type != "SpellTrap" and slot_type != "Spell" and slot_type != "Trap":
+					continue
+
+				if not bool(s.get("card_in_slot")):
+					continue
+
+				var c = s.get_meta("card_ref")
+				if not is_instance_valid(c):
+					print("    SLOT OCCUPIED BUT card_ref invalid")
+					continue
+
+				print("    CARD REF=", c.cardname if ("cardname" in c) else "<null>", " face_down=", _is_card_face_down(c))
+
+				if not _is_card_face_down(c):
+					continue
+
+				candidates.append(c)
+
+	print("REVEAL candidates final=", candidates.size())
+
+	if candidates.is_empty():
+		return
+
+	var selected: Array = []
+
+	if choose == "ALL" or count == 0:
+		selected = candidates
+	elif choose == "RANDOM":
+		candidates.shuffle()
+		for i in range(min(max(1, count), candidates.size())):
+			selected.append(candidates[i])
+	else:
+		selected = candidates
+
+	print("REVEAL selected=", selected.map(func(x): return x.cardname if ("cardname" in x) else str(x)))
+
+	_begin_temporary_reveal(selected, source_zone, reveal_to, require_ack, controller)
+
+func _begin_temporary_reveal(cards: Array, source_zone: String, reveal_to: String, require_ack: bool, controller: String) -> void:
+	print("BEGIN TEMP REVEAL cards=", cards.map(func(x): return x.cardname if ("cardname" in x) else str(x)), " source_zone=", source_zone, " controller=", controller)
+
+	if cards.is_empty():
+		return
+
+	reveal_overlay_active = true
+	reveal_overlay_cards = []
+	reveal_overlay_original_states = []
+	reveal_overlay_waiting_ack = false
+
+	for c in cards:
+		if not is_instance_valid(c):
+			continue
+
+		var saved := {
+			"card": c,
+			"face_down": (_is_card_face_down(c)),
+			"show_back_only": (bool(c.show_back_only) if "show_back_only" in c else false),
+			"z_index": (int(c.z_index) if "z_index" in c else 0)
+		}
+		reveal_overlay_original_states.append(saved)
+		reveal_overlay_cards.append(c)
+
+		_set_card_face_down(c, false)
+		if c.has_method("set_show_back_only"):
+			c.set_show_back_only(false)
+		if c.has_method("_update_visuals"):
+			c._update_visuals()
+
+		c.z_index = 50
+
+	var is_player_review := (controller == "Player")
+	print("BEGIN TEMP REVEAL is_player_review=", is_player_review, " require_ack=", require_ack)
+
+	if require_ack and is_player_review:
+		reveal_overlay_waiting_ack = true
+		_show_reveal_ack_popup()
+	else:
+		_finish_temporary_reveal()
+
+func _finish_temporary_reveal() -> void:
+	for item in reveal_overlay_original_states:
+		var c = item.get("card", null)
+		if not is_instance_valid(c):
+			continue
+
+		if "face_down" in item:
+			_set_card_face_down(c, bool(item["face_down"]))
+
+		if c.has_method("set_show_back_only") and item.has("show_back_only"):
+			c.set_show_back_only(bool(item["show_back_only"]))
+
+		if item.has("z_index"):
+			c.z_index = int(item["z_index"])
+
+		if c.has_method("_update_visuals"):
+			c._update_visuals()
+
+	reveal_overlay_cards.clear()
+	reveal_overlay_original_states.clear()
+	reveal_overlay_active = false
+	reveal_overlay_waiting_ack = false
+
+func _show_reveal_ack_popup() -> void:
+	var panel = get_node_or_null("../RevealAckPanel")
+	print("SHOW REVEAL POPUP panel=", panel)
+	if panel:
+		panel.visible = true
+
+func _on_reveal_ack_accept_pressed() -> void:
+	var panel = get_node_or_null("../RevealAckPanel")
+	if panel:
+		panel.visible = false
+	_finish_temporary_reveal()

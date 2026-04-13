@@ -314,4 +314,27 @@ autoplay = "animationSpiral"
 
 [node name="CardContextMenu" type="PopupMenu" parent="UILayer"]
 
+[node name="RevealAckPanel" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_left = 974.0
+offset_top = 655.0
+offset_right = 1014.0
+offset_bottom = 695.0
+
+[node name="Label" type="Label" parent="RevealAckPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "ya ta perrito?"
+
+[node name="ButtonAccept" type="Button" parent="RevealAckPanel"]
+layout_mode = 0
+offset_left = 33.0
+offset_top = 28.0
+offset_right = 55.0
+offset_bottom = 59.0
+text = "Si"
+
 [connection signal="pressed" from="EndTurnButton" to="BattleManager" method="_on_end_turn_button_pressed"]

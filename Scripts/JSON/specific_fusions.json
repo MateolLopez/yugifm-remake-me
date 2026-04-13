@@ -16,5 +16,29 @@
 	"result_id":"10526791",
 	"required_ids":["86188410","59793705"],
 	"exact_count": true
+},
+{
+	"fusion_id":"e_hero_mariner",
+	"result_id":"14225239",
+	"required_ids":["21844576","79979666"],
+	"exact_count": true
+},
+{
+	"fusion_id":"roaring_ocean_snake",
+	"result_id":"19066538",
+	"required_ids":["98049915","02118022"],
+	"exact_count": true
+},
+{
+	"fusion_id":"e_hero_flare_wman",
+	"result_id":"35809262",
+	"required_ids":["58932615","21844576"],
+	"exact_count": true
+},
+{
+	"fusion_id":"e_hero_shining_wman",
+	"result_id":"25366484",
+	"required_ids":["35809262","20721928"],
+	"exact_count": true
 }
 ]

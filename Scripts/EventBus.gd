@@ -25,6 +25,10 @@ signal attack_declared(payload: Dictionary)
 signal battle_damage_inflicted(payload: Dictionary)
 signal effect_damage_inflicted(payload: Dictionary)
 
+signal monster_destroyed_by_battle(payload: Dictionary)
+
+signal lp_recovered(payload: Dictionary)
+
 signal card_destroyed(payload: Dictionary)
 signal card_destroyed_by_battle(payload: Dictionary)
 signal card_destroyed_by_effect(payload: Dictionary)
@@ -40,7 +44,7 @@ signal level_loss(payload: Dictionary)
 
 func emit_event(event_name: String, payload: Dictionary = {}) -> void:
 	emit_signal("event", event_name, payload)
-	print("[BUS] ", event_name)
+	#print("[BUS] ", event_name)
 
 	match event_name:
 		"TURN_START":
@@ -80,6 +84,12 @@ func emit_event(event_name: String, payload: Dictionary = {}) -> void:
 			emit_signal("battle_damage_inflicted", payload)
 		"ON_INFLICT_EFFECT_DAMAGE":
 			emit_signal("effect_damage_inflicted", payload)
+
+		"ON_DESTROY_MONSTER_BY_BATTLE":
+			emit_signal("monster_destroyed_by_battle", payload)
+
+		"ON_RECOVER_LP":
+			emit_signal("lp_recovered", payload)
 
 		"ON_DESTROY":
 			emit_signal("card_destroyed", payload)

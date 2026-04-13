@@ -82,8 +82,8 @@ func register_card_entered_field(card: Node, controller: String) -> void:
 		if trig != "PASSIVE":
 			continue
 
-		if tpl == "aura_stat_buff_while_source_faceup":
-			print("  REGISTER AURA:", card.cardname if ("cardname" in card) else str(card))
+		if tpl == "aura_stat_buff_while_source_faceup" or tpl == "graveyard_count_stat_buff_while_source_faceup":
+			print("  REGISTER CONTINUOUS STAT SOURCE:", card.cardname if ("cardname" in card) else str(card))
 			_active_register_aura(card, _norm_owner(controller), e)
 		elif tpl == "grant_protection_profile_while_faceup":
 			print("  REGISTER PROTECTION:", card.cardname if ("cardname" in card) else str(card))
@@ -123,7 +123,17 @@ func _on_event(event_name: String, payload: Dictionary) -> void:
 	_resolve_aura_reactions(event_name, payload)
 
 	var ev := str(event_name).to_upper()
-	if ev in ["ON_PLAY", "ON_FLIP", "ON_LEAVE_FIELD", "ON_DESTROY", "ON_SUMMON_BY_EFFECT", "ON_CHANGE_POSITION"]:
+	if ev in [
+		"ON_PLAY",
+		"ON_FLIP",
+		"ON_LEAVE_FIELD",
+		"ON_DESTROY",
+		"ON_SUMMON_BY_EFFECT",
+		"ON_CHANGE_POSITION",
+		"ON_SEND_TO_GRAVE",
+		"ON_SEND_TO_GRAVE_BY_EFFECT",
+		"ON_DESTROY_MONSTER_BY_BATTLE"
+	]:
 		_refresh_aura_stat_buffs()
 
 func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void:
@@ -163,6 +173,12 @@ func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void
 		else:
 			non_trap_candidates.append(card)
 
+	print("EVENT=", ev)
+	print("PAYLOAD controller=", payload.get("controller", ""), " suppress_trap_reactions=", payload.get("suppress_trap_reactions", false))
+	print("FIELD_CARDS=", field_cards.map(func(c): return c.cardname if ("cardname" in c) else str(c)))
+	print("NON_TRAP_CANDIDATES=", non_trap_candidates.map(func(c): return c.cardname if ("cardname" in c) else str(c)))
+	print("TRAP_CANDIDATES(before sort)=", trap_candidates.map(func(c): return c.cardname if ("cardname" in c) else str(c)))
+
 	for card in non_trap_candidates:
 		if card == null or not is_instance_valid(card):
 			continue
@@ -178,18 +194,25 @@ func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void
 			if trig != ev:
 				continue
 
-			if not _passes_controller_filter(card, trig, payload):
+			var passes_non_trap := _passes_controller_filter(card, trig, payload)
+			print("CHECK NON-TRAP:", card.cardname if ("cardname" in card) else str(card), " trig=", trig, " passes_filter=", passes_non_trap)
+
+			if not passes_non_trap:
 				continue
 
-			_execute_effect(card, payload, e)
+			var executed_non_trap := _execute_effect(card, payload, e)
+			print("EXEC NON-TRAP:", card.cardname if ("cardname" in card) else str(card), " executed=", executed_non_trap)
 
 	trap_candidates.sort_custom(func(a, b): return _card_set_order(a) < _card_set_order(b))
+	print("TRAP_CANDIDATES(after sort)=", trap_candidates.map(func(c): return "%s(order=%s)" % [c.cardname if ("cardname" in c) else str(c), str(_card_set_order(c))]))
 
 	for card in trap_candidates:
 		if card == null or not is_instance_valid(card):
 			continue
 		if not card.has_method("get_effects"):
 			continue
+
+		print("CHECKING TRAP CARD:", card.cardname if ("cardname" in card) else str(card), " controller=", _controller_of_card(card), " set_order=", _card_set_order(card))
 
 		var effs: Array = card.get_effects()
 		var executed_trap := false
@@ -199,17 +222,25 @@ func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void
 				continue
 
 			var trig := str(e.get("trigger", "")).to_upper()
+			print("  TRAP EFFECT trig=", trig, " expected=", ev)
+
 			if trig != ev:
 				continue
 
-			if not _passes_controller_filter(card, trig, payload):
+			var passes_trap := _passes_controller_filter(card, trig, payload)
+			print("  TRAP FILTER:", card.cardname if ("cardname" in card) else str(card), " passes_filter=", passes_trap)
+
+			if not passes_trap:
 				continue
 
-			_execute_effect(card, payload, e)
-			executed_trap = true
-			break
+			executed_trap = _execute_effect(card, payload, e)
+			print("TRY TRAP:", card.cardname if ("cardname" in card) else str(card), " executed=", executed_trap)
+
+			if executed_trap:
+				break
 
 		if executed_trap:
+			print("TRAP CONSUMED REACTION:", card.cardname if ("cardname" in card) else str(card))
 			break
 
 func _resolve_aura_reactions(event_name: String, payload: Dictionary) -> void:
@@ -223,32 +254,74 @@ func _resolve_aura_reactions(event_name: String, payload: Dictionary) -> void:
 			if event_name in ["ON_PLAY", "ON_SUMMON_BY_EFFECT"]:
 				_execute_effect(card, payload, e)
 
-func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> void:
+func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> bool:
 	var template := str(effect_def.get("template", ""))
 	var params: Dictionary = effect_def.get("params", {})
 	var trigger := str(effect_def.get("trigger", ""))
 	var limit := _get_limit_per_instance(params)
+
 	if limit == 1:
 		var k := "%s|%s|%s" % [str(source.get_instance_id()), trigger, template]
 		if once_per_instance_used.get(k, false):
-			return
+			return false
 		once_per_instance_used[k] = true
+
 	match template:
-		"destroy_target": _tpl_destroy_target(source, ctx, params)
-		"reveal_set_cards": _tpl_reveal_set_cards(source, ctx, params)
-		"guardian_star_bonus_multiplier": _tpl_guardian_star_bonus_multiplier(source, ctx, params)
-		"change_self_position_when_attacked_end_of_battle": _tpl_change_self_position_when_attacked_end_of_battle(source, ctx, params)
-		"apply_keyword_to_new_summons_while_source_faceup": _tpl_apply_keyword_to_new_summons_while_source_faceup(source, ctx, params)
-		"summon_token_copy_source_stats_on_send_to_grave_by_effect": _tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source, ctx, params)
-		"inflict_effect_damage": _tpl_inflict_effect_damage(source, ctx, params)
-		"summon_token_from_source_basestats": _tpl_summon_token_from_source_basestats(source, ctx, params)
-		"negate_attack_and_destroy": _tpl_negate_attack_and_destroy(source, ctx, params)
-		"destroy_by_effect": _tpl_destroy_by_effect(source, ctx, params)
-		"equip_spell_to_target": _tpl_equip_spell_to_target(source, ctx, params)
-		"aura_stat_buff_while_source_faceup": _tpl_aura_stat_buff_while_source_faceup(source, ctx, params)
-		"grant_protection_profile_while_faceup": _tpl_grant_protection_profile_while_faceup(source, ctx, params)
+		"destroy_target":
+			_tpl_destroy_target(source, ctx, params)
+			return true
+		"reveal_set_cards":
+			_tpl_reveal_set_cards(source, ctx, params)
+			return true
+		"guardian_star_bonus_multiplier":
+			_tpl_guardian_star_bonus_multiplier(source, ctx, params)
+			return true
+		"change_self_position_when_attacked_end_of_battle":
+			_tpl_change_self_position_when_attacked_end_of_battle(source, ctx, params)
+			return true
+		"apply_keyword_to_new_summons_while_source_faceup":
+			_tpl_apply_keyword_to_new_summons_while_source_faceup(source, ctx, params)
+			return true
+		"summon_token_copy_source_stats_on_send_to_grave_by_effect":
+			_tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source, ctx, params)
+			return true
+		"inflict_effect_damage":
+			_tpl_inflict_effect_damage(source, ctx, params)
+			return true
+		"recover_lp":
+			_tpl_recover_lp(source, ctx, params)
+			return true
+		"summon_token_from_source_basestats":
+			_tpl_summon_token_from_source_basestats(source, ctx, params)
+			return true
+		"negate_attack_and_destroy":
+			return _tpl_negate_attack_and_destroy(source, ctx, params)
+		"destroy_by_effect":
+			_tpl_destroy_by_effect(source, ctx, params)
+			return true
+		"equip_spell_to_target":
+			_tpl_equip_spell_to_target(source, ctx, params)
+			return true
+		"aura_stat_buff_while_source_faceup":
+			_tpl_aura_stat_buff_while_source_faceup(source, ctx, params)
+			return true
+		"grant_protection_profile_while_faceup":
+			_tpl_grant_protection_profile_while_faceup(source, ctx, params)
+			return true
+		"grant_keyword_to_selected_target":
+			_tpl_grant_keyword_to_selected_target(source, ctx, params)
+			return true
+		"reveal_hidden_cards":
+			_tpl_reveal_hidden_cards(source, ctx, params)
+			return true
+		"graveyard_count_stat_buff_while_source_faceup":
+			_tpl_graveyard_count_stat_buff_while_source_faceup(source, ctx, params)
+			return true
+		"inflict_destroyed_monster_atk_as_effect_damage":
+			return _tpl_inflict_destroyed_monster_atk_as_effect_damage(source, ctx, params)
 		_:
 			push_warning("EffectEngine: Template no implementado: %s" % template)
+			return false
 
 func _get_limit_per_instance(params: Dictionary) -> int:
 	if params.has("limit_per_instance"):
@@ -256,6 +329,117 @@ func _get_limit_per_instance(params: Dictionary) -> int:
 	if params.has("limit") and typeof(params.get("limit")) == TYPE_DICTIONARY:
 		return int(params["limit"].get("per_instance", 0))
 	return 0
+
+func _card_has_tag(card: Node, wanted_tag: String) -> bool:
+	if not is_instance_valid(card):
+		return false
+	wanted_tag = str(wanted_tag).strip_edges().to_lower()
+	if wanted_tag == "":
+		return true
+	if not ("tags" in card):
+		return false
+	for t in card.tags:
+		if str(t).strip_edges().to_lower() == wanted_tag:
+			return true
+	return false
+
+func _card_matches_filters(card: Node, filter_attribute: String, filter_race: String, filter_tag: String, use_effective_stats := false) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	filter_attribute = str(filter_attribute).to_upper()
+	filter_race = str(filter_race).to_upper()
+	filter_tag = str(filter_tag).to_lower()
+
+	var card_attribute := ""
+	var card_race := ""
+
+	if use_effective_stats and card.has_method("get_effective_attribute"):
+		card_attribute = str(card.get_effective_attribute()).to_upper()
+	else:
+		card_attribute = str(card.attribute).to_upper() if ("attribute" in card) else ""
+
+	if use_effective_stats and card.has_method("get_effective_race"):
+		card_race = str(card.get_effective_race()).to_upper()
+	else:
+		card_race = str(card.race).to_upper() if ("race" in card) else ""
+
+	if filter_attribute != "" and card_attribute != filter_attribute:
+		return false
+	if filter_race != "" and card_race != filter_race:
+		return false
+	if filter_tag != "" and not _card_has_tag(card, filter_tag):
+		return false
+
+	return true
+
+func _grave_cards_for_side(bm: Node, side: String) -> Array:
+	side = str(side).to_upper()
+	if side == "PLAYER":
+		return bm.player_graveyard
+	if side == "OPPONENT":
+		return bm.opponent_graveyard
+	return []
+
+func _grave_entry_matches_filters(entry, filter_attribute: String, filter_race: String, filter_tag: String) -> bool:
+	if typeof(entry) != TYPE_DICTIONARY:
+		return false
+
+	filter_attribute = str(filter_attribute).to_upper()
+	filter_race = str(filter_race).to_upper()
+	filter_tag = str(filter_tag).to_lower()
+
+	var entry_kind := str(entry.get("kind", "")).to_upper()
+	var entry_attribute := str(entry.get("attribute", "")).to_upper()
+	var entry_race := str(entry.get("race", "")).to_upper()
+	var entry_tags: Array = entry.get("tags", [])
+
+	if entry_kind != "MONSTER":
+		return false
+
+	if filter_attribute != "" and entry_attribute != filter_attribute:
+		return false
+
+	if filter_race != "" and entry_race != filter_race:
+		return false
+
+	if filter_tag != "":
+		var ok := false
+		for t in entry_tags:
+			if str(t).strip_edges().to_lower() == filter_tag:
+				ok = true
+				break
+		if not ok:
+			return false
+
+	return true
+
+func _count_matching_cards_in_graveyard(bm: Node, source_controller: String, params: Dictionary) -> int:
+	var count_side := str(params.get("count_side", "SELF")).to_upper()
+	var filter_attribute := str(params.get("count_filter_attribute", "")).to_upper()
+	var filter_race := str(params.get("count_filter_race", "")).to_upper()
+	var filter_tag := str(params.get("count_filter_tag", "")).to_lower()
+
+	var sides: Array[String] = []
+
+	if count_side == "SELF":
+		sides = ["PLAYER" if source_controller == "Player" else "OPPONENT"]
+	elif count_side == "OPPONENT":
+		sides = ["OPPONENT" if source_controller == "Player" else "PLAYER"]
+	elif count_side == "BOTH":
+		sides = ["PLAYER", "OPPONENT"]
+	else:
+		sides = ["PLAYER" if source_controller == "Player" else "OPPONENT"]
+
+	var total := 0
+	for side in sides:
+		var arr := _grave_cards_for_side(bm, side)
+		for entry in arr:
+			if not _grave_entry_matches_filters(entry, filter_attribute, filter_race, filter_tag):
+				continue
+			total += 1
+
+	return total
 
 func _tpl_destroy_target(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var selector = params.get("target", null)
@@ -305,6 +489,8 @@ func _tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source: Node
 		return
 	bm.summon_token_from_source_basestats(source, params, ctx)
 
+
+
 func _get_battle_manager(ctx: Dictionary) -> Node:
 	if ctx.has("battle_manager") and ctx["battle_manager"] != null:
 		return ctx["battle_manager"]
@@ -330,7 +516,8 @@ func _is_self_only_trigger(ev: String) -> bool:
 		"ON_SEND_TO_GRAVE",
 		"ON_SEND_TO_GRAVE_BY_EFFECT",
 		"ON_SEND_TO_GRAVE_AS_COST",
-		"ON_BANISH"
+		"ON_BANISH",
+		"ON_DESTROY_MONSTER_BY_BATTLE"
 	]
 
 func _controller_of_card(card: Node) -> String:
@@ -351,10 +538,15 @@ func _passes_controller_filter(card: Node, trigger: String, payload: Dictionary)
 	if trigger.begins_with("ON_OPPONENT_"):
 		return card_controller != ev_controller
 
-	if trigger == "ON_TRAP_ACTIVATE" or trigger == "ON_SPELL_ACTIVATE" or trigger == "ON_OPPONENT_NORMAL_SUMMON":
+	if trigger in [
+		"ON_ATTACK_DECLARATION",
+		"ON_TRAP_ACTIVATE",
+		"ON_SPELL_ACTIVATE",
+		"ON_OPPONENT_NORMAL_SUMMON"
+	]:
 		if trigger == "ON_OPPONENT_NORMAL_SUMMON":
 			return card_controller != ev_controller
-		return card_controller == ev_controller
+		return true
 
 	return true
 
@@ -510,26 +702,52 @@ func _tpl_inflict_effect_damage(source: Node, ctx: Dictionary, params: Dictionar
 
 	bm._apply_effect_damage_to_side(target_player, amount, {"source": source})
 
-func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dictionary) -> void:
+func _tpl_recover_lp(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
 		return
 
+	var amount := int(params.get("amount", 0))
+
+	var target := str(params.get("target", "SELF")).to_upper()
+
+	var source_controller := ""
+	if source != null:
+		if "owner_side" in source:
+			source_controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+	source_controller = _norm_owner(source_controller)
+
+	var target_player := source_controller
+	if target == "OPPONENT":
+		target_player = ("Opponent" if source_controller == "Player" else "Player")
+	elif target == "SELF":
+		target_player = source_controller
+
+	target_player = _norm_owner(target_player)
+
+	if bm.has_method("recover_lp_to_side"):
+		bm.recover_lp_to_side(target_player, amount, {"source": source})
+
+func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return false
+
 	var attacker_card = ctx.get("attacker", null)
 	if not is_instance_valid(attacker_card):
-		return
+		return false
 
 	if source != null and source.has_method("is_on_field"):
 		if not source.is_on_field():
-			return
+			return false
 
 	if bool(params.get("only_if_attacker_is_opponent", false)):
 		var attacker_controller := _norm_owner(ctx.get("controller", ""))
 		var source_controller := _norm_owner(_controller_of_card(source))
 		if attacker_controller == "" or source_controller == "":
-			return
+			return false
 		if attacker_controller == source_controller:
-			return
+			return false
 
 	var effect_ctx := {
 		"source": source,
@@ -550,7 +768,7 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 				bm.send_spell_to_graveyard(source, source_owner0)
 			else:
 				bm.destroy_card(source, source_owner0, "DESTROY_EFFECT", effect_ctx)
-			return
+			return true
 
 	ctx["prevent_attack"] = true
 	ctx["attack_negated"] = true
@@ -560,9 +778,37 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 	if destroy_mode == "attacker":
 		var owner := _norm_owner(bm._owner_of(attacker_card))
 		bm.destroy_card(attacker_card, owner, "DESTROY_EFFECT", effect_ctx)
+
+	elif destroy_mode == "all_attack_position_of_attacker_controller":
+		var attacker_owner := _norm_owner(bm._owner_of(attacker_card))
+		var field_arr: Array = bm.player_cards_on_battlefield if attacker_owner == "Player" else bm.opponent_cards_on_battlefield
+
+		var to_destroy: Array = []
+		for c in field_arr:
+			if not is_instance_valid(c):
+				continue
+			if bm._card_kind(c) != "MONSTER":
+				continue
+			if bool(c.in_defense):
+				continue
+
+			var blocked := false
+			if eng and eng.has_method("is_effect_application_blocked"):
+				blocked = bool(eng.is_effect_application_blocked(c, effect_ctx, "DESTROY"))
+			if blocked:
+				continue
+
+			to_destroy.append(c)
+
+		for c in to_destroy:
+			if not is_instance_valid(c):
+				continue
+			var owner2 := _norm_owner(bm._owner_of(c))
+			bm.destroy_card(c, owner2, "DESTROY_EFFECT", effect_ctx)
+
 	else:
-		var owner2 := _norm_owner(bm._owner_of(attacker_card))
-		bm.destroy_card(attacker_card, owner2, "DESTROY_EFFECT", effect_ctx)
+		var owner3 := _norm_owner(bm._owner_of(attacker_card))
+		bm.destroy_card(attacker_card, owner3, "DESTROY_EFFECT", effect_ctx)
 
 	var source_owner := _norm_owner(bm._owner_of(source))
 	if bm.has_method("_send_spell_to_graveyard"):
@@ -571,6 +817,8 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 		bm.send_spell_to_graveyard(source, source_owner)
 	else:
 		bm.destroy_card(source, source_owner, "DESTROY_EFFECT", effect_ctx)
+
+	return true
 
 func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
@@ -827,6 +1075,10 @@ func _tpl_aura_stat_buff_while_source_faceup(source: Node, ctx: Dictionary, para
 	_refresh_aura_stat_buffs()
 
 func _refresh_aura_stat_buffs() -> void:
+	var bm := _get_battle_manager({})
+	if bm == null:
+		return
+
 	var monsters: Array = []
 	for c in field_cards:
 		if not is_instance_valid(c):
@@ -834,17 +1086,17 @@ func _refresh_aura_stat_buffs() -> void:
 		var k := str(c.kind).to_upper() if ("kind" in c) else ""
 		if k != "MONSTER":
 			continue
-		if not c.has_method("is_on_field") or not c.is_on_field():
+		if not field_cards.has(c):
 			continue
 		monsters.append(c)
 
-	var acc: Dictionary = {}  # key: target instance_id => { "atk":int, "def":int, "mods":Array }
+	var acc: Dictionary = {}
 
 	for a in active_auras:
 		var src = a.get("card", null)
 		if not is_instance_valid(src):
 			continue
-		if not src.has_method("is_on_field") or not src.is_on_field():
+		if not field_cards.has(src):
 			continue
 
 		var src_facedown := bool(src.face_down) if ("face_down" in src) else false
@@ -852,62 +1104,108 @@ func _refresh_aura_stat_buffs() -> void:
 			continue
 
 		var effect_def: Dictionary = a.get("effect", {})
-		if str(effect_def.get("template","")) != "aura_stat_buff_while_source_faceup":
-			continue
-
+		var template := str(effect_def.get("template", ""))
 		var params: Dictionary = effect_def.get("params", {})
-
-		var target_side := str(params.get("target_side","SELF")).to_upper() # SELF / OPPONENT / BOTH
-		var filter_attribute := str(params.get("filter_attribute","")).to_upper()
-		var atk_delta := int(params.get("atk_delta", 0))
-		var def_delta := int(params.get("def_delta", 0))
-
 		var src_controller := _norm_owner(_controller_of_card(src))
 		if src_controller == "":
 			continue
 
-		for t in monsters:
-			if not is_instance_valid(t):
-				continue
+		if template == "aura_stat_buff_while_source_faceup":
+			var target_side := str(params.get("target_side","SELF")).to_upper()
+			var filter_attribute := str(params.get("filter_attribute","")).to_upper()
+			var atk_delta := int(params.get("atk_delta", 0))
+			var def_delta := int(params.get("def_delta", 0))
 
-			var t_controller := _norm_owner(_controller_of_card(t))
-			if t_controller == "":
-				continue
-
-			var ok_side := true
-			if target_side == "SELF":
-				ok_side = (t_controller == src_controller)
-			elif target_side == "OPPONENT":
-				ok_side = (t_controller != src_controller)
-			elif target_side == "BOTH":
-				ok_side = true
-			if not ok_side:
-				continue
-
-			if filter_attribute != "":
-				var a2 := str(t.attribute).to_upper() if ("attribute" in t) else ""
-				if a2 != filter_attribute:
+			for t in monsters:
+				if not is_instance_valid(t):
 					continue
 
-			var tid := str(t.get_instance_id())
-			if not acc.has(tid):
-				acc[tid] = {"atk": 0, "def": 0, "mods": []}
+				var t_controller := _norm_owner(_controller_of_card(t))
+				if t_controller == "":
+					continue
 
-			acc[tid]["atk"] = int(acc[tid]["atk"]) + atk_delta
-			acc[tid]["def"] = int(acc[tid]["def"]) + def_delta
-			acc[tid]["mods"].append({
-				"src_id": str(src.get_instance_id()),
-				"atk": atk_delta,
-				"def": def_delta
-			})
+				var ok_side := true
+				if target_side == "SELF":
+					ok_side = (t_controller == src_controller)
+				elif target_side == "OPPONENT":
+					ok_side = (t_controller != src_controller)
+				elif target_side == "BOTH":
+					ok_side = true
+				if not ok_side:
+					continue
+
+				if filter_attribute != "":
+					var a2 := str(t.attribute).to_upper() if ("attribute" in t) else ""
+					if a2 != filter_attribute:
+						continue
+
+				var tid := str(t.get_instance_id())
+				if not acc.has(tid):
+					acc[tid] = {"atk": 0, "def": 0, "mods": []}
+
+				acc[tid]["atk"] = int(acc[tid]["atk"]) + atk_delta
+				acc[tid]["def"] = int(acc[tid]["def"]) + def_delta
+				acc[tid]["mods"].append({
+					"instance_id": _aura_instance_id(src, effect_def),
+					"atk": atk_delta,
+					"def": def_delta
+				})
+
+		elif template == "graveyard_count_stat_buff_while_source_faceup":
+			var target_side2 := str(params.get("target_side", "SELF")).to_upper()
+			var target_filter_attribute := str(params.get("target_filter_attribute", "")).to_upper()
+			var target_filter_race := str(params.get("target_filter_race", "")).to_upper()
+			var target_filter_tag := str(params.get("target_filter_tag", "")).to_lower()
+			var per_count_atk := int(params.get("per_count_atk", 0))
+			var per_count_def := int(params.get("per_count_def", 0))
+
+			var grave_count := _count_matching_cards_in_graveyard(bm, src_controller, params)
+			if grave_count <= 0:
+				continue
+
+			var total_atk := grave_count * per_count_atk
+			var total_def := grave_count * per_count_def
+
+			for t in monsters:
+				if not is_instance_valid(t):
+					continue
+
+				var t_controller2 := _norm_owner(_controller_of_card(t))
+				if t_controller2 == "":
+					continue
+
+				var ok_side2 := true
+				if target_side2 == "SELF":
+					ok_side2 = (t_controller2 == src_controller)
+				elif target_side2 == "OPPONENT":
+					ok_side2 = (t_controller2 != src_controller)
+				elif target_side2 == "BOTH":
+					ok_side2 = true
+				if not ok_side2:
+					continue
+
+				if not _card_matches_filters(t, target_filter_attribute, target_filter_race, target_filter_tag, true):
+					continue
+
+				var tid2 := str(t.get_instance_id())
+				if not acc.has(tid2):
+					acc[tid2] = {"atk": 0, "def": 0, "mods": []}
+
+				acc[tid2]["atk"] = int(acc[tid2]["atk"]) + total_atk
+				acc[tid2]["def"] = int(acc[tid2]["def"]) + total_def
+				acc[tid2]["mods"].append({
+					"instance_id": _aura_instance_id(src, effect_def),
+					"atk": total_atk,
+					"def": total_def
+				})
 
 	for t in monsters:
 		if not is_instance_valid(t):
 			continue
-		var tid := str(t.get_instance_id())
+		var tid3 := str(t.get_instance_id())
 		var mods: Array = []
-		if acc.has(tid):
-			mods = acc[tid]["mods"]
+		if acc.has(tid3):
+			mods = acc[tid3]["mods"]
 
 		if t.has_method("set_effect_modifiers"):
 			t.set_effect_modifiers(mods)
@@ -971,3 +1269,143 @@ func _apply_aura_as_virtual_equip(target: Node, instance_id: String, source: Nod
 
 func _tpl_grant_protection_profile_while_faceup(_source: Node, _ctx: Dictionary, _params: Dictionary) -> void:
 	return
+
+func _tpl_grant_keyword_to_selected_target(source: Node, ctx: Dictionary, params: Dictionary) -> void:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return
+
+	var controller := _norm_owner(ctx.get("controller", ""))
+	if controller == "" and source != null and ("owner_side" in source):
+		controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+	controller = _norm_owner(controller)
+
+	var target_side := str(params.get("target_side", "OPPONENT")).to_upper()
+	var faceup_only := bool(params.get("faceup_only", false))
+	var position := str(params.get("position", "ANY")).to_upper()
+	var choose := str(params.get("choose", "RANDOM")).to_upper()
+	var count := int(params.get("count", 1))
+	var keyword := str(params.get("keyword", "")).to_upper()
+	var duration := str(params.get("duration", "UNTIL_TURN_END")).to_upper()
+
+	if keyword == "":
+		return
+
+	var candidates: Array = []
+	var sides: Array[String] = []
+
+	if target_side == "SELF":
+		sides = ["PLAYER" if controller == "Player" else "OPPONENT"]
+	elif target_side == "OPPONENT":
+		sides = ["OPPONENT" if controller == "Player" else "PLAYER"]
+	elif target_side == "BOTH":
+		sides = ["PLAYER", "OPPONENT"]
+	else:
+		sides = ["OPPONENT" if controller == "Player" else "PLAYER"]
+
+	for side in sides:
+		var arr: Array = bm.player_cards_on_battlefield if side == "PLAYER" else bm.opponent_cards_on_battlefield
+		for c in arr:
+			if not is_instance_valid(c):
+				continue
+			if bm._card_kind(c) != "MONSTER":
+				continue
+
+			var is_facedown := false
+			if "face_down" in c:
+				is_facedown = bool(c.face_down)
+
+			if faceup_only and is_facedown:
+				continue
+
+			if position == "ATTACK" and bool(c.in_defense):
+				continue
+			if position == "DEFENSE" and not bool(c.in_defense):
+				continue
+
+			candidates.append(c)
+
+	if candidates.is_empty():
+		return
+
+	var selected: Array = []
+
+	if choose == "ALL":
+		selected = candidates
+	elif choose == "RANDOM":
+		candidates.shuffle()
+		for i in range(min(max(1, count), candidates.size())):
+			selected.append(candidates[i])
+	else:
+		match choose:
+			"HIGHEST_ATK":
+				candidates.sort_custom(func(a, b): return int(a.get_effective_atk() if a.has_method("get_effective_atk") else a.atk) > int(b.get_effective_atk() if b.has_method("get_effective_atk") else b.atk))
+			"LOWEST_ATK":
+				candidates.sort_custom(func(a, b): return int(a.get_effective_atk() if a.has_method("get_effective_atk") else a.atk) < int(b.get_effective_atk() if b.has_method("get_effective_atk") else b.atk))
+			"HIGHEST_LEVEL":
+				candidates.sort_custom(func(a, b): return int(a.level) > int(b.level))
+			"LOWEST_LEVEL":
+				candidates.sort_custom(func(a, b): return int(a.level) < int(b.level))
+			_:
+				candidates.shuffle()
+
+		for i in range(min(max(1, count), candidates.size())):
+			selected.append(candidates[i])
+
+	var effect_ctx := {
+		"source": source,
+		"controller": controller,
+		"activation_type": "MONSTER_EFFECT"
+	}
+
+	var eng = bm._get_effect_engine()
+	for target in selected:
+		if not is_instance_valid(target):
+			continue
+
+		if eng and eng.has_method("is_effect_application_blocked"):
+			if eng.is_effect_application_blocked(target, effect_ctx, "AFFECT"):
+				continue
+
+		bm.apply_keyword_to_target(target, keyword, duration, controller)
+
+func _tpl_reveal_hidden_cards(source: Node, ctx: Dictionary, params: Dictionary) -> void:
+	print("TPL REVEAL HIDDEN source=", source.cardname if is_instance_valid(source) and ("cardname" in source) else "<null>", " params=", params)
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		print("TPL REVEAL HIDDEN bm=NULL")
+		return
+	if bm.has_method("reveal_hidden_cards_by_effect"):
+		print("TPL REVEAL HIDDEN calling battle_manager")
+		bm.reveal_hidden_cards_by_effect(source, ctx, params)
+	else:
+		print("TPL REVEAL HIDDEN bm missing reveal_hidden_cards_by_effect")
+
+func _tpl_graveyard_count_stat_buff_while_source_faceup(_source: Node, _ctx: Dictionary, _params: Dictionary) -> void:
+	return
+
+func _tpl_inflict_destroyed_monster_atk_as_effect_damage(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return false
+
+	var destroyed_atk := int(ctx.get("destroyed_atk", 0))
+	if destroyed_atk <= 0:
+		return false
+
+	var target := str(params.get("target", "OPPONENT")).to_upper()
+
+	var source_controller := _norm_owner(ctx.get("controller", ""))
+	if source_controller == "" and source != null and ("owner_side" in source):
+		source_controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+	source_controller = _norm_owner(source_controller)
+
+	var target_player := source_controller
+	if target == "OPPONENT":
+		target_player = ("Opponent" if source_controller == "Player" else "Player")
+	elif target == "SELF":
+		target_player = source_controller
+
+	target_player = _norm_owner(target_player)
+	bm._apply_effect_damage_to_side(target_player, destroyed_atk, {"source": source})
+	return true

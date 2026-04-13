@@ -5,11 +5,47 @@
 	"required_groups":[["machine","iron"],["golem"]],
 	"priority": 0.6
 },
+ {
+	"fusion_id":"wood_clown",
+	"result_id":"17511156",
+	"required_groups":[["wood"],["clown"]],
+	"priority": 0.8
+},
+ {
+	"fusion_id":"cockroach_knight",
+	"result_id":"33413638",
+	"required_groups":[["knight"],["insect"]],
+	"priority": 0.81
+},
+{
+	"fusion_id": "dokuroizo",
+	"result_id": "25882881",
+	"required_groups": [["skull","zombie"],["robe"]],
+	"priority": 9.0
+},
+{
+	"fusion_id": "flame_manipulator",
+	"result_id": "34460851",
+	"required_groups": [["spellcaster"],["fire"]],
+	"priority": 9.1
+},
 {
 	"fusion_id": "celtic_guardian",
 	"result_id": "14261867",
 	"required_groups": [["elf"],["warrior"]],
 	"priority": 1.0
+},
+{
+	"fusion_id": "e_hero_avian",
+	"result_id": "21817254",
+	"required_groups": [["hero"],["winged","w-beast","bird"]],
+	"priority": 1.01
+},
+{
+	"fusion_id": "charubin_fire_k",
+	"result_id": "37313348",
+	"required_groups": [["fire","pyro"],["warrior","knight","armored"]],
+	"priority": 1.1
 },
 {
 	"fusion_id": "gigatech-wolf",
@@ -18,16 +54,82 @@
 	"priority": 1.2
 },
 {
+	"fusion_id": "big_eye",
+	"result_id": "16768387",
+	"required_groups":[["eye"],["fiend"]],
+	"priority": 1.21
+},
+{
+	"fusion_id": "spirit_mountain",
+	"result_id": "34690519",
+	"required_groups":[["spirit"],["earth","rock"]],
+	"priority": 1.3
+},
+{
+	"fusion_id":"fiend_sword",
+	"result_id":"22855882",
+	"required_groups":[["sword","weapon"],["fiend","dark"]],
+	"priority":1.4
+},
+{
+	"fusion_id": "judgement_hand",
+	"result_id": "28003512",
+	"required_groups":[["hand"],["hand"]],
+	"priority": 1.41
+},
+{
+	"fusion_id": "witty_phantom",
+	"result_id": "36304921",
+	"required_groups":[["elf"],["fiend"]],
+	"priority": 1.42
+},
+{
+	"fusion_id":"boulder_tortoise",
+	"result_id":"09540040",
+	"required_groups":[["rock"],["turtle"]],
+	"priority":1.45
+},
+{
 	"fusion_id": "uraby",
 	"result_id": "01784619",
 	"required_groups": [["dinosaur","dino"],["dark","wild"]],
 	"priority": 1.5
 },
 {
+	"fusion_id": "giant_flea",
+	"result_id": "41762634",
+	"required_groups": [["giant"],["insect"]],
+	"priority": 1.51
+},
+{
+	"fusion_id": "e_hero_sparkman",
+	"result_id": "20721928",
+	"required_groups":[["hero"],["thunder"]],
+	"priority": 1.6
+},
+{
+	"fusion_id": "thunder_dragon",
+	"result_id": "31786629",
+	"required_groups":[["dragon"],["thunder"]],
+	"priority": 1.61
+},
+{
+	"fusion_id":"akihiron",
+	"result_id":"36904469",
+	"required_groups":[["water","aqua"],["insect","eye"]],
+	"priority": 1.70
+},
+{
 	"fusion_id":"asura_priest",
 	"result_id":"02134346",
 	"required_groups":[["light","fairy"],["monk"]],
-	"priority": 1.7
+	"priority": 1.71
+},
+{
+	"fusion_id": "marine_beast",
+	"result_id": "29929832",
+	"required_groups":[["fish","water"],["beast"]],
+	"priority": 1.72
 },
 {
 	"fusion_id": "gearfried_iron_k",
@@ -36,16 +138,39 @@
 	"priority": 1.8
 },
 {
+	"fusion_id": "rude_kaiser",
+	"result_id": "25882881",
+	"required_groups":[["reptile","dinosaur"],["armor","armored","axe"]],
+	"priority": 1.81
+},
+{
 	"fusion_id": "skull_bird",
 	"result_id": "08327462",
 	"required_groups":[["w-beast","bird","winged"],["skull","bone"]],
 	"priority": 1.9
 },
 {
-	"fusion_id":"boulder_tortoise",
-	"result_id":"09540040",
-	"required_groups":[["rock"],["turtle"]],
-	"priority":1.45
-}
-
+	"fusion_id": "granadora",
+	"result_id": "13944422",
+	"required_groups":[["reptile"],["water"]],
+	"priority": 1.91
+},
+{
+	"fusion_id": "monstrous_bird",
+	"result_id": "35712107",
+	"required_groups":[["w-beast","winged"],["giant"]],
+	"priority": 2.0
+},
+{
+	"fusion_id": "roaring_ocea_s",
+	"result_id": "19066538",
+	"required_groups":[["snake","s-serpent"],["water","aqua"]],
+	"priority": 2.1
+},
+{
+	"fusion_id": "mystical_sand",
+	"result_id": "32751480",
+	"required_groups":[["witch"],["earth","rock"]],
+	"priority": 2.11
+},
 ]

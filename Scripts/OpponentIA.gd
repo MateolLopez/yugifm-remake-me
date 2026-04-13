@@ -36,6 +36,8 @@ func make_turn_decisions() -> void:
 	if not _has_pending_fusion():
 		await play_optimal_monsters()
 
+	await play_one_spelltrap_set()
+
 	adjust_all_battle_positions()
 	await execute_intelligent_attacks()
 
@@ -362,7 +364,7 @@ func execute_intelligent_attacks() -> void:
 
 	var attackers = battle_manager.opponent_cards_on_battlefield.duplicate()
 	attackers = attackers.filter(func(c):
-		return is_instance_valid(c) and not bool(c.get("in_defense"))
+		return is_instance_valid(c) and not bool(c.get("in_defense")) and not battle_manager._has_kw(c, "PARALYZED")
 	)
 	attackers.sort_custom(func(a, b): return int(a.get("atk")) > int(b.get("atk")))
 
@@ -386,3 +388,88 @@ func get_strongest_player_monster():
 		return null
 	player_monsters.sort_custom(func(a, b): return int(a.get("atk")) > int(b.get("atk")))
 	return player_monsters[0]
+
+func _pick_free_spelltrap_slot_opponent():
+	var free := _get_free_spelltrap_slots_opponent()
+	if free.is_empty():
+		return null
+	return free[randi_range(0, free.size() - 1)]
+
+func _get_free_spelltrap_slots_opponent() -> Array:
+	var root := _slots_root_opponent
+	if not is_instance_valid(root):
+		return []
+
+	var free: Array = []
+	for child in root.get_children():
+		if not is_instance_valid(child):
+			continue
+
+		var t := str(child.get("card_slot_type"))
+		if t != "SpellTrap" and t != "Spell" and t != "Trap":
+			continue
+
+		var occupied := bool(child.get("card_in_slot"))
+		if not occupied:
+			free.append(child)
+
+	return free
+
+func _get_opponent_hand_spelltraps() -> Array:
+	if not opponent_hand:
+		return []
+
+	var arr: Array = opponent_hand.get("opponent_hand")
+	if arr == null:
+		return []
+
+	return arr.filter(func(c):
+		return is_instance_valid(c) and (str(c.get("kind")).to_upper() == "SPELL" or str(c.get("kind")).to_upper() == "TRAP")
+	)
+
+#SPELLS/TRAPS
+
+func play_one_spelltrap_set() -> void:
+	if played_spellortrap_card_this_turn:
+		return
+	if not is_instance_valid(battle_manager):
+		return
+
+	var free_slot = _pick_free_spelltrap_slot_opponent()
+	if free_slot == null:
+		return
+
+	var spelltraps := _get_opponent_hand_spelltraps()
+	if spelltraps.is_empty():
+		return
+
+	var chosen = spelltraps[0]
+
+	if opponent_hand and opponent_hand.has_method("remove_card_from_hand"):
+		opponent_hand.remove_card_from_hand(chosen)
+
+	if "owner_side" in chosen:
+		chosen.owner_side = "OPPONENT"
+	if chosen.has_method("apply_owner_collision_layers"):
+		chosen.apply_owner_collision_layers()
+
+	if battle_manager.has_method("_set_card_slot"):
+		battle_manager._set_card_slot(chosen, free_slot)
+
+	if battle_manager.has_method("_place_card_in_slot"):
+		battle_manager._place_card_in_slot(chosen, free_slot)
+	else:
+		free_slot.card_in_slot = true
+		if "card_ref" in free_slot:
+			free_slot.card_ref = chosen
+		if chosen.has_method("set_field_slot"):
+			chosen.set_field_slot(free_slot)
+		if chosen.has_method("set_show_back_only"):
+			chosen.set_show_back_only(false)
+		if chosen.has_method("set_face_down"):
+			chosen.set_face_down(true)
+
+	_register_card_played_to_battle(chosen, "Opponent")
+
+	played_spellortrap_card_this_turn = true
+	await get_tree().process_frame

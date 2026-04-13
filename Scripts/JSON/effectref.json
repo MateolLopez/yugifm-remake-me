@@ -84,7 +84,14 @@
 			"sources": ["BATTLE", "SPELL", "TRAP", "MONSTER_EFFECT"]
 		}
 		]
-	}
+	},
+	"recover_lp": {
+  "desc": "Recupera LP para un jugador.",
+  "params_schema": {
+	"amount": "int",
+	"target": "SELF|OPPONENT"
+  }
+},
 	},
 	"inflict_effect_damage": {
 	  "desc": "Inflige daño de efecto a un jugador.",
@@ -142,11 +149,17 @@
 	  "params_schema": {
 		"owner": "SELF|OPPONENT"
 	  }
-	},
-	"reveal_random_set_card_opponent": {
-	  "desc": "Revela una carta colocada aleatoria del oponente (información para el jugador).",
-	  "params_schema": {}
-	},
+	},"reveal_hidden_cards": {
+		"desc": "Revela temporalmente cartas ocultas del campo o de la mano.",
+		"params_schema": {
+		"target_side": "SELF|OPPONENT|BOTH",
+		"source_zone": "SET_SPELL_TRAP|HAND",
+		"choose": "ALL|RANDOM",
+		"count": "int",
+		"reveal_to": "PLAYER_ONLY|BOTH",
+		"require_ack": "bool"
+	}
+},
 	"destroy_random_opponent_spelltrap": {
 	  "desc": "Destruye una Spell/Trap aleatoria del oponente, con preferencia por face-up si se pide.",
 	  "params_schema": {
@@ -272,6 +285,27 @@
 		"duration": "INSTANT|PERMANENT_WHILE_FACEUP"
 	  }
 	},
+	"graveyard_count_stat_buff_while_source_faceup": {
+  "desc": "Mientras la fuente permanezca boca arriba en el campo, otorga ATK/DEF a monstruos según la cantidad de cartas que cumplan filtros en cementerio.",
+  "params_schema": {
+	"target_side": "SELF|OPPONENT|BOTH",
+	"target_filter_attribute": "string?",
+	"target_filter_race": "string?",
+	"target_filter_tag": "string?",
+	"count_side": "SELF|OPPONENT|BOTH",
+	"count_filter_attribute": "string?",
+	"count_filter_race": "string?",
+	"count_filter_tag": "string?",
+	"per_count_atk": "int",
+	"per_count_def": "int"
+  }
+},
+"inflict_destroyed_monster_atk_as_effect_damage": {
+  "desc": "Cuando esta carta destruye un monstruo en batalla, inflige como daño de efecto el ATK del monstruo destruido.",
+  "params_schema": {
+	"target": "OPPONENT|SELF"
+  }
+},
 	"replace_send_to_grave_with_banish_global": {
 	  "desc": "Reemplazo global: cualquier carta que fuera a cementerio se va a banish.",
 	  "params_schema": {}
@@ -330,64 +364,6 @@
 	  "desc": "Previene la primera destrucción por batalla mientras permanezca en campo.",
 	  "params_schema": {}
 	},
-	"grant_keyword_to_summoned_monsters_while_source_faceup": {
-  "desc": "Mientras la fuente esté boca arriba, aplica keyword a monstruos que entren al campo y cumplan filtros.",
-  "params_schema": {
-	"affected_side": "OPPONENT|OWNER|BOTH",
-	"summon_triggers": ["ON_PLAY", "ON_SUMMON_BY_EFFECT"],
-	"filters": "object?",
-	"keyword": "string",
-	"duration": "UNTIL_LEAVE_FIELD|UNTIL_TURN_END|PERMANENT_WHILE_FACEUP"
-  }
-},
-	"grant_keyword_to_allies_by_attribute_until_turn_end": {
-	  "desc": "Otorga una keyword a todos los monstruos aliados en campo con un atributo dado hasta fin de turno.",
-	  "params_schema": {
-		"attribute": {
-		  "type": "enum",
-		  "values": [
-			"EARTH",
-			"WATER",
-			"FIRE",
-			"WIND",
-			"LIGHT",
-            "DARK"
-		  ]
-		},
-		"keyword": {
-		  "type": "enum",
-		  "values": [
-			"PIERCING",
-			"TAUNT",
-			"STEALTH",
-			"SLOW",
-			"PARALYZED",
-			"BAD_LUCK",
-			"MULTI_ATTACK_2",
-			"MULTI_ATTACK_ALL",
-			"DIRECT_ATTACK",
-			"NAME_COUNTS_AS_HARPIE_LADY",
-			"NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF",
-			"NO_EQUIP"
-		  ]
-		},
-		"include_future_summons": {
-		  "type": "bool",
-		  "default": false
-		},
-		"limit_per_instance": {
-		  "type": "int",
-		  "min": 1,
-		  "max": 1,
-		  "default": 1
-		}
-	  },
-	  "notes": [
-		"Por defecto solo afecta monstruos aliados ya presentes en campo al resolverse el ON_ACTIVATE.",
-		"Si include_future_summons=true, aplicar también a monstruos que entren luego en el mismo turno (se implementa como un buff de turno ligado al controlador).",
-        "La keyword expira en TURN_END del controlador."
-	  ]
-	},
 	"summon_token_copy_source_stats_on_send_to_grave_by_effect": {
 	  "desc": "Al ser enviada al cementerio por efecto, invoca un Token copiando las estadísticas conocidas de la fuente antes de salir del campo.",
 	  "params_schema": {
@@ -402,7 +378,7 @@
 	  },
 	  "notes": [
 		"Requiere que el motor capture 'last known information' (LKI) de la carta al abandonar el campo.",
-        "Por defecto, token_art_id=null implica reutilizar el art id de la fuente."
+		    "Por defecto, token_art_id=null implica reutilizar el art id de la fuente."
 	  ]
 	},
 	"summon_token_on_sent_to_grave": {
@@ -427,6 +403,18 @@
 	},
 	"position": "FACEUP_ATK|FACEUP_DEF"
   }
+},"grant_keyword_to_selected_target": {
+  "desc": "Aplica una keyword a un objetivo seleccionado según filtros y selector.",
+  "params_schema": {
+	"target_side": "SELF|OPPONENT|BOTH",
+	"zones": ["MONSTER"],
+	"faceup_only": "bool",
+	"position": "ATTACK|DEFENSE|ANY",
+	"choose": "HIGHEST_ATK|LOWEST_ATK|HIGHEST_LEVEL|LOWEST_LEVEL|RANDOM|ALL",
+	"count": "int",
+	"keyword": "string",
+	"duration": "UNTIL_TURN_END|UNTIL_NEXT_OWNER_TURN_END|UNTIL_NEXT_TARGET_TURN_END|UNTIL_LEAVE_FIELD|PERMANENT_WHILE_FACEUP"
+  }
 },
 	"guardian_star_bonus_multiplier": {
 	  "desc": "Modifica el bonus/malus de Guardian Star de esta carta multiplicándolo por un factor.",
@@ -437,18 +425,6 @@
 	  "notes": [
 		"Si el bonus base es 500, multiplier=2 produce 1000.",
         "No altera el cálculo de ventaja/desventaja, solo la magnitud."
-	  ]
-	},
-	"reveal_set_cards": {
-	  "desc": "Revela cartas colocadas (set) según un selector; luego las vuelve a dejar colocadas (no cambia estado).",
-		"params_schema": {
-	"target_selector": "selector",
-	"count": "int|null",
-	"rehide_after_reveal": "bool"
-  },
-	  "notes": [
-		"En UI: mostrar temporalmente y luego restaurar visual de facedown.",
-        "No habilita interacción adicional salvo información."
 	  ]
 	},
 	"schedule_change_battle_position_on_battle_end": {
