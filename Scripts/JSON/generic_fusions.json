@@ -66,6 +66,18 @@
 	"priority": 1.3
 },
 {
+	"fusion_id": "tripwire_beast",
+	"result_id": "45042329",
+	"required_groups":[["thunder"],["reptile","dinosaur"]],
+	"priority": 1.31
+},
+{
+	"fusion_id": "tatsunootoshigo",
+	"result_id": "47922711",
+	"required_groups":[["horse"],["water","fish"]],
+	"priority": 1.35
+},
+{
 	"fusion_id":"fiend_sword",
 	"result_id":"22855882",
 	"required_groups":[["sword","weapon"],["fiend","dark"]],
@@ -132,6 +144,18 @@
 	"priority": 1.72
 },
 {
+	"fusion_id": "ancient_tool",
+	"result_id": "49587396",
+	"required_groups":[["machine"],["weapon"]],
+	"priority": 1.73
+},
+{
+	"fusion_id": "ansatsu",
+	"result_id": "48365709",
+	"required_groups":[["ninja"],["earth"]],
+	"priority": 1.74
+},
+{
 	"fusion_id": "gearfried_iron_k",
 	"result_id": "00423705",
 	"required_groups":[["knight","warrior"],["armor","armored"]],
@@ -172,5 +196,17 @@
 	"result_id": "32751480",
 	"required_groups":[["witch"],["earth","rock"]],
 	"priority": 2.11
+},
+{
+	"fusion_id": "crimson_sunbird",
+	"result_id": "46696593",
+	"required_groups":[["w-beast"],["fire","pyro"]],
+	"priority": 2.3
+},
+{
+	"fusion_id": "dark_magician",
+	"result_id": "46986414",
+	"required_groups":[["dark-magician"],["dark","robe","spellcaster"]],
+	"priority": 2.5
 },
 ]

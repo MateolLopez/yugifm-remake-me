@@ -983,6 +983,56 @@
 	"keywords": [],
 	"description": "Un ladrón que aparece en las noches, utiliza su báculo mágico para escapar sin ser visto.",
 	"effects": []
+},
+{
+  "id": "52090844",
+  "kind": "MONSTER",
+  "cardname": "Bowganian",
+  "attribute": "DARK",
+  "race": "MACHINE",
+  "level": 3,
+  "atk": 1300,
+  "def": 1000,
+  "guardian_star": ["MARS","SATURN"],
+  "tags": ["machine"],
+  "keywords": [],
+  "description": "Al inicio de tu turno, inflige 600 de daño de efecto al oponente con su arco.",
+  "effects": [
+	{
+	  "trigger": "TURN_START",
+	  "template": "inflict_effect_damage",
+	  "params": {
+		"amount": 600,
+		"target": "OPPONENT",
+		"only_on_controller_turn": true
+	  }
+	}
+  ]
+},
+{
+  "id": "04732017",
+  "kind": "MONSTER",
+  "cardname": "Molten Zombie",
+  "attribute": "FIRE",
+  "race": "PYRO",
+  "level": 4,
+  "atk": 1600,
+  "def": 400,
+  "guardian_star": ["MARS","SUN"],
+  "tags": ["pyro","fire"],
+  "keywords": [],
+  "description": "Activar: inflige 500 de daño de efecto al oponente. Una vez por turno.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "inflict_effect_damage",
+	  "params": {
+		"amount": 500,
+		"target": "OPPONENT",
+		"once_per_turn": true
+	  }
+	}
+  ]
 },{
 	"id": "25366484",
 	"kind": "MONSTER",
@@ -1481,7 +1531,213 @@
 	}
   ]
 },
-
+{
+	"id": "47922711",
+	"kind": "MONSTER",
+	"cardname": "Tatsunootoshigo",
+	"attribute": "EARTH",
+	"race": "Beast",
+	"level": 5,
+	"atk": 1350,
+	"def": 1600,
+	"guardian_star": ["NEPTUNE","MERCURY"],
+	"tags": ["earth","water","beast","fish","horse"],
+	"keywords": [],
+	"description": "Una bestia que se mueve a grandes velocidades tanto en tierra como en agua.",
+	"effects": []
+},
+{
+	"id": "48365709",
+	"kind": "MONSTER",
+	"cardname": "Ansatsu",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 5,
+	"atk": 1700,
+	"def": 1200,
+	"guardian_star": ["MERCURY","NEPTUNE"],
+	"tags": ["ninja","earth"],
+	"keywords": [],
+	"description": "Un veloz y silencioso ninja especializado en ataques furtivos.",
+	"effects": []
+},
+{
+	"id": "49370026",
+	"kind": "MONSTER",
+	"cardname": "Genin",
+	"attribute": "LIGHT",
+	"race": "Spellcaster",
+	"level": 3,
+	"atk": 600,
+	"def": 900,
+	"guardian_star": ["VENUS","SUN"],
+	"tags": ["spellchaster","light"],
+	"keywords": [],
+	"description": "Utiliza una asombrosa destreza manual para engañar y destruir a sus enemigos.",
+	"effects": []
+},
+{
+	"id": "49587396",
+	"kind": "MONSTER",
+	"cardname": "Ancient Tool",
+	"attribute": "DARK",
+	"race": "Machine",
+	"level": 5,
+	"atk": 1700,
+	"def": 1400,
+	"guardian_star": ["MOON","SATURN"],
+	"tags": ["machine","dark","iron"],
+	"keywords": [],
+	"description": "Un arma de destrucción descubierta entre las ruinas de una antigua civilización.",
+	"effects": []
+},
+{
+	"id": "50259460",
+	"kind": "MONSTER",
+	"cardname": "Versago the Destroyer",
+	"attribute": "DARK",
+	"race": "Fiend",
+	"level": 3,
+	"atk": 1100,
+	"def": 900,
+	"guardian_star": ["MERCURY","SATURN"],
+	"tags": ["fiend","dark","claw"],
+	"keywords": [],
+	"description": "Este señor de la destrucción, nacido del corazón de las tinieblas, puede utilizar sus garras para despedazar a sus oponentes.",
+	"effects": []
+},
+{
+	"id": "52031567",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Mudballman",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 6,
+	"atk": 1900,
+	"def": 3000,
+	"guardian_star": ["NEPTUNE","URANUS"],
+	"tags": ["hero","earth","water"],
+	"keywords": [],
+	"description": "Un héroe que ha fortalecido su cuerpo para convertirse en una muralla impenetrables.",
+	"effects": []
+},
+{
+	"id": "53153481",
+	"kind": "MONSTER",
+	"cardname": "Armail",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 3,
+	"atk": 700,
+	"def": 1300,
+	"guardian_star": ["MARS","MERCURY"],
+	"tags": ["warrior","earth","armored"],
+	"keywords": [],
+	"description": "Un extraño guerrero que manipula tres temibles espadas con ambas manos y con su cola.",
+	"effects": []
+},
+{
+	"id": "53293545",
+	"kind": "MONSTER",
+	"cardname": "Firegrass",
+	"attribute": "EARTH",
+	"race": "Plant",
+	"level": 3,
+	"atk": 700,
+	"def": 600,
+	"guardian_star": ["MARS","MOON"],
+	"tags": ["plant","fire","earth"],
+	"keywords": [],
+	"description": "Una planta que escupe fuego, puede ser encontrada creciendo cerca de volcanes.",
+	"effects": []
+},
+{
+	"id": "53581214",
+	"kind": "MONSTER",
+	"cardname": "Fire Reaper",
+	"attribute": "DARK",
+	"race": "Zombie",
+	"level": 2,
+	"atk": 700,
+	"def": 500,
+	"guardian_star": ["MARS","SUN"],
+	"tags": ["dark","fire","zombie","skull"],
+	"keywords": [],
+	"description": "Una criatura que inflige castigo con sus flechas llameantes.",
+	"effects": []
+},
+{
+	"id": "53830602",
+	"kind": "MONSTER",
+	"cardname": "Fungi of the Musk",
+	"attribute": "DARK",
+	"race": "Fiend",
+	"level": 1,
+	"atk": 400,
+	"def": 300,
+	"guardian_star": ["JUPITER","MOON"],
+	"tags": ["dark","plant","tentacle","fiend"],
+	"keywords": [],
+	"description": "Un monstruo que segrega ácido por sus poros para derretir todo lo que toca su piel.",
+	"effects": []
+},
+{
+	"id": "54098121",
+	"kind": "MONSTER",
+	"cardname": "Mysterious Puppeteer",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 1000,
+	"def": 1500,
+	"guardian_star": ["URANUS","MERCURY"],
+	"tags": ["earth","warrior","spellcaster","puppet"],
+	"keywords": [],
+	"description": "Un titiritero que manipula a los enemigos durante la batalla.",
+	"effects": []
+},
+{
+	"id": "54541900",
+	"kind": "MONSTER",
+	"cardname": "Karbonala Warrior",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 1500,
+	"def": 1200,
+	"guardian_star": ["URANUS","JUPITER"],
+	"tags": ["earth","warrior","armored"],
+	"keywords": [],
+	"description": "Un guerrero que porta una armadura completa, sus habilidades de combate fueron pulidas en multiples batallas.",
+	"effects": []
+},{
+	"id": "09076207",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Wild Wingman",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 8,
+	"atk": 1900,
+	"def": 2300,
+	"guardian_star": ["SATURN","VENUS"],
+	"tags": ["earth","wind","winged","claw","hero"],
+	"keywords": [],
+	"description": "Este héroe alado posee instintos superiores a cualquier otro, pudiendo detectar y evitar amenazas ocultas.",
+	"effects": [
+	  {
+		"trigger": "ON_ACTIVATE",
+		"template": "destroy_by_effect",
+		"params": {
+			"target_side": "OPPONENT",
+			"zones": ["SPELL_TRAP","FIELD"],
+			"kinds": ["SPELL", "TRAP"],
+			"choose": "RANDOM",
+			"count": 1,
+			"once_per_turn": true
+		  }
+	  }
+	]
+  },
 
 
 
@@ -1541,56 +1797,6 @@
 	  "params": {
 		"only_if_attacker_is_opponent": true,
 		"destroy_mode": "all_attack_position_of_attacker_controller"
-	  }
-	}
-  ]
-},
-{
-  "id": "52090844",
-  "kind": "MONSTER",
-  "cardname": "Bowganian",
-  "attribute": "DARK",
-  "race": "MACHINE",
-  "level": 3,
-  "atk": 1300,
-  "def": 1000,
-  "guardian_star": ["MARS","SATURN"],
-  "tags": ["machine"],
-  "keywords": [],
-  "description": "Al inicio de tu turno, inflige 600 de daño de efecto al oponente con su arco.",
-  "effects": [
-	{
-	  "trigger": "TURN_START",
-	  "template": "inflict_effect_damage",
-	  "params": {
-		"amount": 600,
-		"target": "OPPONENT",
-		"only_on_controller_turn": true
-	  }
-	}
-  ]
-},
-{
-  "id": "04732017",
-  "kind": "MONSTER",
-  "cardname": "Molten Zombie",
-  "attribute": "FIRE",
-  "race": "PYRO",
-  "level": 4,
-  "atk": 1600,
-  "def": 400,
-  "guardian_star": ["MARS","SUN"],
-  "tags": ["pyro","fire"],
-  "keywords": [],
-  "description": "Activar: inflige 500 de daño de efecto al oponente. Una vez por turno.",
-  "effects": [
-	{
-	  "trigger": "ON_ACTIVATE",
-	  "template": "inflict_effect_damage",
-	  "params": {
-		"amount": 500,
-		"target": "OPPONENT",
-		"once_per_turn": true
 	  }
 	}
   ]

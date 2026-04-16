@@ -10,6 +10,7 @@ var active_protection_profiles: Array = []
 var field_cards: Array = []
 var field_controller_by_id: Dictionary = {} 
 var once_per_instance_used: Dictionary = {}
+var once_per_turn_used: Dictionary = {}
 
 func _ready() -> void:
 	_load_effectref()
@@ -258,13 +259,21 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 	var template := str(effect_def.get("template", ""))
 	var params: Dictionary = effect_def.get("params", {})
 	var trigger := str(effect_def.get("trigger", ""))
-	var limit := _get_limit_per_instance(params)
 
+	var limit := _get_limit_per_instance(params)
 	if limit == 1:
-		var k := "%s|%s|%s" % [str(source.get_instance_id()), trigger, template]
+		var k := "%s|INSTANCE|%s|%s" % [str(source.get_instance_id()), trigger, template]
 		if once_per_instance_used.get(k, false):
 			return false
 		once_per_instance_used[k] = true
+
+	if _is_once_per_turn(params):
+		var turn_stamp := _get_turn_stamp(ctx)
+		if turn_stamp >= 0:
+			var turn_key := "%s|TURN|%s|%s" % [str(source.get_instance_id()), trigger, template]
+			if once_per_turn_used.get(turn_key, -999999) == turn_stamp:
+				return false
+			once_per_turn_used[turn_key] = turn_stamp
 
 	match template:
 		"destroy_target":
@@ -342,6 +351,24 @@ func _card_has_tag(card: Node, wanted_tag: String) -> bool:
 		if str(t).strip_edges().to_lower() == wanted_tag:
 			return true
 	return false
+
+func _is_once_per_turn(params: Dictionary) -> bool:
+	if params.has("once_per_turn"):
+		return bool(params.get("once_per_turn", false))
+	if params.has("limit") and typeof(params.get("limit")) == TYPE_DICTIONARY:
+		return bool(params["limit"].get("once_per_turn", false))
+	return false
+
+func _get_turn_stamp(ctx: Dictionary) -> int:
+	if ctx.has("turn_index"):
+		return int(ctx.get("turn_index", -1))
+
+	var bm := _get_battle_manager(ctx)
+	if bm != null and ("turn_index" in bm):
+		return int(bm.turn_index)
+
+	return -1
+
 
 func _card_matches_filters(card: Node, filter_attribute: String, filter_race: String, filter_tag: String, use_effective_stats := false) -> bool:
 	if not is_instance_valid(card):
