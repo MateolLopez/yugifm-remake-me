@@ -60,6 +60,12 @@
 	"priority": 1.21
 },
 {
+	"fusion_id": "mavelus",
+	"result_id": "59036972",
+	"required_groups":[["fire","pyro"],["w-beast"]],
+	"priority": 1.22
+},
+{
 	"fusion_id": "spirit_mountain",
 	"result_id": "34690519",
 	"required_groups":[["spirit"],["earth","rock"]],
@@ -70,6 +76,12 @@
 	"result_id": "45042329",
 	"required_groups":[["thunder"],["reptile","dinosaur"]],
 	"priority": 1.31
+},
+{
+	"fusion_id": "gruesome_goo",
+	"result_id": "65623423",
+	"required_groups":[["aqua","water","slime"],["slime"]],
+	"priority": 1.32
 },
 {
 	"fusion_id": "tatsunootoshigo",
@@ -112,6 +124,11 @@
 	"result_id": "41762634",
 	"required_groups": [["giant"],["insect"]],
 	"priority": 1.51
+},
+{
+	"fusion_id":"burning_beast",
+	"result_id":"59364406",
+	"required_groups":[["rock","pyro","fire"],["beast"]]
 },
 {
 	"fusion_id": "e_hero_sparkman",
@@ -168,16 +185,28 @@
 	"priority": 1.81
 },
 {
+	"fusion_id": "giant_red_ssnake",
+	"result_id": "58831685",
+	"required_groups":[["snake","s-serpent"],["giant"]],
+	"priority": 1.82
+},
+{
 	"fusion_id": "skull_bird",
 	"result_id": "08327462",
 	"required_groups":[["w-beast","bird","winged"],["skull","bone"]],
 	"priority": 1.9
 },
 {
+	"fusion_id": "gemini_elf",
+	"result_id": "69140098",
+	"required_groups":[["elf"],["elf"]],
+	"priority": 1.91
+},
+{
 	"fusion_id": "granadora",
 	"result_id": "13944422",
 	"required_groups":[["reptile"],["water"]],
-	"priority": 1.91
+	"priority": 1.92
 },
 {
 	"fusion_id": "monstrous_bird",
@@ -202,6 +231,12 @@
 	"result_id": "46696593",
 	"required_groups":[["w-beast"],["fire","pyro"]],
 	"priority": 2.3
+},
+{
+	"fusion_id": "serpent_night_d",
+	"result_id": "66516792",
+	"required_groups":[["snake","dragon"],["fiend","dark"]],
+	"priority": 2.35
 },
 {
 	"fusion_id": "dark_magician",

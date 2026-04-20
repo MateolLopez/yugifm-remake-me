@@ -69,6 +69,10 @@ func _ready() -> void:
 	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot4")
 	empty_monster_card_slots.append($"../CardSlotsRival/CardSlot5")
 	
+	print("BM check CardDB root=", get_node_or_null("/root/CardDB"))
+	print("BM check CardDB parent=", get_node_or_null("../CardDB"))
+	print("BM check CardDB scene=", get_tree().current_scene.get_node_or_null("CardDB") if get_tree() and get_tree().current_scene else null)
+	
 	player_hp = _starting_hp()
 	$"../PlayerHP".text = str(player_hp)
 	opponent_hp = _starting_hp()
@@ -247,6 +251,124 @@ func _get_effect_engine():
 	if eng == null:
 		eng = get_node_or_null("/root/EffectEngine")
 	return eng
+
+func _get_cards_db() -> Array:
+	var db_node = get_node_or_null("/root/CardDb")
+	if db_node == null:
+		db_node = get_node_or_null("../CardDB")
+	if db_node == null and get_tree() != null and get_tree().current_scene != null:
+		db_node = get_tree().current_scene.get_node_or_null("CardDB")
+
+	if db_node != null:
+		if "RAW_CARDS" in db_node:
+			var db1: Array = db_node.RAW_CARDS
+			print("_get_cards_db via RAW_CARDS size=", db1.size())
+			return db1
+		if "CARDS" in db_node:
+			var dict_cards: Dictionary = db_node.CARDS
+			var db2: Array = dict_cards.values()
+			print("_get_cards_db via CARDS.values() size=", db2.size())
+			return db2
+
+	print("_get_cards_db FAIL: no DB source found")
+	return []
+
+func _db_card_has_tag(card_def: Dictionary, wanted_tag: String) -> bool:
+	wanted_tag = str(wanted_tag).strip_edges().to_lower()
+	if wanted_tag == "":
+		return true
+
+	var tags: Array = card_def.get("tags", [])
+	for t in tags:
+		if str(t).strip_edges().to_lower() == wanted_tag:
+			return true
+	return false
+
+func _db_card_matches_filters(card_def: Dictionary, filters: Dictionary) -> bool:
+	if typeof(card_def) != TYPE_DICTIONARY:
+		return false
+
+	if str(card_def.get("kind", "")).to_upper() != "MONSTER":
+		return false
+
+	var filter_id := str(filters.get("id", ""))
+	var filter_tag := str(filters.get("tag", "")).strip_edges().to_lower()
+	var filter_attribute := str(filters.get("attribute", "")).to_upper()
+	var filter_race := str(filters.get("race", "")).to_upper()
+
+	var min_level = filters.get("min_level", null)
+	var max_level = filters.get("max_level", null)
+	var min_atk = filters.get("min_atk", null)
+	var max_atk = filters.get("max_atk", null)
+	var min_def = filters.get("min_def", null)
+	var max_def = filters.get("max_def", null)
+
+	var card_id := str(card_def.get("id", ""))
+	var card_attribute := str(card_def.get("attribute", "")).to_upper()
+	var card_race := str(card_def.get("race", "")).to_upper()
+	var card_level := int(card_def.get("level", 0) if card_def.get("level", 0) != null else 0)
+	var card_atk := int(card_def.get("atk", 0) if card_def.get("atk", 0) != null else 0)
+	var card_defense := int(card_def.get("def", 0) if card_def.get("def", 0) != null else 0)
+
+	if filter_id != "" and card_id != filter_id:
+		return false
+	if filter_attribute != "" and card_attribute != filter_attribute:
+		return false
+	if filter_race != "" and card_race != filter_race:
+		return false
+	if filter_tag != "" and not _db_card_has_tag(card_def, filter_tag):
+		return false
+
+	if min_level != null and card_level < int(min_level):
+		return false
+	if max_level != null and card_level > int(max_level):
+		return false
+
+	if min_atk != null and card_atk < int(min_atk):
+		return false
+	if max_atk != null and card_atk > int(max_atk):
+		return false
+
+	if min_def != null and card_defense < int(min_def):
+		return false
+	if max_def != null and card_defense > int(max_def):
+		return false
+
+	return true
+
+func _spawn_card_from_db_entry(card_def: Dictionary, controller: String) -> Card:
+	var card_scene: PackedScene = preload("res://Scenes/Card.tscn")
+	var card: Card = card_scene.instantiate()
+	if not is_instance_valid(card):
+		return null
+
+	get_tree().current_scene.add_child(card)
+	card.apply_db(card_def)
+
+	card.owner_side = ("PLAYER" if _norm_owner(controller) == "Player" else "OPPONENT")
+	if card.has_method("apply_owner_collision_layers"):
+		card.apply_owner_collision_layers()
+	if card.has_method("set_show_back_only"):
+		card.set_show_back_only(false)
+
+	return card
+
+func _get_free_monster_slot_for(controller: String) -> Node2D:
+	var norm := _norm_owner(controller)
+	var slots_root := get_node_or_null("../CardSlots") if norm == "Player" else get_node_or_null("../CardSlotsRival")
+	if not is_instance_valid(slots_root):
+		return null
+
+	for s in slots_root.get_children():
+		if not is_instance_valid(s):
+			continue
+		if str(s.get("card_slot_type")) != "Monster":
+			continue
+		if bool(s.get("card_in_slot")):
+			continue
+		return s
+
+	return null
 
 func _register_card_with_effect_engine(card, controller: String) -> void:
 	var eng = _get_effect_engine()
@@ -512,7 +634,7 @@ func attack(atk_card, defending, attacker):
 func _trigger_on_attack_effects(_card, _who: String, _ctx: Dictionary) -> void:
 	return
 
-func _place_card_in_slot(card: Node2D, slot: Node2D) -> void:
+func _place_card_in_slot(card: Node2D, slot: Node2D, summon_origin: String = "PLAY") -> void:
 	if not is_instance_valid(card) or not is_instance_valid(slot):
 		return
 	var cardowner := _card_owner_side(card)
@@ -581,7 +703,7 @@ func _place_card_in_slot(card: Node2D, slot: Node2D) -> void:
 
 	if should_reveal:
 		reveal_card(card)
-		if kind == "MONSTER":
+		if kind == "MONSTER" and summon_origin == "PLAY":
 			_trigger_on_play_effects(card, cardowner)
 
 func _has_immediate_effect(card) -> bool:
@@ -1796,7 +1918,7 @@ func try_play_monster_from_hand(card, facedown: bool) -> void:
 	else:
 		_set_card_face_down(card, false)
 		
-	_place_card_in_slot(card, free_slot)
+	_place_card_in_slot(card, free_slot, "PLAY")
 	if not facedown:
 		reveal_card(card)
 
@@ -2351,3 +2473,147 @@ func _on_reveal_ack_accept_pressed() -> void:
 	if panel:
 		panel.visible = false
 	_finish_temporary_reveal()
+
+func summon_random_from_db(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	print("BM summon_random_from_db ENTER source=", source.cardname if is_instance_valid(source) and ("cardname" in source) else "<null>", " params=", params)
+
+	var controller := str(params.get("controller", "SELF")).to_upper()
+	var filters: Dictionary = params.get("filters", {})
+	var position := str(params.get("position", "FACEUP_ATK")).to_upper()
+	var exclude_ids: Array = params.get("exclude_ids", [])
+	var exclude_self_id := bool(params.get("exclude_self_id", false))
+	var prefer_highest_level := bool(params.get("prefer_highest_level", false))
+
+	print("  controller=", controller, " filters=", filters, " position=", position, " exclude_self_id=", exclude_self_id, " exclude_ids=", exclude_ids)
+
+	var source_controller := _norm_owner(ctx.get("controller", ""))
+	if source_controller == "" and is_instance_valid(source) and ("owner_side" in source):
+		source_controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+	source_controller = _norm_owner(source_controller)
+
+	var summon_controller := source_controller
+	if controller == "OPPONENT":
+		summon_controller = ("Opponent" if source_controller == "Player" else "Player")
+	elif controller == "SELF":
+		summon_controller = source_controller
+
+	print("  source_controller=", source_controller, " summon_controller=", summon_controller)
+
+	var free_slot := _get_free_monster_slot_for(summon_controller)
+	print("  free_slot=", free_slot)
+	if free_slot == null:
+		print("BM summon_random_from_db FAIL: no free slot")
+		return false
+
+	var db: Array = _get_cards_db()
+	print("  db size=", db.size())
+	if db.is_empty():
+		print("BM summon_random_from_db FAIL: db empty")
+		return false
+
+	var excluded: Array[String] = []
+	for x in exclude_ids:
+		excluded.append(str(x))
+
+	if exclude_self_id and is_instance_valid(source) and ("id" in source):
+		excluded.append(str(source.id))
+
+	print("  excluded=", excluded)
+
+	var pool: Array = []
+	for card_def in db:
+		if typeof(card_def) != TYPE_DICTIONARY:
+			continue
+
+		var candidate_id := str(card_def.get("id", ""))
+		var candidate_name := str(card_def.get("cardname", ""))
+		var matches := _db_card_matches_filters(card_def, filters)
+
+		if not matches:
+			continue
+
+		if excluded.has(candidate_id):
+			print("    EXCLUDED candidate=", candidate_name, " id=", candidate_id)
+			continue
+
+		print("    POOL candidate=", candidate_name, " id=", candidate_id)
+		pool.append(card_def)
+
+	print("  pool size=", pool.size())
+
+	if pool.is_empty():
+		print("BM summon_random_from_db FAIL: pool empty")
+		return false
+
+	if prefer_highest_level:
+		pool.sort_custom(func(a, b):
+			var la := int(a.get("level", 0) if a.get("level", 0) != null else 0)
+			var lb := int(b.get("level", 0) if b.get("level", 0) != null else 0)
+			return la > lb
+		)
+		var top_level := int(pool[0].get("level", 0) if pool[0].get("level", 0) != null else 0)
+		var filtered_top: Array = []
+		for c in pool:
+			var lv := int(c.get("level", 0) if c.get("level", 0) != null else 0)
+			if lv == top_level:
+				filtered_top.append(c)
+		pool = filtered_top
+		print("  prefer_highest_level filtered pool size=", pool.size(), " top_level=", top_level)
+
+	pool.shuffle()
+	var picked: Dictionary = pool[0]
+	print("  picked=", picked.get("cardname", "<no name>"), " id=", picked.get("id", ""))
+
+	var card := _spawn_card_from_db_entry(picked, summon_controller)
+	print("  spawned card=", card)
+	if not is_instance_valid(card):
+		print("BM summon_random_from_db FAIL: spawn invalid")
+		return false
+
+	if position == "FACEUP_ATK":
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(false)
+		else:
+			card.in_defense = false
+	elif position == "FACEUP_DEF":
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(true)
+		else:
+			card.in_defense = true
+	elif position == "FACEDOWN_DEF":
+		_set_card_face_down(card, true)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(true)
+		else:
+			card.in_defense = true
+	else:
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(false)
+		else:
+			card.in_defense = false
+
+	_set_card_slot(card, free_slot)
+	_place_card_in_slot(card, free_slot, "EFFECT")
+
+	if position == "FACEUP_ATK":
+		_set_card_face_down(card, false)
+		reveal_card(card)
+	elif position == "FACEUP_DEF":
+		_set_card_face_down(card, false)
+		reveal_card(card)
+	elif position == "FACEDOWN_DEF":
+		_set_card_face_down(card, true)
+
+	_emit_duel_event("ON_SUMMON_BY_EFFECT", {
+		"battle_manager": self,
+		"source": card,
+		"controller": summon_controller,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player"),
+		"created_from": source
+	})
+
+	print("BM summon_random_from_db SUCCESS summoned=", card.cardname if ("cardname" in card) else str(card))
+	return true

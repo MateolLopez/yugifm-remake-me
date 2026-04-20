@@ -294,6 +294,8 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 		"summon_token_copy_source_stats_on_send_to_grave_by_effect":
 			_tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source, ctx, params)
 			return true
+		"summon_random_from_db":
+			return _tpl_summon_random_from_db(source, ctx, params)
 		"inflict_effect_damage":
 			_tpl_inflict_effect_damage(source, ctx, params)
 			return true
@@ -516,7 +518,21 @@ func _tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source: Node
 		return
 	bm.summon_token_from_source_basestats(source, params, ctx)
 
+func _tpl_summon_random_from_db(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	print("TPL summon_random_from_db source=", source.cardname if is_instance_valid(source) and ("cardname" in source) else "<null>", " params=", params)
 
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		print("TPL summon_random_from_db bm=NULL")
+		return false
+
+	if not bm.has_method("summon_random_from_db"):
+		print("TPL summon_random_from_db missing battle_manager.summon_random_from_db")
+		return false
+
+	var ok := bool(bm.summon_random_from_db(source, ctx, params))
+	print("TPL summon_random_from_db result=", ok)
+	return ok
 
 func _get_battle_manager(ctx: Dictionary) -> Node:
 	if ctx.has("battle_manager") and ctx["battle_manager"] != null:
@@ -873,6 +889,18 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 	var facedown_only := bool(params.get("facedown_only", false))
 	var choose := str(params.get("choose", "ALL")).to_upper()
 	var count := int(params.get("count", 0))
+	var self_only := bool(params.get("self_only", false))
+
+	var filter_attribute := str(params.get("filter_attribute", "")).to_upper()
+	var filter_race := str(params.get("filter_race", "")).to_upper()
+	var filter_tag := str(params.get("filter_tag", "")).to_lower()
+
+	var min_level = params.get("min_level", null)
+	var max_level = params.get("max_level", null)
+	var min_atk = params.get("min_atk", null)
+	var max_atk = params.get("max_atk", null)
+	var min_def = params.get("min_def", null)
+	var max_def = params.get("max_def", null)
 
 	var zones: Array = params.get("zones", ["MONSTER"])
 	var kinds: Array = params.get("kinds", ["MONSTER"])
@@ -911,6 +939,8 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 					continue
 				if not kinds.has("MONSTER"):
 					continue
+				if self_only and c != source:
+					continue
 
 				var is_facedown := false
 				if "face_down" in c:
@@ -919,6 +949,39 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 				if faceup_only and is_facedown:
 					continue
 				if facedown_only and not is_facedown:
+					continue
+
+				var c_attribute := str(c.attribute).to_upper() if ("attribute" in c) else ""
+				var c_race := str(c.race).to_upper() if ("race" in c) else ""
+				var c_level := int(c.level) if ("level" in c and c.level != null) else 0
+				var c_atk := int(c.get_effective_atk() if c.has_method("get_effective_atk") else (c.atk if ("atk" in c and c.atk != null) else 0))
+				var c_def := int(c.get_effective_def() if c.has_method("get_effective_def") else (c.def if ("def" in c and c.def != null) else 0))
+
+				if filter_attribute != "" and c_attribute != filter_attribute:
+					continue
+				if filter_race != "" and c_race != filter_race:
+					continue
+				if filter_tag != "":
+					var tags: Array = c.tags if ("tags" in c) else []
+					var has_tag := false
+					for t in tags:
+						if str(t).strip_edges().to_lower() == filter_tag:
+							has_tag = true
+							break
+					if not has_tag:
+						continue
+
+				if min_level != null and c_level < int(min_level):
+					continue
+				if max_level != null and c_level > int(max_level):
+					continue
+				if min_atk != null and c_atk < int(min_atk):
+					continue
+				if max_atk != null and c_atk > int(max_atk):
+					continue
+				if min_def != null and c_def < int(min_def):
+					continue
+				if max_def != null and c_def > int(max_def):
 					continue
 
 				candidates.append(c)
@@ -942,9 +1005,7 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 					if not bool(s.get("card_in_slot")):
 						continue
 
-					var c = null
-					if "card_ref" in s:
-						c = s.card_ref
+					var c = s.get_meta("card_ref", null)
 					if not is_instance_valid(c):
 						continue
 
@@ -953,6 +1014,8 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 						ck = str(c.kind).to_upper()
 
 					if not kinds.has(ck):
+						continue
+					if self_only and c != source:
 						continue
 
 					var is_facedown2 := false
@@ -963,6 +1026,23 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 						continue
 					if facedown_only and not is_facedown2:
 						continue
+
+					var c_attribute2 := str(c.attribute).to_upper() if ("attribute" in c) else ""
+					var c_race2 := str(c.race).to_upper() if ("race" in c) else ""
+
+					if filter_attribute != "" and c_attribute2 != filter_attribute:
+						continue
+					if filter_race != "" and c_race2 != filter_race:
+						continue
+					if filter_tag != "":
+						var tags2: Array = c.tags if ("tags" in c) else []
+						var has_tag2 := false
+						for t2 in tags2:
+							if str(t2).strip_edges().to_lower() == filter_tag:
+								has_tag2 = true
+								break
+						if not has_tag2:
+							continue
 
 					candidates.append(c)
 
@@ -983,16 +1063,27 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 						fs_kind = str(fs.kind).to_upper()
 
 					if kinds.has(fs_kind):
-						var fs_facedown := false
-						if "face_down" in fs:
-							fs_facedown = bool(fs.face_down)
-
-						if faceup_only and fs_facedown:
-							pass
-						elif facedown_only and not fs_facedown:
+						if self_only and fs != source:
 							pass
 						else:
-							candidates.append(fs)
+							var fs_facedown := false
+							if "face_down" in fs:
+								fs_facedown = bool(fs.face_down)
+
+							if faceup_only and fs_facedown:
+								pass
+							elif facedown_only and not fs_facedown:
+								pass
+							else:
+								var fs_attribute := str(fs.attribute).to_upper() if ("attribute" in fs) else ""
+								var fs_race := str(fs.race).to_upper() if ("race" in fs) else ""
+
+								if filter_attribute != "" and fs_attribute != filter_attribute:
+									pass
+								elif filter_race != "" and fs_race != filter_race:
+									pass
+								else:
+									candidates.append(fs)
 
 	if candidates.is_empty():
 		return
@@ -1010,32 +1101,20 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 		match choose:
 			"HIGHEST_ATK":
 				candidates.sort_custom(func(a, b):
-					var av := 0
-					var bv := 0
-					if "atk" in a:
-						av = int(a.atk)
-					if "atk" in b:
-						bv = int(b.atk)
+					var av := int(a.get_effective_atk() if a.has_method("get_effective_atk") else (a.atk if ("atk" in a and a.atk != null) else 0))
+					var bv := int(b.get_effective_atk() if b.has_method("get_effective_atk") else (b.atk if ("atk" in b and b.atk != null) else 0))
 					return av > bv
 				)
 			"LOWEST_ATK":
 				candidates.sort_custom(func(a, b):
-					var av := 0
-					var bv := 0
-					if "atk" in a:
-						av = int(a.atk)
-					if "atk" in b:
-						bv = int(b.atk)
+					var av := int(a.get_effective_atk() if a.has_method("get_effective_atk") else (a.atk if ("atk" in a and a.atk != null) else 0))
+					var bv := int(b.get_effective_atk() if b.has_method("get_effective_atk") else (b.atk if ("atk" in b and b.atk != null) else 0))
 					return av < bv
 				)
 			"HIGHEST_LEVEL":
 				candidates.sort_custom(func(a, b):
-					var av := 0
-					var bv := 0
-					if "level" in a:
-						av = int(a.level)
-					if "level" in b:
-						bv = int(b.level)
+					var av := int(a.level) if ("level" in a and a.level != null) else 0
+					var bv := int(b.level) if ("level" in b and b.level != null) else 0
 					return av > bv
 				)
 			_:

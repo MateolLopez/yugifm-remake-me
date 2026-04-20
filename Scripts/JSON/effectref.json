@@ -64,16 +64,27 @@
 	  "params_schema": {}
 	},
 	"destroy_by_effect": {
-	  "desc": "Destruye uno o más monstruos según un selector.",
-	  "params_schema": {
-		  "target_side": "SELF|OPPONENT|BOTH",
-		  "zones": ["MONSTER", "SPELL_TRAP", "FIELD"],
-		  "kinds": ["MONSTER", "SPELL", "TRAP"],
-		  "faceup_only": true,
-		  "facedown_only": false,
-		  "count": 1,
-		  "choose": "RANDOM|HIGHEST_ATK|LOWEST_ATK|HIGHEST_LEVEL|ALL"
-		}
+  "desc": "Destruye una o más cartas según filtros.",
+  "params_schema": {
+	"target_side": "SELF|OPPONENT|BOTH",
+	"zones": ["MONSTER", "SPELL_TRAP", "FIELD"],
+	"kinds": ["MONSTER", "SPELL", "TRAP"],
+	"faceup_only": true,
+	"facedown_only": false,
+	"count": 1,
+	"choose": "RANDOM|HIGHEST_ATK|LOWEST_ATK|HIGHEST_LEVEL|ALL",
+	"self_only": false,
+	"filter_attribute": "string?",
+	"filter_race": "string?",
+	"filter_tag": "string?",
+	"min_level": "int?",
+	"max_level": "int?",
+	"min_atk": "int?",
+	"max_atk": "int?",
+	"min_def": "int?",
+	"max_def": "int?"
+  }
+}	}
 	},
 	"grant_protection_profile_while_faceup": {
 		"desc": "Mientras la fuente permanezca boca arriba en el campo, otorga reglas de protección a sí misma.",
@@ -168,15 +179,27 @@
 	  }
 	},
 	"summon_random_from_db": {
-	  "desc": "Invoca un monstruo aleatorio desde DB con filtros. No interactúa con Deck.",
-	  "params_schema": {
-		"controller": "SELF|OPPONENT",
-		"filters": "object",
-		"position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF",
-		"exclude_ids": "array?",
-		"prefer_highest_level": "bool?"
-	  }
+  "desc": "Invoca un monstruo aleatorio desde DB con filtros opcionales. No interactúa con Deck.",
+  "params_schema": {
+	"controller": "SELF|OPPONENT",
+	"filters": {
+	  "id": "string?",
+	  "tag": "string?",
+	  "attribute": "string?",
+	  "race": "string?",
+	  "min_level": "int?",
+	  "max_level": "int?",
+	  "min_atk": "int?",
+	  "max_atk": "int?",
+	  "min_def": "int?",
+	  "max_def": "int?"
 	},
+	"position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF",
+	"exclude_ids": "array?",
+	"exclude_self_id": "bool?",
+	"prefer_highest_level": "bool?"
+  }
+},
 	"summon_multiple_random_from_db": {
 	  "desc": "Invoca múltiples monstruos aleatorios desde DB con filtros.",
 	  "params_schema": {

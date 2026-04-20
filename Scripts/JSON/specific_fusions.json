@@ -40,5 +40,11 @@
 	"result_id":"25366484",
 	"required_ids":["35809262","20721928"],
 	"exact_count": true
+},
+{
+	"fusion_id":"e_hero_thunder_giant",
+	"result_id":"61204971",
+	"required_ids":["20721928","84327329"],
+	"exact_count": true
 }
 ]
