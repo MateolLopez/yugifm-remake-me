@@ -54,6 +54,18 @@
 	"priority": 1.2
 },
 {
+	"fusion_id": "hitotsu_me_giant",
+	"result_id": "76184692",
+	"required_groups": [["ciclop"],["giant"]],
+	"priority": 1.201
+},
+{
+	"fusion_id": "fiend_kraken",
+	"result_id": "77456781",
+	"required_groups": [["tentacle"],["fiend"]],
+	"priority": 1.202
+},
+{
 	"fusion_id": "big_eye",
 	"result_id": "16768387",
 	"required_groups":[["eye"],["fiend"]],
@@ -64,6 +76,12 @@
 	"result_id": "59036972",
 	"required_groups":[["fire","pyro"],["w-beast"]],
 	"priority": 1.22
+},
+{
+	"fusion_id": "queen_bird",
+	"result_id": "73081602",
+	"required_groups":[["king"],["w-beast"]],
+	"priority": 1.221
 },
 {
 	"fusion_id": "spirit_mountain",
@@ -96,6 +114,12 @@
 	"priority":1.4
 },
 {
+	"fusion_id":"bean_soldier",
+	"result_id":"84990171",
+	"required_groups":[["plant"],["warrior"]],
+	"priority":1.401
+},
+{
 	"fusion_id": "judgement_hand",
 	"result_id": "28003512",
 	"required_groups":[["hand"],["hand"]],
@@ -120,6 +144,18 @@
 	"priority": 1.5
 },
 {
+	"fusion_id": "trent",
+	"result_id": "78780140",
+	"required_groups": [["wood"],["wood"]],
+	"priority": 1.501
+},
+{
+	"fusion_id": "freezing_beast",
+	"result_id": "85359414",
+	"required_groups": [["ice"],["beast"]],
+	"priority": 1.502
+},
+{
 	"fusion_id": "giant_flea",
 	"result_id": "41762634",
 	"required_groups": [["giant"],["insect"]],
@@ -128,7 +164,14 @@
 {
 	"fusion_id":"burning_beast",
 	"result_id":"59364406",
-	"required_groups":[["rock","pyro","fire"],["beast"]]
+	"required_groups":[["rock","pyro","fire"],["beast"]],
+	"priority": 1.511
+},
+{
+	"fusion_id":"ocubeam",
+	"result_id":"86088138",
+	"required_groups":[["fairy","light"],["beast"]],
+	"priority": 1.512
 },
 {
 	"fusion_id": "e_hero_sparkman",
@@ -140,7 +183,19 @@
 	"fusion_id": "thunder_dragon",
 	"result_id": "31786629",
 	"required_groups":[["dragon"],["thunder"]],
-	"priority": 1.61
+	"priority": 1.611
+},
+{
+	"fusion_id":"spike_seadra",
+	"result_id":"85326399",
+	"required_groups":[["snake","dragon"],["s-serpent","thunder"]],
+	"priority": 1.612
+},
+{
+	"fusion_id": "octoberser",
+	"result_id": "74637266",
+	"required_groups":[["tentacle"],["aqua","water"]],
+	"priority": 1.62
 },
 {
 	"fusion_id":"akihiron",
@@ -179,6 +234,12 @@
 	"priority": 1.8
 },
 {
+	"fusion_id": "mecha_saurus",
+	"result_id": "89112729",
+	"required_groups":[["machine"],["dinosaur"]],
+	"priority": 1.801
+},
+{
 	"fusion_id": "rude_kaiser",
 	"result_id": "25882881",
 	"required_groups":[["reptile","dinosaur"],["armor","armored","axe"]],
@@ -209,6 +270,12 @@
 	"priority": 1.92
 },
 {
+	"fusion_id": "turtle_bird",
+	"result_id": "72929454",
+	"required_groups":[["turtle"],["w-beast","winged"]],
+	"priority": 1.921
+},
+{
 	"fusion_id": "monstrous_bird",
 	"result_id": "35712107",
 	"required_groups":[["w-beast","winged"],["giant"]],
@@ -237,6 +304,12 @@
 	"result_id": "66516792",
 	"required_groups":[["snake","dragon"],["fiend","dark"]],
 	"priority": 2.35
+},
+{
+	"fusion_id": "red_eyes_b_dragon",
+	"result_id": "74677422",
+	"required_groups":[["dragon"],["dark","fiend","red-eyes"]],
+	"priority": 2.4
 },
 {
 	"fusion_id": "dark_magician",

@@ -2150,6 +2150,675 @@
 	"description": "Un monstruo con forma de escarabajo ciervo, con cuernos y brazos dentados.",
 	"effects": []
 },
+{
+	"id": "72929454",
+	"kind": "MONSTER",
+	"cardname": "Turtle Bird",
+	"attribute": "WATER",
+	"race": "Aqua",
+	"level": 6,
+	"atk": 1900,
+	"def": 1700,
+	"guardian_star": ["SATURN","MARS"],
+	"tags": ["w-beast","turtle","aqua","winged","water"],
+	"keywords": [],
+	"description": "Esta extraña criatura reside en los mares, en ocasiones se le puede ver sobrevolando las aguas donde ella misma habita.",
+	"effects": []
+},
+{
+	"id": "72929454",
+	"kind": "MONSTER",
+	"cardname": "Sand Stone",
+	"attribute": "EARTH",
+	"race": "Rock",
+	"level": 5,
+	"atk": 1300,
+	"def": 1600,
+	"guardian_star": ["URANUS","MARS"],
+	"tags": ["tentacle","earth","rock","jaws","claw"],
+	"keywords": [],
+	"description": "Ataca a sus presas de imprevisto con sus extraños tentáculos. Se oculta a simple vista haciéndose pasar por un cúmulo de arena y rocas.",
+	"effects": []
+},
+{
+	"id": "73081602",
+	"kind": "MONSTER",
+	"cardname": "Queen Bird",
+	"attribute": "WIND",
+	"race": "Winged Beast",
+	"level": 5,
+	"atk": 1200,
+	"def": 2000,
+	"guardian_star": ["SATURN","MOON"],
+	"tags": ["w-beast","wind","king","winged"],
+	"keywords": [],
+	"description": "Un inmenso ave considerada la reina entre las aves de su especie, protege a su bandada generando un muro de viento al agitar sus alas.",
+	"effects": []
+},
+{
+	"id": "74637266",
+	"kind": "MONSTER",
+	"cardname": "Octoberser",
+	"attribute": "WATER",
+	"race": "Aqua",
+	"level": 5,
+	"atk": 1600,
+	"def": 1400,
+	"guardian_star": ["NEPTUNE","MOON"],
+	"tags": ["tentacle","water","aqua"],
+	"keywords": [],
+	"description": "Un inmenso ave considerada la reina entre las aves de su especie, protege a su bandada generando un muro de viento al agitar sus alas.",
+	"effects": []
+},
+{
+	"id": "74637266",
+	"kind": "MONSTER",
+	"cardname": "Red-eyes B. Dragon",
+	"attribute": "DARK",
+	"race": "Dragon",
+	"level": 7,
+	"atk": 2400,
+	"def": 2000,
+	"guardian_star": ["NEPTUNE","MOON"],
+	"tags": ["red-eyes","dragon","dark","jaws","claw","winged"],
+	"keywords": [],
+	"description": "Un dragón extremadamente raro, se cree que su potencial es ilimitado.",
+	"effects": []
+},
+{
+	"id": "75356564",
+	"kind": "MONSTER",
+	"cardname": "Petit Dragon",
+	"attribute": "WIND",
+	"race": "Dragon",
+	"level": 2,
+	"atk": 600,
+	"def": 700,
+	"guardian_star": ["SATURN","SUN"],
+	"tags": ["dragon","wind","winged"],
+	"keywords": [],
+	"description": "Aparentemente inofensivo, se defiende lanzando pequeñas bolas de fuego desde su boca cuando se siente amenazado.",
+	"effects": []
+},
+{
+	"id": "75889523",
+	"kind": "MONSTER",
+	"cardname": "Archfiend Marmot of Nefariousness",
+	"attribute": "EARTH",
+	"race": "Beast",
+	"level": 2,
+	"atk": 400,
+	"def": 600,
+	"guardian_star": ["MOON","URANUS"],
+	"tags": ["fiend","archfiend","beast","winged","jaw"],
+	"keywords": [],
+	"description": "Un castor cornudo con alas que lanza bellotas a gran velocidad desde el cielo con una precisión asombrosa.",
+	"effects": []
+},
+{
+	"id": "76184692",
+	"kind": "MONSTER",
+	"cardname": "Hitotsu-me Giant",
+	"attribute": "EARTH",
+	"race": "Beast-Warrior",
+	"level": 4,
+	"atk": 1200,
+	"def": 1000,
+	"guardian_star": ["MOON","MARS"],
+	"tags": ["b-warrior","giant","ciclop","claw"],
+	"keywords": [],
+	"description": "Un coloso de un ojo con brazos gruesos y poderosos, hechos para asestar golpes demoledores.",
+	"effects": []
+},
+{
+	"id": "76704943",
+	"kind": "MONSTER",
+	"cardname": "Yamatano Dragon Scroll",
+	"attribute": "WIND",
+	"race": "Dragon",
+	"level": 2,
+	"atk": 900,
+	"def": 300,
+	"guardian_star": ["SATURN","MARS"],
+	"tags": ["book","dragon","wind"],
+	"keywords": [],
+	"description": "Este dragón se invoca a partir de un pergamino ilustrado para atacar a los enemigos.",
+	"effects": []
+},
+{
+	"id": "77456781",
+	"kind": "MONSTER",
+	"cardname": "Fiend Kraken",
+	"attribute": "WATER",
+	"race": "Aqua",
+	"level": 4,
+	"atk": 1200,
+	"def": 1400,
+	"guardian_star": ["NEPTUNE","VENUS"],
+	"tags": ["tentacle","water","aqua"],
+	"keywords": [],
+	"description": "Un calamar gigantesco que emerge repentinamente de las profundidades del mar para atacar a enemigos desprevenidos.",
+	"effects": []
+},
+{
+	"id": "77581312",
+	"kind": "MONSTER",
+	"cardname": "Masked Clown",
+	"attribute": "DARK",
+	"race": "Warrior",
+	"level": 2,
+	"atk": 500,
+	"def": 700,
+	"guardian_star": ["NEPTUNE","VENUS"],
+	"tags": ["clown","dark","ninja"],
+	"keywords": [],
+	"description": "Un guerrero danzante que hace picadillo a sus oponentes con una afilada guadaña, algunos dicen que es sólo un payaso, otros que también es un ninja.",
+	"effects": []
+},
+{
+	"id": "77603950",
+	"kind": "MONSTER",
+	"cardname": "Phantom Dewan",
+	"attribute": "DARK",
+	"race": "Spellcaster",
+	"level": 2,
+	"atk": 700,
+	"def": 600,
+	"guardian_star": ["MERCURY","JUPITER"],
+	"tags": ["spellcaster","dark"],
+	"keywords": [],
+	"description": "Un mago que congela los movimientos de un enemigo con una sola maldición.",
+	"effects": []
+},
+{
+	"id": "78780140",
+	"kind": "MONSTER",
+	"cardname": "Trent",
+	"attribute": "EARTH",
+	"race": "Plant",
+	"level": 5,
+	"atk": 1500,
+	"def": 1800,
+	"guardian_star": ["JUPITER","SUN"],
+	"tags": ["plant","wood","earth"],
+	"keywords": [],
+	"description": "Un protector del bosque. Este enorme árbol sigue creciendo.",
+	"effects": []
+},
+{
+	"id": "79979666",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Bubbleman",
+	"attribute": "WATER",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 800,
+	"def": 1200,
+	"guardian_star": ["SUN","NEPTUNE"],
+	"tags": ["hero","water"],
+	"keywords": [],
+	"description": "Este héroe utiliza armas no letales para disuadir conflictos, sin embargo es capaz de reducir a sus oponentes cuando estos se dejan llevar por la maldad.",
+	"effects": [
+	{
+		"trigger": "ON_PLAY",
+		"template": "set_random_spelltrap_from_db",
+		"params": {
+		"controller": "SELF",
+		"filters": {
+			"tag": "bubbleman",
+			"kind": "SPELL"
+		},
+		"exclude_self_id": true
+		}
+	}]
+},
+{
+	"id": "81003500",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Necroid Shaman",
+	"attribute": "DARK",
+	"race": "Warrior",
+	"level": 6,
+	"atk": 1900,
+	"def": 1800,
+	"guardian_star": ["SUN","MOON"],
+	"tags": ["dark","spellcaster","hero"],
+	"keywords": [],
+	"description": "Un héroe con capacidades extrasensoriales, pide prestado el poder de los caídos para luchar contra la vileza.",
+	"effects": [
+	  {
+		"trigger": "ON_SUMMON",
+		"template": "destroy_by_effect",
+		"params": {
+			"target_side": "OPPONENT",
+			"zones": ["MONSTER"],
+			"kinds": ["MONSTER"],
+			"faceup_only": true,
+			"choose": "HIGHEST_ATK",
+			"count": 1
+			}
+		},
+	{
+		"trigger": "ON_PLAY",
+		"template": "summon_random_from_db",
+		"params": {
+		"controller": "SELF",
+		"filters": {
+			"tag": "zombie",
+			"max_level": 3
+		},
+		"position": "FACEUP_ATK"
+		}
+	}
+	]
+},
+{
+	"id": "81197327",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Steam Healer",
+	"attribute": "DARK",
+	"race": "Warrior",
+	"level": 6,
+	"atk": 1800,
+	"def": 1000,
+	"guardian_star": ["MARS","NEPTUNE"],
+	"tags": ["fire","water","machine","hero"],
+	"keywords": [],
+	"description": "Un héroe con capacidades armado con una armadura mecánica avanzada, capaz de canalizar vapores ardientes para vencer al mal y a su vez posee la capacidad de aliviar a los suyos.",
+	"effects": [
+		{
+		"trigger": "ON_DESTROY_MONSTER_BY_BATTLE",
+		"template": "recover_lp_equal_to_destroyed_monster_original_atk",
+		"params": {
+			"target": "SELF"
+		}
+	}]
+},
+{
+	"id": "81618817",
+	"kind": "MONSTER",
+	"cardname": "Lord of Zemia",
+	"attribute": "DARK",
+	"race": "Fiend",
+	"level": 4,
+	"atk": 1300,
+	"def": 1000,
+	"guardian_star": ["MERCURY","URANUS"],
+	"tags": ["dark","fiend","claw","winged"],
+	"keywords": [],
+	"description": "Una entidad del abismo que seduce a sus objetivos para hacerlos caminar un camino de pura destrucción.",
+	"effects": []
+},
+{
+	"id": "82742611",
+	"kind": "MONSTER",
+	"cardname": "Serpent Marauder",
+	"attribute": "EARTH",
+	"race": "Reptile",
+	"level": 4,
+	"atk": 700,
+	"def": 600,
+	"guardian_star": ["NEPTUNE","SUN"],
+	"tags": ["earth","reptile","snake","jaws"],
+	"keywords": [],
+	"description": "Una serpiente de un sólo ojo que puede ser encontrada en humedos pantanos, paraliza a sus presas con el veneno de su mordida.",
+	"effects": []
+},
+{
+	"id": "83121692",
+	"kind": "MONSTER",
+	"cardname": "E HERO Tempest",
+	"attribute": "WIND",
+	"race": "Warrior",
+	"level": 8,
+	"atk": 2800,
+	"def": 2800,
+	"guardian_star": ["NEPTUNE","PLUTO","SATURN"],
+	"tags": ["wind","water","thunder","hero","winged"],
+	"keywords": [],
+	"description": "Conocido como uno de los más poderosos héroes elementales, posee la capacidad de controlar las tormentas a su antojo, algunos lo consideran invencible.",
+	"effects": [
+	{
+	"trigger": "PASSIVE",
+	"template": "grant_protection_profile_while_faceup",
+	"params": {
+	"rules": [
+			{
+			"mode": "CANNOT_BE_DESTROYED_BY",
+			"sources": ["BATTLE"]
+			}]
+		}
+	}]
+},
+{
+	"id": "84285623",
+	"kind": "MONSTER",
+	"cardname": "Haniwa",
+	"attribute": "EARTH",
+	"race": "Rock",
+	"level": 2,
+	"atk": 500,
+	"def": 500,
+	"guardian_star": ["URANUS","JUPITER"],
+	"tags": ["earth","spirit","rock","golem"],
+	"keywords": [],
+	"description": "Una estatuilla de roca que ha cobrado vida al ser poseída por un espíritu, utiliza sus capacidades para ayudar a quienes considera bondadosos.",
+	"effects": []
+},
+{
+	"id": "84327329",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Clayman",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 800,
+	"def": 2000,
+	"guardian_star": ["URANUS","JUPITER"],
+	"tags": ["earth","hero","rock","golem"],
+	"keywords": [],
+	"description": "Un HÉROE Elemental con un cuerpo de arcilla hecho para resistir. Protegerá a sus colegas HÉROEs Elementales a cualquier precio.",
+	"effects": []
+},
+{
+	"id": "84990171",
+	"kind": "MONSTER",
+	"cardname": "Bean Soldier",
+	"attribute": "EARTH",
+	"race": "Plant",
+	"level": 4,
+	"atk": 1400,
+	"def": 1300,
+	"guardian_star": ["URANUS","JUPITER"],
+	"tags": ["earth","warrior","plant"],
+	"keywords": [],
+	"description": "Una guerrero planta que ataca con veloces cortes y combinaciones sorprendentemente ágiles.",
+	"effects": []
+},
+{
+	"id": "85255550",
+	"kind": "MONSTER",
+	"cardname": "Swordsman from a Foreign Land",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 1,
+	"atk": 250,
+	"def": 250,
+	"guardian_star": ["URANUS","VENUS"],
+	"tags": ["samurai","earth"],
+	"keywords": [],
+	"description": "Un samurai veterano, ha sido exiliado hace tiempo debido a su espada maldita.",
+	"effects": []
+},
+{
+	"id": "85326399",
+	"kind": "MONSTER",
+	"cardname": "Spike Seadra",
+	"attribute": "WATER",
+	"race": "Sea Serpent",
+	"level": 5,
+	"atk": 1600,
+	"def": 1300,
+	"guardian_star": ["PLUTO","MERCURY"],
+	"tags": ["s-serpent","water","snake","thunder"],
+	"keywords": [],
+	"description": "Utilizando las púas que brotan de su cuerpo, esta criatura apuñala a sus oponentes y los inunda de electricidad.",
+	"effects": []
+},
+{
+	"id": "85359414",
+	"kind": "MONSTER",
+	"cardname": "Freezing Beast",
+	"attribute": "WATER",
+	"race": "Aqua",
+	"level": 4,
+	"atk": 1500,
+	"def": 1000,
+	"guardian_star": ["NEPTUNE","SUN"],
+	"tags": ["ice","water","aqua","beast"],
+	"keywords": [],
+	"description": "Una bestia hecha completamente de hielo glaciar, protege su habitat manteniendo la temperatura suficientemente baja como para disuadir a casi cualquier ser vivo de acercarse a sus dominios.",
+	"effects": []
+},
+{
+	"id": "86088138",
+	"kind": "MONSTER",
+	"cardname": "Ocubeam",
+	"attribute": "LIGHT",
+	"race": "Fairy",
+	"level": 5,
+	"atk": 1550,
+	"def": 1650,
+	"guardian_star": ["SATURN","VENUS"],
+	"tags": ["winged","fairy","light","beast","ciclop"],
+	"keywords": [],
+	"description": "Una bestia de apariencia aterradora que vuela por los cielos, utiliza sus poderes de luz para expulsar a los espiritus malignos.",
+	"effects": []
+},
+{
+	"id": "86088138",
+	"kind": "MONSTER",
+	"cardname": "Zone Eater",
+	"attribute": "WATER",
+	"race": "Aqua",
+	"level": 1,
+	"atk": 250,
+	"def": 200,
+	"guardian_star": ["NEPTUNE","SUN"],
+	"tags": ["insect","water","aqua"],
+	"keywords": [],
+	"description": "Un gusano de tamaño descomunal que traga a sus enemigos enteros para digerirlos lentamente.",
+	"effects": []
+},
+{
+	"id": "86188410",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Wildheart",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 1500,
+	"def": 1600,
+	"guardian_star": ["URANUS","JUPITER"],
+	"tags": ["hero","warrior","earth"],
+	"keywords": [],
+	"description": "Un héroe cuyos reflejos han alcanzado un nivel impresionante, es capáz de evitar caer en caulquier trampa.",
+	"effects": [
+		{
+		  "trigger": "PASSIVE",
+		  "template": "grant_protection_profile_while_faceup",
+		  "params": {
+			"rules": [
+			  {
+				"mode": "UNAFFECTED_BY",
+				"sources": ["TRAP"]
+			  }
+			]
+		  }
+		}
+	]
+},
+{
+	"id": "86421986",
+	"kind": "MONSTER",
+	"cardname": "Ancient Tree of Enlightenment",
+	"attribute": "EARTH",
+	"race": "Plant",
+	"level": 3,
+	"atk": 600,
+	"def": 1500,
+	"guardian_star": ["PLUTO","JUPITER"],
+	"tags": ["wood","plant","earth"],
+	"keywords": [],
+	"description": "Este árbol antiguo posee conocimientos ancestrales, se dice que lleva vivo más de mil años.",
+	"effects": []
+},
+{
+	"id": "88435542",
+	"kind": "MONSTER",
+	"cardname": "Fire Eye",
+	"attribute": "FIRE",
+	"race": "Pyro",
+	"level": 2,
+	"atk": 800,
+	"def": 600,
+	"guardian_star": ["MARS","SATURN"],
+	"tags": ["fire","pyro","winged","eye"],
+	"keywords": [],
+	"description": "Un ojo alado envuelto en llamas, ataca a sus enemigos emanando olas de calor.",
+	"effects": []
+},
+{
+	"id": "88753985",
+	"kind": "MONSTER",
+	"cardname": "Fox Fire",
+	"attribute": "FIRE",
+	"race": "Pyro",
+	"level": 2,
+	"atk": 300,
+	"def": 200,
+	"guardian_star": ["MARS","VENUS"],
+	"tags": ["fire","pyro","beast","jaws","spirit"],
+	"keywords": [],
+	"description": "Un espíritu en forma de zorro conocido por regresar una y otra vez por venganza contra aquellos que lo dañan.",
+	"effects": [
+			{
+		"trigger": "ON_DESTROY_BATTLE",
+		"template": "revive_self_at_turn_end_if_destroyed",
+		"params": {
+		"require_played_from_hand": true,
+		"require_attack_position_on_destroy": false,
+		"position": "FACEUP_DEF"
+		}
+	}]
+},
+{
+	"id": "89091579",
+	"kind": "MONSTER",
+	"cardname": "Basic Insect",
+	"attribute": "EARTH",
+	"race": "Insect",
+	"level": 2,
+	"atk": 500,
+	"def": 700,
+	"guardian_star": ["JUPITER","PLUTO"],
+	"tags": ["insect","earth"],
+	"keywords": [],
+	"description": "Esta criatura, que suele encontrarse viajando en enjambres, habita en el bosque.",
+	"effects": []
+},
+{
+	"id": "89112729",
+	"kind": "MONSTER",
+	"cardname": "Mecha Sauruss",
+	"attribute": "EARTH",
+	"race": "Machine",
+	"level": 5,
+	"atk": 1800,
+	"def": 1400,
+	"guardian_star": ["URANUS","SUN"],
+	"tags": ["machine","dinosaur","earth"],
+	"keywords": [],
+	"description": "Un dinosaurio mejorado mecánicamente, posee varias armas de alto calibre acopladas a su brazo.",
+	"effects": []
+},
+{
+	"id": "89252153",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Necroshade",
+	"attribute": "DARK",
+	"race": "Warrior",
+	"level": 5,
+	"atk": 1600,
+	"def": 1800,
+	"guardian_star": ["MERCURY","JUPITER"],
+	"tags": ["hero","dark","zombie"],
+	"keywords": [],
+	"description": "Un héroe que retornó de la tumba. Sus métodos no siempre van de acuerdo a los de los demás héroes, sin embargo algunos lo respetan por sus resultados.",
+	"effects": [
+		{
+		"trigger": "ON_DESTROY_BATTLE",
+		"template": "summon_random_from_db",
+		"params": {
+		"controller": "SELF",
+		"filters": {
+			"tag": "zombie",
+			"max_level": 3
+		},
+		"position": "FACEUP_ATK"
+		}
+	}]
+},
+{
+	"id": "89272878",
+	"kind": "MONSTER",
+	"cardname": "Guardian of the Underworld",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 1000,
+	"def": 1200,
+	"guardian_star": ["PLUTO","MERCURY"],
+	"tags": ["warrior","armored","earth","dark"],
+	"keywords": [],
+	"description": "Un guerrero que custodia la entrada al inframundo.",
+	"effects": []
+},
+{
+	"id": "89272878",
+	"kind": "MONSTER",
+	"cardname": "E. HERO Prisma",
+	"attribute": "LIGHT",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 1700,
+	"def": 1100,
+	"guardian_star": ["SUN","MOON","MERCURY","VENUS","MARS","JUPITER","URANUS","NEPTUNE","PLUTO"],
+	"tags": ["hero","rock","light"],
+	"keywords": [],
+	"description": "Un guerrero de cristal que irradia luz, destruye a sus oponentes canalizando un poder descomunal.",
+	"effects": [
+	{
+		"trigger": "PASSIVE",
+		"template": "guardian_star_bonus_multiplier",
+		"params": {
+		"atk_multiplier": 2.0,
+		"def_multiplier": 2.0
+		}
+	}]
+},
+{
+	"id": "89494469",
+	"kind": "MONSTER",
+	"cardname": "Dark Titan of Terror",
+	"attribute": "DARK",
+	"race": "Fiend",
+	"level": 4,
+	"atk": 1300,
+	"def": 1100,
+	"guardian_star": ["MERCURY","JUPITER"],
+	"tags": ["spirit","fiend","golem","dark"],
+	"keywords": [],
+	"description": "Se dice que un espíritu habita en el mundo de los sueños. Ataca a los enemigos mientras duermen.",
+	"effects": []
+},
+{
+	"id": "89631139",
+	"kind": "MONSTER",
+	"cardname": "Blue-eyes White Dragon",
+	"attribute": "LIGHT",
+	"race": "Dragon",
+	"level": 8,
+	"atk": 3000,
+	"def": 2500,
+	"guardian_star": ["SUN","MARS"],
+	"tags": ["dragon","blue-eyes","jaws","winged","light","claw"],
+	"keywords": [],
+	"description": "Una carta extremadamente rara con un poder de ataque y defensa insuperable.",
+	"effects": []
+},
+
+
 
 
 

@@ -46,6 +46,8 @@ var reveal_overlay_cards: Array = []
 var reveal_overlay_original_states: Array = []
 var reveal_overlay_waiting_ack := false
 
+var pending_end_turn_self_revives: Array = []
+
 signal attack_declared(attacker, defender, attacker_owner)
 signal monster_played(monster, cardowner)
 signal spell_activated(spell, cardowner)
@@ -424,6 +426,7 @@ func _on_end_turn_button_pressed() -> void:
 	$"../FusionManager".reset_turn()
 	player_cards_that_attacked_this_turn = []
 	opponent_cards_that_attacked_this_turn = []
+	_process_pending_end_turn_self_revives("Player")
 	multi_attack_targets_this_turn.clear()
 	$"../CardManager".reset_played_cards()
 	opponent_turn()
@@ -634,7 +637,7 @@ func attack(atk_card, defending, attacker):
 func _trigger_on_attack_effects(_card, _who: String, _ctx: Dictionary) -> void:
 	return
 
-func _place_card_in_slot(card: Node2D, slot: Node2D, summon_origin: String = "PLAY") -> void:
+func _place_card_in_slot(card: Node2D, slot: Node2D, placement_origin: String = "PLAY") -> void:
 	if not is_instance_valid(card) or not is_instance_valid(slot):
 		return
 	var cardowner := _card_owner_side(card)
@@ -684,7 +687,7 @@ func _place_card_in_slot(card: Node2D, slot: Node2D, summon_origin: String = "PL
 		"TRAP":
 			emit_signal("trap_activated", card, cardowner)
 
-	if kind == "SPELL" or kind == "TRAP":
+	if (kind == "SPELL" or kind == "TRAP") and placement_origin == "PLAY":
 		var cm_track := get_node_or_null("../CardManager")
 		if cm_track:
 			if "played_spellortrap_card_this_turn" in cm_track:
@@ -703,7 +706,7 @@ func _place_card_in_slot(card: Node2D, slot: Node2D, summon_origin: String = "PL
 
 	if should_reveal:
 		reveal_card(card)
-		if kind == "MONSTER" and summon_origin == "PLAY":
+		if kind == "MONSTER" and placement_origin == "PLAY":
 			_trigger_on_play_effects(card, cardowner)
 
 func _has_immediate_effect(card) -> bool:
@@ -743,6 +746,7 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 
 	if atk_power > def_power:
 		var destroyed_atk := int(defending.get_effective_atk() if defending.has_method("get_effective_atk") else defending.atk)
+		var destroyed_original_atk := int(defending.atk if ("atk" in defending) else 0)
 		var destroyed_ref = defending
 		var destroyed_ok := destroy_card(defending, defender_owner, "DESTROY_BATTLE")
 		if destroyed_ok:
@@ -752,6 +756,7 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 				"attacker": atk_card,
 				"destroyed": destroyed_ref,
 				"destroyed_atk": destroyed_atk,
+				"destroyed_original_atk": destroyed_original_atk,
 				"controller": _norm_owner(attacker),
 				"turn_owner": ("Opponent" if is_opponent_turn else "Player")
 			})
@@ -875,6 +880,7 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 	if attacker_won:
 		_apply_battle_damage_to_side(defender_owner, damage, atk_card, defending)
 		var destroyed_atk := int(defending.get_effective_atk() if defending.has_method("get_effective_atk") else defending.atk)
+		var destroyed_original_atk := int(defending.atk if ("atk" in defending) else 0)
 		var destroyed_ref = defending
 		var destroyed_ok := destroy_card(defending, defender_owner, "DESTROY_BATTLE")
 		if destroyed_ok:
@@ -884,6 +890,7 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 				"attacker": atk_card,
 				"destroyed": destroyed_ref,
 				"destroyed_atk": destroyed_atk,
+				"destroyed_original_atk": destroyed_original_atk,
 				"controller": attacker_owner,
 				"turn_owner": ("Opponent" if is_opponent_turn else "Player")
 			})
@@ -940,7 +947,6 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 		else:
 			if not (atk_card in opponent_cards_that_attacked_this_turn):
 				opponent_cards_that_attacked_this_turn.append(atk_card)
-
 func _is_card_alive(card) -> bool:
 	return is_instance_valid(card) and (card in player_cards_on_battlefield or card in opponent_cards_on_battlefield)
 
@@ -1473,6 +1479,7 @@ func end_opponent_turn():
 	var player_deck = $"../Deck"
 	var player_hand_node = $"../PlayerHand"
 	var card_manager = $"../CardManager"
+	_process_pending_end_turn_self_revives("Opponent")
 	is_opponent_turn = false
 	card_manager.reset_played_cards()
 	for k in multi_mode.keys():
@@ -1917,7 +1924,8 @@ func try_play_monster_from_hand(card, facedown: bool) -> void:
 		_set_card_face_down(card, true)
 	else:
 		_set_card_face_down(card, false)
-		
+
+	card.set_meta("played_from_hand", true)
 	_place_card_in_slot(card, free_slot, "PLAY")
 	if not facedown:
 		reveal_card(card)
@@ -2569,7 +2577,7 @@ func summon_random_from_db(source: Node, ctx: Dictionary, params: Dictionary) ->
 	if not is_instance_valid(card):
 		print("BM summon_random_from_db FAIL: spawn invalid")
 		return false
-
+	card.set_meta("played_from_hand", false)
 	if position == "FACEUP_ATK":
 		_set_card_face_down(card, false)
 		if card.has_method("set_defense_position"):
@@ -2616,4 +2624,250 @@ func summon_random_from_db(source: Node, ctx: Dictionary, params: Dictionary) ->
 	})
 
 	print("BM summon_random_from_db SUCCESS summoned=", card.cardname if ("cardname" in card) else str(card))
+	return true
+
+func _schedule_self_revival_at_turn_end(card: Node, card_owner: String, position: String, require_played_from_hand: bool, require_attack_position_on_destroy: bool) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	if require_played_from_hand and not bool(card.get_meta("played_from_hand", false)):
+		return false
+
+	if require_attack_position_on_destroy and bool(card.in_defense):
+		return false
+
+	var entry := {
+		"id": str(card.id) if ("id" in card) else "",
+		"controller": _norm_owner(card_owner),
+		"position": str(position).to_upper(),
+		"due_turn_end_owner": ("Opponent" if is_opponent_turn else "Player")
+	}
+
+	if entry["id"] == "":
+		return false
+
+	pending_end_turn_self_revives.append(entry)
+	return true
+
+func _revive_card_from_db_entry_at_turn_end(entry: Dictionary) -> bool:
+	var controller := _norm_owner(entry.get("controller", ""))
+	var position := str(entry.get("position", "FACEUP_ATK")).to_upper()
+	var revive_id := str(entry.get("id", ""))
+
+	if revive_id == "":
+		return false
+
+	var free_slot := _get_free_monster_slot_for(controller)
+	if free_slot == null:
+		return false
+
+	var db: Array = _get_cards_db()
+	if db.is_empty():
+		return false
+
+	var picked: Dictionary = {}
+	for card_def in db:
+		if typeof(card_def) != TYPE_DICTIONARY:
+			continue
+		if str(card_def.get("id", "")) == revive_id:
+			picked = card_def
+			break
+
+	if picked.is_empty():
+		return false
+
+	var card := _spawn_card_from_db_entry(picked, controller)
+	if not is_instance_valid(card):
+		return false
+
+	card.set_meta("played_from_hand", false)
+
+	if position == "FACEUP_ATK":
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(false)
+		else:
+			card.in_defense = false
+	elif position == "FACEUP_DEF":
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(true)
+		else:
+			card.in_defense = true
+	elif position == "FACEDOWN_DEF":
+		_set_card_face_down(card, true)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(true)
+		else:
+			card.in_defense = true
+	else:
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(false)
+		else:
+			card.in_defense = false
+
+	_set_card_slot(card, free_slot)
+	_place_card_in_slot(card, free_slot, "EFFECT")
+
+	if position == "FACEUP_ATK":
+		_set_card_face_down(card, false)
+		reveal_card(card)
+	elif position == "FACEUP_DEF":
+		_set_card_face_down(card, false)
+		reveal_card(card)
+	elif position == "FACEDOWN_DEF":
+		_set_card_face_down(card, true)
+
+	_emit_duel_event("ON_SUMMON_BY_EFFECT", {
+		"battle_manager": self,
+		"source": card,
+		"controller": controller,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player")
+	})
+
+	return true
+
+func _process_pending_end_turn_self_revives(turn_owner: String) -> void:
+	var remaining: Array = []
+
+	for entry in pending_end_turn_self_revives:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+
+		var due_owner := _norm_owner(entry.get("due_turn_end_owner", ""))
+		if due_owner != _norm_owner(turn_owner):
+			remaining.append(entry)
+			continue
+
+		var ok := _revive_card_from_db_entry_at_turn_end(entry)
+		if not ok:
+			pass
+
+	pending_end_turn_self_revives = remaining
+
+func _get_free_spelltrap_slot_for(controller: String) -> Node2D:
+	var norm := _norm_owner(controller)
+	var slots_root := get_node_or_null("../CardSlots") if norm == "Player" else get_node_or_null("../CardSlotsRival")
+	if not is_instance_valid(slots_root):
+		return null
+
+	for s in slots_root.get_children():
+		if not is_instance_valid(s):
+			continue
+
+		var t := str(s.get("card_slot_type"))
+		if t != "SpellTrap" and t != "Spell" and t != "Trap":
+			continue
+
+		if bool(s.get("card_in_slot")):
+			continue
+
+		return s
+
+	return null
+
+func _db_card_matches_spelltrap_filters(card_def: Dictionary, filters: Dictionary) -> bool:
+	if typeof(card_def) != TYPE_DICTIONARY:
+		return false
+
+	var filter_id := str(filters.get("id", ""))
+	var filter_tag := str(filters.get("tag", "")).strip_edges().to_lower()
+	var filter_attribute := str(filters.get("attribute", "")).to_upper()
+	var filter_race := str(filters.get("race", "")).to_upper()
+	var filter_kind := str(filters.get("kind", "ANY")).to_upper()
+
+	var card_kind := str(card_def.get("kind", "")).to_upper()
+	var card_id := str(card_def.get("id", ""))
+	var card_attribute := str(card_def.get("attribute", "")).to_upper()
+	var card_race := str(card_def.get("race", "")).to_upper()
+
+	if card_kind != "SPELL" and card_kind != "TRAP":
+		return false
+
+	if filter_kind != "ANY" and filter_kind != "" and card_kind != filter_kind:
+		return false
+
+	if filter_id != "" and card_id != filter_id:
+		return false
+	if filter_attribute != "" and card_attribute != filter_attribute:
+		return false
+	if filter_race != "" and card_race != filter_race:
+		return false
+	if filter_tag != "" and not _db_card_has_tag(card_def, filter_tag):
+		return false
+
+	return true
+
+func set_random_spelltrap_from_db(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	print("BM set_random_spelltrap_from_db ENTER source=", source.cardname if is_instance_valid(source) and ("cardname" in source) else "<null>", " params=", params)
+
+	var controller := str(params.get("controller", "SELF")).to_upper()
+	var filters: Dictionary = params.get("filters", {})
+	var exclude_ids: Array = params.get("exclude_ids", [])
+	var exclude_self_id := bool(params.get("exclude_self_id", false))
+
+	var source_controller := _norm_owner(ctx.get("controller", ""))
+	if source_controller == "" and is_instance_valid(source) and ("owner_side" in source):
+		source_controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+	source_controller = _norm_owner(source_controller)
+
+	var target_controller := source_controller
+	if controller == "OPPONENT":
+		target_controller = ("Opponent" if source_controller == "Player" else "Player")
+	elif controller == "SELF":
+		target_controller = source_controller
+
+	var free_slot := _get_free_spelltrap_slot_for(target_controller)
+	if free_slot == null:
+		print("BM set_random_spelltrap_from_db FAIL: no free spell/trap slot")
+		return false
+
+	var db: Array = _get_cards_db()
+	if db.is_empty():
+		print("BM set_random_spelltrap_from_db FAIL: db empty")
+		return false
+
+	var excluded: Array[String] = []
+	for x in exclude_ids:
+		excluded.append(str(x))
+
+	if exclude_self_id and is_instance_valid(source) and ("id" in source):
+		excluded.append(str(source.id))
+
+	var pool: Array = []
+	for card_def in db:
+		if typeof(card_def) != TYPE_DICTIONARY:
+			continue
+		if not _db_card_matches_spelltrap_filters(card_def, filters):
+			continue
+
+		var candidate_id := str(card_def.get("id", ""))
+		if excluded.has(candidate_id):
+			continue
+
+		pool.append(card_def)
+
+	if pool.is_empty():
+		print("BM set_random_spelltrap_from_db FAIL: pool empty")
+		return false
+
+	pool.shuffle()
+	var picked: Dictionary = pool[0]
+
+	var card := _spawn_card_from_db_entry(picked, target_controller)
+	if not is_instance_valid(card):
+		print("BM set_random_spelltrap_from_db FAIL: spawn invalid")
+		return false
+
+	_set_card_face_down(card, true)
+
+	_set_card_slot(card, free_slot)
+	_place_card_in_slot(card, free_slot, "EFFECT")
+
+	_set_card_face_down(card, true)
+	if card.has_method("set_show_back_only"):
+		card.set_show_back_only(false)
+
+	print("BM set_random_spelltrap_from_db SUCCESS set=", card.cardname if ("cardname" in card) else str(card))
 	return true

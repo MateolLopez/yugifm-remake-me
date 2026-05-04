@@ -84,7 +84,7 @@
 	"min_def": "int?",
 	"max_def": "int?"
   }
-}	}
+}
 	},
 	"grant_protection_profile_while_faceup": {
 		"desc": "Mientras la fuente permanezca boca arriba en el campo, otorga reglas de protección a sí misma.",
@@ -155,12 +155,21 @@
 		"field_name": "string"
 	  }
 	},
-	"set_random_trap_from_db": {
-	  "desc": "Coloca una trampa aleatoria desde DB (no desde Deck).",
-	  "params_schema": {
-		"owner": "SELF|OPPONENT"
-	  }
-	},"reveal_hidden_cards": {
+	"set_random_spelltrap_from_db": {
+  "desc": "Coloca una Spell/Trap aleatoria desde DB en la zona Spell/Trap del controlador indicado.",
+  "params_schema": {
+	"controller": "SELF|OPPONENT",
+	"filters": {
+	  "id": "string?",
+	  "tag": "string?",
+	  "attribute": "string?",
+	  "race": "string?",
+	  "kind": "SPELL|TRAP|ANY"
+	},
+	"exclude_ids": "array?",
+	"exclude_self_id": "bool?"
+  }
+},"reveal_hidden_cards": {
 		"desc": "Revela temporalmente cartas ocultas del campo o de la mano.",
 		"params_schema": {
 		"target_side": "SELF|OPPONENT|BOTH",
@@ -209,6 +218,14 @@
 		"position": "string"
 	  }
 	},
+	"revive_self_at_turn_end_if_destroyed": {
+  "desc": "Programa el regreso de esta misma carta al final del turno si fue destruida bajo condiciones.",
+  "params_schema": {
+	"require_played_from_hand": "bool?",
+	"require_attack_position_on_destroy": "bool?",
+	"position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF"
+  }
+},
 	"equip_spell_to_target": {
   "desc": "Equipa esta carta a un monstruo objetivo y aplica modificaciones.",
   "params_schema": {
@@ -328,6 +345,11 @@
   "params_schema": {
 	"target": "OPPONENT|SELF"
   }
+},"recover_lp_equal_to_destroyed_monster_original_atk": {
+	"desc": "Cuando esta carta destruye un monstruo en batalla, recupera LP iguales al ATK original del monstruo destruido.",
+	"params_schema": {
+	"target": "SELF|OPPONENT"
+	}
 },
 	"replace_send_to_grave_with_banish_global": {
 	  "desc": "Reemplazo global: cualquier carta que fuera a cementerio se va a banish.",
@@ -440,7 +462,7 @@
   }
 },
 	"guardian_star_bonus_multiplier": {
-	  "desc": "Modifica el bonus/malus de Guardian Star de esta carta multiplicándolo por un factor.",
+	  "desc": "Modifica el bonus de Guardian Star de esta carta multiplicándolo por un factor.",
 		"params_schema": {
 	"atk_multiplier": "float",
 	"def_multiplier": "float"
@@ -494,7 +516,6 @@
 	"position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF",
 	"prefer_highest_level": "bool?"
   }
-}
   },
   "selectors": {
 	"Side": {

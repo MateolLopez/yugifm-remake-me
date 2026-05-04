@@ -296,6 +296,10 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 			return true
 		"summon_random_from_db":
 			return _tpl_summon_random_from_db(source, ctx, params)
+		"revive_self_at_turn_end_if_destroyed":
+			return _tpl_revive_self_at_turn_end_if_destroyed(source, ctx, params)
+		"set_random_spelltrap_from_db":
+			return _tpl_set_random_spelltrap_from_db(source, ctx, params)
 		"inflict_effect_damage":
 			_tpl_inflict_effect_damage(source, ctx, params)
 			return true
@@ -330,6 +334,8 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 			return true
 		"inflict_destroyed_monster_atk_as_effect_damage":
 			return _tpl_inflict_destroyed_monster_atk_as_effect_damage(source, ctx, params)
+		"recover_lp_equal_to_destroyed_monster_original_atk":
+			return _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source, ctx, params)
 		_:
 			push_warning("EffectEngine: Template no implementado: %s" % template)
 			return false
@@ -533,6 +539,16 @@ func _tpl_summon_random_from_db(source: Node, ctx: Dictionary, params: Dictionar
 	var ok := bool(bm.summon_random_from_db(source, ctx, params))
 	print("TPL summon_random_from_db result=", ok)
 	return ok
+
+func _tpl_set_random_spelltrap_from_db(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return false
+
+	if not bm.has_method("set_random_spelltrap_from_db"):
+		return false
+
+	return bool(bm.set_random_spelltrap_from_db(source, ctx, params))
 
 func _get_battle_manager(ctx: Dictionary) -> Node:
 	if ctx.has("battle_manager") and ctx["battle_manager"] != null:
@@ -1515,3 +1531,60 @@ func _tpl_inflict_destroyed_monster_atk_as_effect_damage(source: Node, ctx: Dict
 	target_player = _norm_owner(target_player)
 	bm._apply_effect_damage_to_side(target_player, destroyed_atk, {"source": source})
 	return true
+
+func _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return false
+
+	var destroyed_original_atk := int(ctx.get("destroyed_original_atk", 0))
+	if destroyed_original_atk <= 0:
+		return false
+
+	var target := str(params.get("target", "SELF")).to_upper()
+
+	var source_controller := _norm_owner(ctx.get("controller", ""))
+	if source_controller == "" and source != null and ("owner_side" in source):
+		source_controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+	source_controller = _norm_owner(source_controller)
+
+	var target_player := source_controller
+	if target == "OPPONENT":
+		target_player = ("Opponent" if source_controller == "Player" else "Player")
+	elif target == "SELF":
+		target_player = source_controller
+
+	target_player = _norm_owner(target_player)
+
+	if bm.has_method("recover_lp_to_side"):
+		bm.recover_lp_to_side(target_player, destroyed_original_atk, {"source": source})
+
+	return true
+
+func _tpl_revive_self_at_turn_end_if_destroyed(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return false
+
+	if not is_instance_valid(source):
+		return false
+
+	var require_played_from_hand := bool(params.get("require_played_from_hand", false))
+	var require_attack_position_on_destroy := bool(params.get("require_attack_position_on_destroy", false))
+	var position := str(params.get("position", "FACEUP_ATK")).to_upper()
+
+	var controller := _norm_owner(ctx.get("controller", ""))
+	if controller == "" and ("owner_side" in source):
+		controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+	controller = _norm_owner(controller)
+
+	if not bm.has_method("_schedule_self_revival_at_turn_end"):
+		return false
+
+	return bool(bm._schedule_self_revival_at_turn_end(
+		source,
+		controller,
+		position,
+		require_played_from_hand,
+		require_attack_position_on_destroy
+	))
