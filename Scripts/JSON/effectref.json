@@ -479,6 +479,15 @@
 	"to": "TOGGLE|ATTACK|DEFENSE"
   }
 },
+"revive_last_destroyed_monster_from_graveyard": {
+  "desc": "Revive el último monstruo destruido y enviado al cementerio desde cualquier cementerio permitido.",
+  "params_schema": {
+	"controller": "SELF|OPPONENT",
+	"source_grave": "SELF|OPPONENT|BOTH",
+	"position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF",
+	"require_destroyed": "bool?"
+  }
+},
 	"change_self_position_when_attacked_end_of_battle": {
 	  "desc": "Si esta carta es objetivo de un ataque, cambia su posición al final de esa batalla.",
 	  "params_schema": {

@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://cv3psty7bf6sh"]
+[gd_scene load_steps=31 format=3 uid="uid://cv3psty7bf6sh"]
 
 [ext_resource type="Script" uid="uid://ddwrxhfr5nnlw" path="res://Scripts/card_manager.gd" id="1_sooux"]
 [ext_resource type="Script" uid="uid://c2bwtc3j72nmj" path="res://Scripts/player_hand.gd" id="2_qattd"]
@@ -15,7 +15,10 @@
 [ext_resource type="Script" uid="uid://q3kdx072n7j6" path="res://Scripts/battle_manager.gd" id="11_flypn"]
 [ext_resource type="Texture2D" uid="uid://x5bxsg0ni8wq" path="res://assets/placeholders/bgduel.jpg" id="13_jmg8l"]
 [ext_resource type="Texture2D" uid="uid://dypaf1l8b8p0" path="res://assets/Deck.png" id="15_h1aux"]
+[ext_resource type="AudioStream" uid="uid://rrau8rmckveo" path="res://sfx/bzzzt.wav" id="15_h8wu8"]
 [ext_resource type="Script" uid="uid://r727c8vuvmas" path="res://Scripts/duel_flow.gd" id="16_qattd"]
+[ext_resource type="PackedScene" uid="uid://c7b6dne8xl2j4" path="res://vfx/card_destroy/ExplosionFX.tscn" id="16_sjiiy"]
+[ext_resource type="PackedScene" uid="uid://bksbn3k68dxoa" path="res://vfx/monster_reborn_fx/monster_reborn_fx.tscn" id="17_flypn"]
 [ext_resource type="Script" uid="uid://7pswykviq5ol" path="res://Scripts/guardian_star_manager.gd" id="19_5r5qm"]
 [ext_resource type="Script" uid="uid://u8cf3ha250wd" path="res://Scripts/fusion_manager.gd" id="19_gatq4"]
 [ext_resource type="Script" uid="uid://gxyjvmaxr58m" path="res://Scripts/OpponentIA.gd" id="20_gatq4"]
@@ -227,6 +230,9 @@ script = ExtResource("10_sjiiy")
 
 [node name="BattleManager" type="Node" parent="."]
 script = ExtResource("11_flypn")
+destroy_vibration_sfx = ExtResource("15_h8wu8")
+destroy_explosion_scene = ExtResource("16_sjiiy")
+monster_reborn_fx_scene = ExtResource("17_flypn")
 
 [node name="BattleTimer" type="Timer" parent="."]
 
@@ -336,5 +342,16 @@ offset_top = 28.0
 offset_right = 55.0
 offset_bottom = 59.0
 text = "Si"
+
+[node name="InputBlocker" type="ColorRect" parent="."]
+visible = false
+z_index = 90
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
 
 [connection signal="pressed" from="EndTurnButton" to="BattleManager" method="_on_end_turn_button_pressed"]

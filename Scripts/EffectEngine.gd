@@ -298,6 +298,8 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 			return _tpl_summon_random_from_db(source, ctx, params)
 		"revive_self_at_turn_end_if_destroyed":
 			return _tpl_revive_self_at_turn_end_if_destroyed(source, ctx, params)
+		"revive_last_destroyed_monster_from_graveyard":
+			return _tpl_revive_last_destroyed_monster_from_graveyard(source, ctx, params)
 		"set_random_spelltrap_from_db":
 			return _tpl_set_random_spelltrap_from_db(source, ctx, params)
 		"inflict_effect_damage":
@@ -1588,3 +1590,13 @@ func _tpl_revive_self_at_turn_end_if_destroyed(source: Node, ctx: Dictionary, pa
 		require_played_from_hand,
 		require_attack_position_on_destroy
 	))
+
+func _tpl_revive_last_destroyed_monster_from_graveyard(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return false
+
+	if not bm.has_method("revive_last_destroyed_monster_from_graveyard"):
+		return false
+
+	return bool(bm.revive_last_destroyed_monster_from_graveyard(source, ctx, params))

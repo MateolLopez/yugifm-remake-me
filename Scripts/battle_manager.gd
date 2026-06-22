@@ -5,6 +5,13 @@ const CARD_MOVE_SPEED = 0.2
 const DEFAULT_MAX_HAND_SIZE = 5
 const DEFAULT_STARTING_HP = 8000
 
+#----- VFX Destrucción
+@export var destroy_vibration_sfx: AudioStream
+@export var destroy_explosion_scene: PackedScene
+@export var monster_reborn_fx_scene: PackedScene
+
+var duel_animation_lock_count: int = 0
+#----- ---------
 signal duel_over(result: String)
 
 var active_field_spell: Node = null
@@ -39,6 +46,7 @@ var equip_targeting: bool = false
 var pending_equip_card: Node = null
 var pending_equip_controller: String = ""
 var reaction_set_order_counter: int = 0
+var graveyard_order_counter: int = 0
 
 #Card Reveal vars
 var reveal_overlay_active := false
@@ -233,6 +241,22 @@ func _grave_entry_from_card(card: Node) -> Dictionary:
 
 	return entry
 
+func _remove_grave_entry_at(grave_owner: String, index: int) -> void:
+	var owner := _norm_owner(grave_owner)
+
+	if index < 0:
+		return
+
+	if owner == "Player":
+		if index < player_graveyard.size():
+			player_graveyard.remove_at(index)
+	elif owner == "Opponent":
+		if index < opponent_graveyard.size():
+			opponent_graveyard.remove_at(index)
+
+func _next_graveyard_order() -> int:
+	graveyard_order_counter += 1
+	return graveyard_order_counter
 # =========================
 # Turn Flow
 # =========================
@@ -337,6 +361,20 @@ func _db_card_matches_filters(card_def: Dictionary, filters: Dictionary) -> bool
 		return false
 
 	return true
+
+func _get_db_card_by_id(card_id: String) -> Dictionary:
+	var db: Array = _get_cards_db()
+	if db.is_empty():
+		return {}
+
+	for card_def in db:
+		if typeof(card_def) != TYPE_DICTIONARY:
+			continue
+
+		if str(card_def.get("id", "")) == str(card_id):
+			return card_def
+
+	return {}
 
 func _spawn_card_from_db_entry(card_def: Dictionary, controller: String) -> Card:
 	var card_scene: PackedScene = preload("res://Scenes/Card.tscn")
@@ -1362,30 +1400,40 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 		_emit_duel_event("ON_SEND_TO_GRAVE_BY_EFFECT", destroy_ctx)
 
 	var slot = _card_slot(card)
-
 	var grave_entry := _grave_entry_from_card(card)
+	grave_entry["grave_owner"] = card_owner
+	grave_entry["sent_order"] = _next_graveyard_order()
+	grave_entry["cause"] = cause
+	grave_entry["was_destroyed"] = str(cause).begins_with("DESTROY")
 
 	if card_owner == "Player":
 		card.defeated = true
+
 		var cshape = card.get_node_or_null("Area2D/CollisionShape2D")
 		if cshape:
 			cshape.disabled = true
+
 		if card in player_cards_on_battlefield:
 			player_graveyard.append(grave_entry)
 			player_cards_on_battlefield.erase(card)
+
 			if slot:
 				var slot_shape = slot.get_node_or_null("Area2D/CollisionShape2D")
 				if slot_shape:
 					slot_shape.disabled = false
 	else:
+		var cshape_opp = card.get_node_or_null("Area2D/CollisionShape2D")
+		if cshape_opp:
+			cshape_opp.disabled = true
+
 		if card in opponent_cards_on_battlefield:
 			opponent_graveyard.append(grave_entry)
 			opponent_cards_on_battlefield.erase(card)
 
 	if slot:
-		slot.card_in_slot = false
-		if "card_ref" in slot:
-			slot.set_meta("card_ref", null)
+		slot.set("card_in_slot", false)
+		slot.set_meta("card_ref", null)
+
 		if slot.get_parent() == $"../CardSlotsRival":
 			if not empty_monster_card_slots.has(slot):
 				empty_monster_card_slots.append(slot)
@@ -1397,9 +1445,15 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 
 	_clear_multi_for(card)
 	_clear_card_slot(card)
-	card.queue_free()
+
 	_clean_battlefield_lists()
 	_refresh_effect_engine_continuous_buffs()
+
+	if card is Node2D:
+		_play_card_destroy_animation_and_free(card)
+	else:
+		card.queue_free()
+
 	return true
 
 func yield_to_refill_opponent_hand():
@@ -2626,6 +2680,165 @@ func summon_random_from_db(source: Node, ctx: Dictionary, params: Dictionary) ->
 	print("BM summon_random_from_db SUCCESS summoned=", card.cardname if ("cardname" in card) else str(card))
 	return true
 
+func revive_last_destroyed_monster_from_graveyard(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var controller_param := str(params.get("controller", "SELF")).to_upper()
+	var source_grave := str(params.get("source_grave", "BOTH")).to_upper()
+	var position := str(params.get("position", "FACEUP_ATK")).to_upper()
+	var require_destroyed := bool(params.get("require_destroyed", true))
+
+	var source_controller := _norm_owner(ctx.get("controller", ""))
+	if source_controller == "" and is_instance_valid(source) and ("owner_side" in source):
+		source_controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+	source_controller = _norm_owner(source_controller)
+
+	if source_controller == "":
+		return false
+
+	var summon_controller := source_controller
+	if controller_param == "OPPONENT":
+		summon_controller = ("Opponent" if source_controller == "Player" else "Player")
+	elif controller_param == "SELF":
+		summon_controller = source_controller
+
+	summon_controller = _norm_owner(summon_controller)
+
+	var free_slot := _get_free_monster_slot_for(summon_controller)
+	if free_slot == null:
+		return false
+
+	var found := _find_last_destroyed_monster_grave_entry(source_controller, source_grave, require_destroyed)
+	if found.is_empty():
+		return false
+
+	var entry: Dictionary = found.get("entry", {})
+	var grave_owner := _norm_owner(found.get("grave_owner", ""))
+	var grave_index := int(found.get("index", -1))
+
+	if entry.is_empty():
+		return false
+
+	var revive_id := str(entry.get("id", ""))
+	if revive_id == "":
+		return false
+
+	var card_def := _get_db_card_by_id(revive_id)
+	if card_def.is_empty():
+		return false
+
+	var card := _spawn_card_from_db_entry(card_def, summon_controller)
+	if not is_instance_valid(card):
+		return false
+
+	card.set_meta("played_from_hand", false)
+	card.set_meta("revived_from_graveyard", true)
+	card.set_meta("revived_by", source.cardname if is_instance_valid(source) and ("cardname" in source) else "UNKNOWN")
+
+	_remove_grave_entry_at(grave_owner, grave_index)
+
+	if position == "FACEUP_ATK":
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(false)
+		else:
+			card.in_defense = false
+
+	elif position == "FACEUP_DEF":
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(true)
+		else:
+			card.in_defense = true
+
+	elif position == "FACEDOWN_DEF":
+		_set_card_face_down(card, true)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(true)
+		else:
+			card.in_defense = true
+
+	else:
+		_set_card_face_down(card, false)
+		if card.has_method("set_defense_position"):
+			card.set_defense_position(false)
+		else:
+			card.in_defense = false
+
+	_set_card_slot(card, free_slot)
+	_place_card_in_slot(card, free_slot, "EFFECT")
+
+	if position == "FACEUP_ATK":
+		_set_card_face_down(card, false)
+		reveal_card(card)
+
+	elif position == "FACEUP_DEF":
+		_set_card_face_down(card, false)
+		reveal_card(card)
+
+	elif position == "FACEDOWN_DEF":
+		_set_card_face_down(card, true)
+
+	if card is Node2D:
+		_play_monster_reborn_fx_on_card(card)
+
+	_emit_duel_event("ON_SUMMON_BY_EFFECT", {
+		"battle_manager": self,
+		"source": card,
+		"controller": summon_controller,
+		"turn_owner": ("Opponent" if is_opponent_turn else "Player"),
+		"created_from": source,
+		"revived_from_graveyard": true,
+		"original_grave_owner": grave_owner
+	})
+
+	return true
+
+func _find_last_destroyed_monster_grave_entry(source_controller: String, source_grave: String, require_destroyed: bool) -> Dictionary:
+	var allowed_owners: Array[String] = []
+
+	var src := _norm_owner(source_controller)
+	var opponent := ("Opponent" if src == "Player" else "Player")
+
+	match source_grave:
+		"SELF":
+			allowed_owners.append(src)
+		"OPPONENT":
+			allowed_owners.append(opponent)
+		_:
+			allowed_owners.append("Player")
+			allowed_owners.append("Opponent")
+
+	var best: Dictionary = {}
+	var best_order := -1
+
+	for owner in allowed_owners:
+		var grave: Array = player_graveyard if owner == "Player" else opponent_graveyard
+
+		for i in range(grave.size()):
+			var entry = grave[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				continue
+
+			if str(entry.get("kind", "")).to_upper() != "MONSTER":
+				continue
+
+			if require_destroyed and not bool(entry.get("was_destroyed", false)):
+				continue
+
+			var entry_id := str(entry.get("id", ""))
+			if entry_id == "":
+				continue
+
+			var order := int(entry.get("sent_order", -1))
+			if order > best_order:
+				best_order = order
+				best = {
+					"entry": entry,
+					"grave_owner": owner,
+					"index": i
+				}
+
+	return best
+
 func _schedule_self_revival_at_turn_end(card: Node, card_owner: String, position: String, require_played_from_hand: bool, require_attack_position_on_destroy: bool) -> bool:
 	if not is_instance_valid(card):
 		return false
@@ -2871,3 +3084,192 @@ func set_random_spelltrap_from_db(source: Node, ctx: Dictionary, params: Diction
 
 	print("BM set_random_spelltrap_from_db SUCCESS set=", card.cardname if ("cardname" in card) else str(card))
 	return true
+
+#---- ANIMATION LOCKERS
+func _begin_duel_animation_lock() -> void:
+	duel_animation_lock_count += 1
+	_set_duel_input_blocked(true)
+
+
+func _end_duel_animation_lock() -> void:
+	duel_animation_lock_count = max(0, duel_animation_lock_count - 1)
+	if duel_animation_lock_count == 0:
+		_set_duel_input_blocked(false)
+
+
+func is_duel_animating() -> bool:
+	return duel_animation_lock_count > 0
+
+
+func _set_duel_input_blocked(blocked: bool) -> void:
+	var blocker := get_node_or_null("../UI/InputBlocker") as Control
+	if blocker:
+		blocker.visible = blocked
+		blocker.mouse_filter = Control.MOUSE_FILTER_STOP if blocked else Control.MOUSE_FILTER_IGNORE
+
+#----- END ANIMATION LOCKERS
+#if is_duel_animating(): MUST ADD THIS TO ENTERING COSAS LATER
+#	return
+
+#func wait_until_duel_idle() -> void: ESTE VA A IR EN LA IA CUANDO LE META MÁS IA
+#	while is_duel_animating():
+#		await get_tree().process_frame
+
+# ---- ANIMATIONS ----
+func _play_monster_reborn_fx_on_card(card: Node2D) -> void:
+	if not is_instance_valid(card):
+		return
+
+	if monster_reborn_fx_scene == null:
+		return
+
+	_begin_duel_animation_lock()
+
+	var fx = monster_reborn_fx_scene.instantiate()
+	if not is_instance_valid(fx):
+		_end_duel_animation_lock()
+		return
+
+	var parent_node := get_tree().current_scene
+	if parent_node == null:
+		parent_node = card.get_parent()
+
+	parent_node.add_child(fx)
+
+	if fx.has_method("setup_from_card"):
+		fx.setup_from_card(card)
+	else:
+		if fx is Node2D:
+			var fx2d := fx as Node2D
+			fx2d.global_position = _get_card_visual_center_global(card)
+			fx2d.global_rotation = card.global_rotation
+			fx2d.scale = card.scale
+			fx2d.z_index = card.z_index + 120
+
+	if fx.has_method("play"):
+		fx.play()
+
+	if fx.has_signal("finished"):
+		await fx.finished
+	else:
+		await get_tree().create_timer(2.0).timeout
+
+	if is_instance_valid(fx):
+		fx.queue_free()
+
+	_end_duel_animation_lock()
+
+func _play_card_destroy_animation_and_free(card: Node2D) -> void:
+	if not is_instance_valid(card):
+		return
+
+	_begin_duel_animation_lock()
+
+	var original_pos := card.global_position
+	var original_z := card.z_index
+
+	card.z_index = original_z + 100
+
+	var cshape = card.get_node_or_null("Area2D/CollisionShape2D")
+	if cshape:
+		cshape.disabled = true
+
+	var sfx := AudioStreamPlayer.new()
+	sfx.name = "DestroyVibrationSFX"
+	sfx.stream = destroy_vibration_sfx
+	add_child(sfx)
+
+	if sfx.stream != null:
+		sfx.play()
+
+	var offsets := [
+		-3.0,
+		6.0,
+		-6.0,
+		6.0,
+		-5.0,
+		5.0,
+		-4.0,
+		4.0,
+		-3.0,
+		3.0,
+		0.0
+	]
+
+	var step_duration := 0.8 / float(offsets.size())
+
+	for x in offsets:
+		if not is_instance_valid(card):
+			if is_instance_valid(sfx):
+				sfx.queue_free()
+			_end_duel_animation_lock()
+			return
+
+		var tw := get_tree().create_tween()
+		tw.tween_property(
+			card,
+			"global_position",
+			original_pos + Vector2(x, 0),
+			step_duration
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+		await tw.finished
+
+	if is_instance_valid(card):
+		card.global_position = original_pos
+
+	await _play_destroy_explosion_on_card(card)
+
+	if is_instance_valid(card):
+		card.visible = false
+		card.queue_free()
+
+	if is_instance_valid(sfx):
+		sfx.queue_free()
+
+	_end_duel_animation_lock()
+
+func _play_destroy_explosion_on_card(card: Node2D) -> void:
+	if not is_instance_valid(card):
+		return
+
+	if destroy_explosion_scene == null:
+		return
+
+	var explosion = destroy_explosion_scene.instantiate()
+	if not is_instance_valid(explosion):
+		return
+
+	var parent_node := card.get_parent()
+	if parent_node == null:
+		parent_node = get_tree().current_scene
+
+	parent_node.add_child(explosion)
+
+	if explosion is Node2D:
+		var exp2d := explosion as Node2D
+		exp2d.global_position = _get_card_visual_center_global(card)
+		exp2d.global_rotation = card.global_rotation
+		exp2d.scale = card.scale
+		exp2d.z_index = card.z_index + 10
+
+	if explosion.has_method("play"):
+		explosion.play()
+
+	if explosion.has_signal("finished"):
+		await explosion.finished
+	else:
+		await get_tree().create_timer(0.25).timeout
+
+	if is_instance_valid(explosion):
+		explosion.queue_free()
+
+func _get_card_visual_center_global(card: Node2D) -> Vector2:
+	if not is_instance_valid(card):
+		return Vector2.ZERO
+
+	var anchor := card.get_node_or_null("AnchorCenter") as Node2D
+	if is_instance_valid(anchor):
+		return anchor.global_position
+
+	return card.global_position

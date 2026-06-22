@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://bksbn3k68dxoa"]
+
+[ext_resource type="AudioStream" uid="uid://bubv7fap8a8rs" path="res://vfx/monster_reborn_fx/MonsterRebornSFX.mp3" id="1_5jv20"]
+[ext_resource type="Script" uid="uid://dvx84n1tv6wmi" path="res://vfx/monster_reborn_fx/monster_reborn_fx.gd" id="1_7ps3g"]
+
+[node name="MonsterRebornFx" type="Node2D"]
+script = ExtResource("1_7ps3g")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_5jv20")

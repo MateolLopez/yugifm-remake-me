@@ -3006,6 +3006,27 @@
   ]
 },
 {
+  "id": "83764718",
+  "kind": "SPELL",
+  "cardname": "Monster Reborn",
+  "race": "NORMAL",
+  "tags": ["monster-reborn", "revive"],
+  "keywords": [],
+  "description": "Activar: revive en tu campo, el último monstruo destruido y enviado a cualquier cementerio.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "revive_last_destroyed_monster_from_graveyard",
+	  "params": {
+		"controller": "SELF",
+		"source_grave": "BOTH",
+		"position": "FACEUP_ATK",
+		"require_destroyed": true
+	  }
+	}
+  ]
+},
+{
   "id": "40619825",
   "kind": "SPELL",
   "cardname": "Axe of Despair",
