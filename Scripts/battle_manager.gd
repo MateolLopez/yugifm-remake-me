@@ -4,9 +4,9 @@ const BATTLE_POSS_OFFSET = 25
 const CARD_MOVE_SPEED = 0.2
 const DEFAULT_MAX_HAND_SIZE = 5
 const DEFAULT_STARTING_HP = 8000
+const DRAW_STEP_DURATION := 0.34
 
 #----- VFX Destrucción
-@export var destroy_vibration_sfx: AudioStream
 @export var destroy_explosion_scene: PackedScene
 @export var monster_reborn_fx_scene: PackedScene
 
@@ -16,6 +16,7 @@ signal duel_over(result: String)
 
 var active_field_spell: Node = null
 var active_field_spell_controller: String = ""
+var initial_hands_drawn: bool = false
 @onready var _ui_field_spell_name: RichTextLabel = get_node_or_null("../FieldSpellName")
 var duel_finished = false
 var battle_timer
@@ -47,6 +48,7 @@ var pending_equip_card: Node = null
 var pending_equip_controller: String = ""
 var reaction_set_order_counter: int = 0
 var graveyard_order_counter: int = 0
+var attack_count_this_turn: Dictionary = {}
 
 #Card Reveal vars
 var reveal_overlay_active := false
@@ -88,6 +90,7 @@ func _ready() -> void:
 	opponent_hp = _starting_hp()
 	$"../OpponentHP".text = str(opponent_hp)
 	_update_field_spell_name_ui()
+	call_deferred("_run_initial_draw_sequence")
 
 # =========================
 # Base / Rules Helpers
@@ -257,6 +260,39 @@ func _remove_grave_entry_at(grave_owner: String, index: int) -> void:
 func _next_graveyard_order() -> int:
 	graveyard_order_counter += 1
 	return graveyard_order_counter
+
+func _run_initial_draw_sequence() -> void:
+	if initial_hands_drawn:
+		return
+
+	initial_hands_drawn = true
+
+	_begin_duel_animation_lock()
+
+	var player_deck = $"../Deck"
+	var player_hand_node = $"../PlayerHand"
+
+	var opponent_deck = $"../DeckRival/Deck"
+	var opponent_hand_node = $"../OpponentHand"
+
+	while true:
+		var player_can_draw = player_deck.player_deck.size() > 0 and player_hand_node.player_hand.size() < _max_hand_size()
+		var opponent_can_draw = opponent_deck.opponent_deck.size() > 0 and opponent_hand_node.opponent_hand.size() < _max_hand_size()
+
+		if not player_can_draw and not opponent_can_draw:
+			break
+
+		_play_duel_sfx("draw")
+
+		if player_can_draw:
+			player_deck.draw_card()
+
+		if opponent_can_draw:
+			opponent_deck.draw_card()
+
+		await _wait_draw_step()
+
+	_end_duel_animation_lock()
 # =========================
 # Turn Flow
 # =========================
@@ -452,39 +488,83 @@ func _cleanup_multi_garbage():
 			_clear_multi_for(k)
 
 func _on_end_turn_button_pressed() -> void:
-	_emit_duel_event("TURN_END", {"turn_owner":"Player", "controller":"Player", "battle_manager": self})
+	if is_duel_animating():
+		return
+
+	_emit_duel_event("TURN_END", {
+		"turn_owner": "Player",
+		"controller": "Player",
+		"battle_manager": self
+	})
+
 	_process_timed_keywords_on_turn_end("Player")
 	_process_scheduled_destruction_on_turn_end("Player")
+
 	for k in multi_mode.keys():
 		if is_instance_valid(k) and (k in player_cards_on_battlefield):
 			_clear_multi_for(k)
+
 	_cleanup_multi_garbage()
+
 	is_opponent_turn = true
+	var cm := get_node_or_null("../CardManager")
+	if cm != null and cm.has_method("cancel_drag_and_restore"):
+		cm.cancel_drag_and_restore()
+
 	$"../CardManager".unselect_selected_monster()
-	$"../FusionManager".reset_turn()
+	var fusion_manager := get_node_or_null("../FusionManager")
+	if fusion_manager and fusion_manager.has_method("reset_turn"):
+		fusion_manager.reset_turn("Player")
+
 	player_cards_that_attacked_this_turn = []
 	opponent_cards_that_attacked_this_turn = []
-	_process_pending_end_turn_self_revives("Player")
 	multi_attack_targets_this_turn.clear()
+	attack_count_this_turn.clear()
+
+	_refresh_card_usage_overlays()
+
+	_process_pending_end_turn_self_revives("Player")
+
 	$"../CardManager".reset_played_cards()
+
 	opponent_turn()
 
 func opponent_turn():
 	turn_index += 1
-	_emit_duel_event("TURN_START", {"turn_owner":"Opponent", "controller":"Opponent", "battle_manager": self})
-	if duel_finished: return
+
+	_emit_duel_event("TURN_START", {
+		"turn_owner":"Opponent",
+		"controller":"Opponent",
+		"battle_manager": self
+	})
+
+	if duel_finished:
+		return
+
 	$"../EndTurnButton".disabled = true
 	$"../EndTurnButton".visible = false
-	
+
+	print("OPPONENT TURN: refill start")
+	_begin_duel_animation_lock()
 	await yield_to_refill_opponent_hand()
+	_end_duel_animation_lock()
+	print("OPPONENT TURN: refill end")
+
+	await wait_until_duel_idle()
 	await action_waiter()
+
 	var opponent_ia = $"../OpponentIA"
 	if opponent_ia:
+		print("OPPONENT TURN: IA start")
+		await wait_until_duel_idle()
 		await opponent_ia.make_turn_decisions()
+		print("OPPONENT TURN: IA end")
+		await wait_until_duel_idle()
 		await action_waiter()
-	
-	opponent_cards_that_attacked_this_turn = []
+
+	print("OPPONENT TURN: calling end_opponent_turn")
 	await end_opponent_turn()
+	print("OPPONENT TURN: end_opponent_turn finished")
 
 func _set_position(card: Card, pos: String) -> bool:
 	if not is_instance_valid(card):
@@ -533,7 +613,6 @@ func trigger_on_play_effects(card, who: String) -> void:
 	_trigger_on_play_effects(card, who)
 
 func attack(atk_card, defending, attacker):
-
 	if _card_kind(atk_card) != "MONSTER":
 		return
 	if duel_finished:
@@ -549,31 +628,9 @@ func attack(atk_card, defending, attacker):
 	if _is_card_face_down(atk_card):
 		reveal_card(atk_card)
 
-	var has_multi := _has_kw(atk_card, "MULTI_ATTACK_ALL")
-
-	if not is_instance_valid(defending):
-		if attacker == "Player":
-			if atk_card in player_cards_that_attacked_this_turn:
-				return
-		else:
-			if atk_card in opponent_cards_that_attacked_this_turn:
-				return
-	else:
-		if not has_multi:
-			if attacker == "Player":
-				if atk_card in player_cards_that_attacked_this_turn:
-					return
-			else:
-				if atk_card in opponent_cards_that_attacked_this_turn:
-					return
-		else:
-			var a_id := str(atk_card.get_instance_id())
-			var d_id := str(defending.get_instance_id())
-			var per_attacker = multi_attack_targets_this_turn.get(a_id, {})
-			if typeof(per_attacker) != TYPE_DICTIONARY:
-				per_attacker = {}
-			if bool(per_attacker.get(d_id, false)):
-				return
+	if not _can_card_declare_attack_against(atk_card, defending, attacker):
+		_release_player_input_if_needed(attacker)
+		return
 
 	var battle_ctx := {
 		"battle_manager": self,
@@ -675,7 +732,7 @@ func attack(atk_card, defending, attacker):
 func _trigger_on_attack_effects(_card, _who: String, _ctx: Dictionary) -> void:
 	return
 
-func _place_card_in_slot(card: Node2D, slot: Node2D, placement_origin: String = "PLAY") -> void:
+func _place_card_in_slot(card: Node2D, slot: Node2D, placement_origin: String = "PLAY", snap_visual: bool = true) -> void:
 	if not is_instance_valid(card) or not is_instance_valid(slot):
 		return
 	var cardowner := _card_owner_side(card)
@@ -692,13 +749,14 @@ func _place_card_in_slot(card: Node2D, slot: Node2D, placement_origin: String = 
 		reaction_set_order_counter += 1
 		card.set_meta("set_order", reaction_set_order_counter)
 	elif kind == "SPELL":
-		if _has_immediate_effect(card):
+		if placement_origin == "SET":
+			_set_card_face_down(card, true)
+			should_reveal = false
+		elif _has_immediate_effect(card):
 			_set_card_face_down(card, false)
 			should_reveal = true
 		else:
 			_set_card_face_down(card, true)
-	else:
-		should_reveal = (not _is_card_face_down(card))
 
 	if card.has_method("set_show_back_only"):
 		card.set_show_back_only(false)
@@ -706,8 +764,10 @@ func _place_card_in_slot(card: Node2D, slot: Node2D, placement_origin: String = 
 		card.move_to_zone("FIELD")
 	var cm = get_node_or_null("../CardManager")
 	if cm:
-		card.scale = Vector2(cm.FIELD_SCALE, cm.FIELD_SCALE)
-		cm._snap_card_to_slot_center(card, slot)
+		if snap_visual:
+			card.scale = Vector2(cm.FIELD_SCALE, cm.FIELD_SCALE)
+			cm._snap_card_to_slot_center(card, slot)
+
 	card.z_index = -4
 
 	if kind == "MONSTER":
@@ -746,6 +806,8 @@ func _place_card_in_slot(card: Node2D, slot: Node2D, placement_origin: String = 
 		reveal_card(card)
 		if kind == "MONSTER" and placement_origin == "PLAY":
 			_trigger_on_play_effects(card, cardowner)
+	
+	_refresh_card_usage_overlays()
 
 func _has_immediate_effect(card) -> bool:
 	if not is_instance_valid(card):
@@ -787,6 +849,7 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 		var destroyed_original_atk := int(defending.atk if ("atk" in defending) else 0)
 		var destroyed_ref = defending
 		var destroyed_ok := destroy_card(defending, defender_owner, "DESTROY_BATTLE")
+
 		if destroyed_ok:
 			_emit_duel_event("ON_DESTROY_MONSTER_BY_BATTLE", {
 				"battle_manager": self,
@@ -798,11 +861,15 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 				"controller": _norm_owner(attacker),
 				"turn_owner": ("Opponent" if is_opponent_turn else "Player")
 			})
+
 		result_str = "win"
+
 	elif atk_power == def_power:
 		result_str = "tie"
+
 	else:
 		var diff = def_power - atk_power
+
 		if attacker == "Opponent":
 			_apply_battle_damage_to_side("Opponent", diff, defending, atk_card)
 		else:
@@ -810,6 +877,7 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 
 	if has_piercing and atk_power > def_power:
 		var piercing_damage = atk_power - def_power
+
 		if attacker == "Opponent":
 			_apply_battle_damage_to_side("Player", piercing_damage, atk_card, defending)
 		else:
@@ -817,8 +885,10 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 
 	if not _is_card_alive(atk_card):
 		_clear_bonuses([atk_card, defending])
+
 		if attacker == "Player":
 			_enable_player_input()
+
 		return
 
 	var return_pos: Vector2 = _anchored_slot_position(atk_card)
@@ -830,6 +900,7 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 		atk_card.z_index = 0
 
 	var defender_ref = defending if is_instance_valid(defending) else null
+
 	await _trigger_on_attack(atk_card, attacker, {
 		"phase": "after_damage",
 		"attacker": atk_card,
@@ -839,32 +910,10 @@ func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power)
 
 	_clear_bonuses([atk_card, defending])
 
-	if attacker == "Player":
-		if _has_kw(atk_card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
-			var a_id := str(atk_card.get_instance_id())
-			var d_id := str(defending.get_instance_id())
-			var per_attacker = multi_attack_targets_this_turn.get(a_id, {})
-			if typeof(per_attacker) != TYPE_DICTIONARY:
-				per_attacker = {}
-			per_attacker[d_id] = true
-			multi_attack_targets_this_turn[a_id] = per_attacker
-		else:
-			if not (atk_card in player_cards_that_attacked_this_turn):
-				player_cards_that_attacked_this_turn.append(atk_card)
+	_register_attack_spent(atk_card, attacker, defending)
 
+	if attacker == "Player":
 		_enable_player_input()
-	else:
-		if _has_kw(atk_card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
-			var a2 := str(atk_card.get_instance_id())
-			var d2 := str(defending.get_instance_id())
-			var per2 = multi_attack_targets_this_turn.get(a2, {})
-			if typeof(per2) != TYPE_DICTIONARY:
-				per2 = {}
-			per2[d2] = true
-			multi_attack_targets_this_turn[a2] = per2
-		else:
-			if not (atk_card in opponent_cards_that_attacked_this_turn):
-				opponent_cards_that_attacked_this_turn.append(atk_card)
 
 func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power) -> void:
 	var attacker_owner: String = _norm_owner(_attacker)
@@ -885,31 +934,10 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 		})
 		_clear_bonuses([atk_card, defending])
 
+		_register_attack_spent(atk_card, attacker_owner, defending)
+
 		if attacker_owner == "Player":
-			if _has_kw(atk_card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
-				var a_id := str(atk_card.get_instance_id())
-				var d_id := str(defending.get_instance_id())
-				var per_attacker = multi_attack_targets_this_turn.get(a_id, {})
-				if typeof(per_attacker) != TYPE_DICTIONARY:
-					per_attacker = {}
-				per_attacker[d_id] = true
-				multi_attack_targets_this_turn[a_id] = per_attacker
-			else:
-				if not (atk_card in player_cards_that_attacked_this_turn):
-					player_cards_that_attacked_this_turn.append(atk_card)
 			_enable_player_input()
-		else:
-			if _has_kw(atk_card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
-				var a2 := str(atk_card.get_instance_id())
-				var d2 := str(defending.get_instance_id())
-				var per2 = multi_attack_targets_this_turn.get(a2, {})
-				if typeof(per2) != TYPE_DICTIONARY:
-					per2 = {}
-				per2[d2] = true
-				multi_attack_targets_this_turn[a2] = per2
-			else:
-				if not (atk_card in opponent_cards_that_attacked_this_turn):
-					opponent_cards_that_attacked_this_turn.append(atk_card)
 		return
 
 	var attacker_won: bool = atk_i > def_i
@@ -959,32 +987,11 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 	})
 
 	_clear_bonuses([atk_card, defending])
+	_register_attack_spent(atk_card, attacker_owner, defending)
 
 	if attacker_owner == "Player":
-		if _has_kw(atk_card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
-			var a_id := str(atk_card.get_instance_id())
-			var d_id := str(defending.get_instance_id())
-			var per_attacker = multi_attack_targets_this_turn.get(a_id, {})
-			if typeof(per_attacker) != TYPE_DICTIONARY:
-				per_attacker = {}
-			per_attacker[d_id] = true
-			multi_attack_targets_this_turn[a_id] = per_attacker
-		else:
-			if not (atk_card in player_cards_that_attacked_this_turn):
-				player_cards_that_attacked_this_turn.append(atk_card)
 		_enable_player_input()
-	else:
-		if _has_kw(atk_card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
-			var a2 := str(atk_card.get_instance_id())
-			var d2 := str(defending.get_instance_id())
-			var per2 = multi_attack_targets_this_turn.get(a2, {})
-			if typeof(per2) != TYPE_DICTIONARY:
-				per2 = {}
-			per2[d2] = true
-			multi_attack_targets_this_turn[a2] = per2
-		else:
-			if not (atk_card in opponent_cards_that_attacked_this_turn):
-				opponent_cards_that_attacked_this_turn.append(atk_card)
+
 func _is_card_alive(card) -> bool:
 	return is_instance_valid(card) and (card in player_cards_on_battlefield or card in opponent_cards_on_battlefield)
 
@@ -1026,41 +1033,24 @@ func direct_attack(atk_card, attacker):
 	if _card_kind(atk_card) != "MONSTER":
 		return
 
+	attacker = _norm_owner(attacker)
+
 	reveal_card(atk_card)
-
-	var battle_ctx := {
-		"battle_manager": self,
-		"source": atk_card,
-		"attacker": atk_card,
-		"defender": null,
-		"attacker_owner": attacker,
-		"controller": attacker,
-		"turn_owner": ("Opponent" if is_opponent_turn else "Player"),
-		"prevent_attack": false,
-		"attack_negated": false,
-		"suppress_trap_reactions": _attacker_suppresses_traps(atk_card)
-	}
-
-	emit_signal("attack_declared", atk_card, null, attacker)
-	_emit_duel_event("ON_ATTACK_DECLARATION", battle_ctx)
-
-	if bool(battle_ctx.get("prevent_attack", false)) or bool(battle_ctx.get("attack_negated", false)):
-		_release_player_input_if_needed(attacker)
-		return
 
 	var effective_atk: int = int(atk_card.get_effective_atk() if atk_card.has_method("get_effective_atk") else atk_card.atk)
 
 	if attacker == "Opponent":
 		var new_pos_y := 1000
+
 		atk_card.z_index = 5
+
 		var t := get_tree().create_tween()
 		t.tween_property(atk_card, "global_position", Vector2(atk_card.global_position.x, new_pos_y), CARD_MOVE_SPEED)
 		await action_waiter()
 
 		_apply_battle_damage_to_side("Player", effective_atk, atk_card, null)
 
-		if not (atk_card in opponent_cards_that_attacked_this_turn):
-			opponent_cards_that_attacked_this_turn.append(atk_card)
+		_register_attack_spent(atk_card, "Opponent", null)
 
 		if duel_finished:
 			return
@@ -1068,21 +1058,24 @@ func direct_attack(atk_card, attacker):
 		var t2 := get_tree().create_tween()
 		t2.tween_property(atk_card, "global_position", _anchored_slot_position(atk_card), CARD_MOVE_SPEED)
 		await action_waiter()
-		atk_card.z_index = 0
+
+		if is_instance_valid(atk_card):
+			atk_card.z_index = 0
+
 		return
 
 	$"../InputManager".inputs_disabled = true
 	enable_end_turn_button(false)
 
-	if not (atk_card in player_cards_that_attacked_this_turn):
-		player_cards_that_attacked_this_turn.append(atk_card)
-
 	atk_card.z_index = 5
+
 	var tw := get_tree().create_tween()
 	tw.tween_property(atk_card, "global_position", Vector2(atk_card.global_position.x, 0), CARD_MOVE_SPEED)
 	await action_waiter()
 
 	_apply_battle_damage_to_side("Opponent", effective_atk, atk_card, null)
+
+	_register_attack_spent(atk_card, "Player", null)
 
 	if duel_finished:
 		return
@@ -1090,7 +1083,9 @@ func direct_attack(atk_card, attacker):
 	var tw2 := get_tree().create_tween()
 	tw2.tween_property(atk_card, "global_position", _anchored_slot_position(atk_card), CARD_MOVE_SPEED)
 	await action_waiter()
-	atk_card.z_index = 0
+
+	if is_instance_valid(atk_card):
+		atk_card.z_index = 0
 
 	$"../InputManager".inputs_disabled = false
 	enable_end_turn_button(true)
@@ -1113,7 +1108,7 @@ func _has_on_attack(card) -> bool:
 	
 	return false
 
-func _trigger_on_attack(_card, _who: String, _ctx: Dictionary) -> void:	# Migrado a DuelEventBus + DuelEffectEngine.
+func _trigger_on_attack(_card, _who: String, _ctx: Dictionary) -> void:
 	return
 
 func _live_defenders_for(attacker_side: String):
@@ -1196,6 +1191,7 @@ func start_spell_activation(spell_card, who: String) -> void:
 		return
 
 	_register_card_with_effect_engine(spell_card, who)
+	_play_card_activation_sfx(spell_card, activation_ctx)
 	_emit_duel_event("ON_ACTIVATE", activation_ctx)
 	_emit_duel_event("ON_ACTIVATION_RESOLVED", activation_ctx)
 	_send_spell_to_graveyard(spell_card, who)
@@ -1405,6 +1401,16 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 	grave_entry["sent_order"] = _next_graveyard_order()
 	grave_entry["cause"] = cause
 	grave_entry["was_destroyed"] = str(cause).begins_with("DESTROY")
+	var presentation = effect_ctx.get("presentation", {})
+	if typeof(presentation) == TYPE_DICTIONARY:
+		var pre_destroy_vfx_key := str(presentation.get("pre_destroy_vfx_key", ""))
+		var pre_destroy_sfx_key := str(presentation.get("pre_destroy_sfx_key", ""))
+
+		if pre_destroy_vfx_key != "":
+			card.set_meta("pre_destroy_vfx_key", pre_destroy_vfx_key)
+
+		if pre_destroy_sfx_key != "":
+			card.set_meta("pre_destroy_sfx_key", pre_destroy_sfx_key)
 
 	if card_owner == "Player":
 		card.defeated = true
@@ -1448,6 +1454,7 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 
 	_clean_battlefield_lists()
 	_refresh_effect_engine_continuous_buffs()
+	_refresh_card_usage_overlays()
 
 	if card is Node2D:
 		_play_card_destroy_animation_and_free(card)
@@ -1459,11 +1466,15 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 func yield_to_refill_opponent_hand():
 	var deck_rival = $"../DeckRival/Deck"
 	var opp_hand = $"../OpponentHand"
+
 	while deck_rival.opponent_deck.size() > 0 and opp_hand.opponent_hand.size() < _max_hand_size():
+		_play_duel_sfx("draw")
 		deck_rival.draw_card()
-		await action_waiter()
+		await _wait_draw_step()
 
 func enemy_card_selected(defending_card) -> void:
+	if is_duel_animating():
+		return
 	if duel_finished:
 		return
 	if is_opponent_turn:
@@ -1495,8 +1506,12 @@ func enemy_card_selected(defending_card) -> void:
 	enable_end_turn_button(true)
 
 func try_play_highest_atk_card():
+	if is_duel_animating():
+		return
+
 	var opp_hand_node = $"../OpponentHand"
 	var opponent_hand = opp_hand_node.opponent_hand
+
 	if opponent_hand.is_empty() or empty_monster_card_slots.is_empty():
 		return
 
@@ -1504,6 +1519,7 @@ func try_play_highest_atk_card():
 	for c in opponent_hand:
 		if _card_kind(c) == "MONSTER":
 			monsters.append(c)
+
 	if monsters.is_empty():
 		return
 
@@ -1516,37 +1532,91 @@ func try_play_highest_atk_card():
 		if int(c.atk) > int(card_highestatk.atk):
 			card_highestatk = c
 
+	_begin_duel_animation_lock()
+
 	opp_hand_node.remove_card_from_hand(card_highestatk)
+
 	_set_card_owner_side(card_highestatk, "Opponent")
+	_play_duel_sfx("summon_faceup")
 
 	var shape := slot.get_node_or_null("Area2D/CollisionShape2D") as CollisionShape2D
 	if shape:
 		shape.disabled = true
 
-	_place_card_in_slot(card_highestatk, slot)
+	_reserve_slot_for_card(card_highestatk, slot)
+
+	await _animate_card_to_slot_visual(card_highestatk, slot, 0.28)
+
+	_place_card_in_slot(card_highestatk, slot, "PLAY", false)
+
 	await action_waiter()
 
+	_end_duel_animation_lock()
+
 func end_opponent_turn():
-	_emit_duel_event("TURN_END", {"turn_owner":"Opponent", "controller":"Opponent", "turn_index": turn_index, "battle_manager": self})
+	_emit_duel_event("TURN_END", {
+		"turn_owner": "Opponent",
+		"controller": "Opponent",
+		"turn_index": turn_index,
+		"battle_manager": self
+	})
+
 	_process_timed_keywords_on_turn_end("Opponent")
 	_process_scheduled_destruction_on_turn_end("Opponent")
+	_process_pending_end_turn_self_revives("Opponent")
+
 	var player_deck = $"../Deck"
 	var player_hand_node = $"../PlayerHand"
 	var card_manager = $"../CardManager"
-	_process_pending_end_turn_self_revives("Opponent")
-	is_opponent_turn = false
+
+	_begin_duel_animation_lock()
+
 	card_manager.reset_played_cards()
+
 	for k in multi_mode.keys():
 		if is_instance_valid(k) and (k in opponent_cards_on_battlefield):
 			_clear_multi_for(k)
-		_cleanup_multi_garbage()
+
+	_cleanup_multi_garbage()
+
+	player_cards_that_attacked_this_turn = []
+	opponent_cards_that_attacked_this_turn = []
+	multi_attack_targets_this_turn.clear()
+	attack_count_this_turn.clear()
+	
+	var fusion_manager := get_node_or_null("../FusionManager")
+	if fusion_manager and fusion_manager.has_method("reset_turn"):
+		fusion_manager.reset_turn("Opponent")
+	
 	while player_deck.player_deck.size() > 0 and player_hand_node.player_hand.size() < _max_hand_size():
+		_play_duel_sfx("draw")
 		player_deck.draw_card()
 		card_manager.reset_played_cards()
-		await action_waiter()
+		await _wait_draw_step()
+
+	_end_duel_animation_lock()
 
 	turn_index += 1
-	_emit_duel_event("TURN_START", {"turn_owner":"Player", "controller":"Player", "turn_index": turn_index, "battle_manager": self,})
+	is_opponent_turn = false
+
+	_emit_duel_event("TURN_START", {
+		"turn_owner": "Player",
+		"controller": "Player",
+		"turn_index": turn_index,
+		"battle_manager": self
+	})
+
+	_refresh_card_usage_overlays()
+
+	var im := get_node_or_null("../InputManager")
+	if im != null:
+		if "inputs_disabled" in im:
+			im.inputs_disabled = false
+		if "is_animating" in im:
+			im.is_animating = false
+
+	$"../CardManager".unselect_selected_monster()
+
 	$"../EndTurnButton".disabled = false
 	$"../EndTurnButton".visible = true
 
@@ -1930,6 +2000,8 @@ func try_play_monster_from_hand(card, facedown: bool) -> void:
 		return
 	if is_opponent_turn:
 		return
+	if is_duel_animating():
+		return
 	if not is_instance_valid(card):
 		return
 
@@ -1965,29 +2037,40 @@ func try_play_monster_from_hand(card, facedown: bool) -> void:
 	if free_slot == null:
 		return
 
+	_begin_duel_animation_lock()
+
 	var ph := get_node_or_null("../PlayerHand")
 	if ph and ph.has_method("remove_card_from_hand"):
 		ph.remove_card_from_hand(card)
 
 	_set_card_owner_side(card, "Player")
+
 	if card.has_method("apply_owner_collision_layers"):
 		card.apply_owner_collision_layers()
 
-	_set_card_slot(card, free_slot)
 	if facedown:
+		_play_duel_sfx("summon_set")
 		_set_card_face_down(card, true)
 	else:
+		_play_duel_sfx("summon_faceup")
 		_set_card_face_down(card, false)
 
 	card.set_meta("played_from_hand", true)
-	_place_card_in_slot(card, free_slot, "PLAY")
-	if not facedown:
-		reveal_card(card)
+
+	_reserve_slot_for_card(card, free_slot)
+
+	await _animate_card_to_slot_visual(card, free_slot, 0.28)
+
+	_place_card_in_slot(card, free_slot, "PLAY", false)
 
 	if cm != null and ("played_monster_card_this_turn" in cm):
 		cm.played_monster_card_this_turn = true
 
+	_end_duel_animation_lock()
+
 func try_activate_from_hand(card) -> void:
+	if is_duel_animating():
+		return
 	if duel_finished:
 		return
 	if is_opponent_turn:
@@ -2060,7 +2143,7 @@ func try_activate_from_hand(card) -> void:
 		"prevent_activate": false,
 		"activation_negated": false
 	}
-
+	_play_card_activation_sfx(card, act_ctx)
 	_emit_duel_event("ON_ACTIVATE", act_ctx)
 
 	if bool(act_ctx.get("prevent_activate", false)) or bool(act_ctx.get("activation_negated", false)):
@@ -2086,11 +2169,15 @@ func try_activate_from_hand(card) -> void:
 	_send_spell_to_graveyard(card, controller)
 
 func try_activate_card(card) -> void:
+	if is_duel_animating():
+		return
 	if duel_finished:
 		return
 	if is_opponent_turn:
 		return
 	if not is_instance_valid(card):
+		return
+	if _card_kind(card) == "TRAP":
 		return
 
 	var controller := _norm_owner(_owner_of(card))
@@ -2144,6 +2231,8 @@ func try_set_from_hand(card) -> void:
 		return
 	if is_opponent_turn:
 		return
+	if is_duel_animating():
+		return
 	if not is_instance_valid(card):
 		return
 
@@ -2167,36 +2256,51 @@ func try_set_from_hand(card) -> void:
 		return
 
 	var free_slot: Node2D = null
-	var slot_type_ok := ["SpellTrap", "Spell", "Trap"] 
+	var slot_type_ok := ["SpellTrap", "Spell", "Trap"]
+
 	for s in slots_root.get_children():
 		if not is_instance_valid(s):
 			continue
+
 		var t := str(s.get("card_slot_type"))
 		if not slot_type_ok.has(t):
 			continue
+
 		if bool(s.get("card_in_slot")):
 			continue
+
 		free_slot = s
 		break
 
 	if free_slot == null:
 		return
 
+	_begin_duel_animation_lock()
+
 	var ph := get_node_or_null("../PlayerHand")
 	if ph and ph.has_method("remove_card_from_hand"):
 		ph.remove_card_from_hand(card)
 
 	_set_card_owner_side(card, "Player")
+
 	if card.has_method("apply_owner_collision_layers"):
 		card.apply_owner_collision_layers()
 
-	_set_card_slot(card, free_slot)
-	_place_card_in_slot(card, free_slot)
+	_set_card_face_down(card, true)
+	_play_duel_sfx("set_spelltrap")
+
+	_reserve_slot_for_card(card, free_slot)
+
+	await _animate_card_to_slot_visual(card, free_slot, 0.28)
+
+	_place_card_in_slot(card, free_slot, "SET", false)
 
 	_set_card_face_down(card, true)
 
 	if cm != null and ("played_spellortrap_card_this_turn" in cm):
 		cm.played_spellortrap_card_this_turn = true
+
+	_end_duel_animation_lock()
 
 func start_equip_from_hand(spell_card: Node, controller: String) -> void:
 	if not is_instance_valid(spell_card):
@@ -2324,6 +2428,130 @@ func _has_kw(card: Node, kw: String) -> bool:
 				return true
 
 	return false
+
+func _attack_key(card: Node) -> String:
+	if not is_instance_valid(card):
+		return ""
+	return str(card.get_instance_id())
+
+
+func _get_attack_count(card: Node) -> int:
+	var key := _attack_key(card)
+	if key == "":
+		return 0
+	return int(attack_count_this_turn.get(key, 0))
+
+
+func _max_attacks_for_card(card: Node) -> int:
+	if not is_instance_valid(card):
+		return 1
+
+	if card.has_method("get_max_attacks_per_turn"):
+		return max(1, int(card.get_max_attacks_per_turn()))
+
+	var max_attacks := 1
+
+	if _has_kw(card, "MULTI_ATTACK_2"):
+		max_attacks = max(max_attacks, 2)
+
+	if card.has_meta("extra_attacks_this_turn"):
+		max_attacks += max(0, int(card.get_meta("extra_attacks_this_turn")))
+
+	return max_attacks
+
+
+func _is_card_attack_exhausted(card: Node, attacker_owner: String) -> bool:
+	if not is_instance_valid(card):
+		return true
+
+	attacker_owner = _norm_owner(attacker_owner)
+
+	# MULTI_ATTACK_ALL no se agota por cantidad fija,
+	# sino cuando ya atacó a todos los monstruos enemigos disponibles. posible cambio lpm
+	if _has_kw(card, "MULTI_ATTACK_ALL"):
+		var defenders = _live_defenders_for(attacker_owner)
+
+		# Si no quedan defensores, cualquier ataque directo consume/termina la posibilidad.
+		if defenders.is_empty():
+			return _get_attack_count(card) > 0
+
+		var a_id := _attack_key(card)
+		var per_attacker = multi_attack_targets_this_turn.get(a_id, {})
+		if typeof(per_attacker) != TYPE_DICTIONARY:
+			return false
+
+		for d in defenders:
+			if not is_instance_valid(d):
+				continue
+
+			var d_id := str(d.get_instance_id())
+			if not bool(per_attacker.get(d_id, false)):
+				return false
+
+		return true
+
+	return _get_attack_count(card) >= _max_attacks_for_card(card)
+
+
+func _can_card_declare_attack_against(card: Node, defending: Node, attacker_owner: String) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	attacker_owner = _norm_owner(attacker_owner)
+
+	if _is_card_attack_exhausted(card, attacker_owner):
+		return false
+
+	if _has_kw(card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
+		var a_id := _attack_key(card)
+		var d_id := str(defending.get_instance_id())
+
+		var per_attacker = multi_attack_targets_this_turn.get(a_id, {})
+		if typeof(per_attacker) != TYPE_DICTIONARY:
+			per_attacker = {}
+
+		if bool(per_attacker.get(d_id, false)):
+			return false
+
+	return true
+
+
+func _register_attack_spent(card: Node, attacker_owner: String, defending: Node = null) -> void:
+	if not is_instance_valid(card):
+		return
+
+	attacker_owner = _norm_owner(attacker_owner)
+
+	var key := _attack_key(card)
+	if key == "":
+		return
+
+	attack_count_this_turn[key] = int(attack_count_this_turn.get(key, 0)) + 1
+
+	if _has_kw(card, "MULTI_ATTACK_ALL") and is_instance_valid(defending):
+		var d_id := str(defending.get_instance_id())
+
+		var per_attacker = multi_attack_targets_this_turn.get(key, {})
+		if typeof(per_attacker) != TYPE_DICTIONARY:
+			per_attacker = {}
+
+		per_attacker[d_id] = true
+		multi_attack_targets_this_turn[key] = per_attacker
+
+	var exhausted := _is_card_attack_exhausted(card, attacker_owner)
+
+	if exhausted:
+		var used_list: Array = player_cards_that_attacked_this_turn if attacker_owner == "Player" else opponent_cards_that_attacked_this_turn
+
+		if not used_list.has(card):
+			used_list.append(card)
+
+		if attacker_owner == "Player":
+			player_cards_that_attacked_this_turn = used_list
+		else:
+			opponent_cards_that_attacked_this_turn = used_list
+
+	_refresh_card_usage_overlays()
 
 func _release_player_input_if_needed(attacker: String) -> void:
 	if _norm_owner(attacker) != "Player":
@@ -3093,19 +3321,25 @@ func _begin_duel_animation_lock() -> void:
 
 func _end_duel_animation_lock() -> void:
 	duel_animation_lock_count = max(0, duel_animation_lock_count - 1)
+
 	if duel_animation_lock_count == 0:
 		_set_duel_input_blocked(false)
 
-
 func is_duel_animating() -> bool:
 	return duel_animation_lock_count > 0
-
 
 func _set_duel_input_blocked(blocked: bool) -> void:
 	var blocker := get_node_or_null("../UI/InputBlocker") as Control
 	if blocker:
 		blocker.visible = blocked
 		blocker.mouse_filter = Control.MOUSE_FILTER_STOP if blocked else Control.MOUSE_FILTER_IGNORE
+
+	var im := get_node_or_null("../InputManager")
+	if im != null:
+		if "is_animating" in im:
+			im.is_animating = blocked
+		if not blocked and "inputs_disabled" in im:
+			im.inputs_disabled = false
 
 #----- END ANIMATION LOCKERS
 #if is_duel_animating(): MUST ADD THIS TO ENTERING COSAS LATER
@@ -3116,6 +3350,13 @@ func _set_duel_input_blocked(blocked: bool) -> void:
 #		await get_tree().process_frame
 
 # ---- ANIMATIONS ----
+func _wait_draw_step() -> void:
+	await get_tree().create_timer(DRAW_STEP_DURATION).timeout
+
+func wait_until_duel_idle() -> void:
+	while is_duel_animating():
+		await get_tree().process_frame
+
 func _play_monster_reborn_fx_on_card(card: Node2D) -> void:
 	if not is_instance_valid(card):
 		return
@@ -3124,6 +3365,8 @@ func _play_monster_reborn_fx_on_card(card: Node2D) -> void:
 		return
 
 	_begin_duel_animation_lock()
+
+	_play_duel_sfx("summon_by_effect")
 
 	var fx = monster_reborn_fx_scene.instantiate()
 	if not is_instance_valid(fx):
@@ -3174,13 +3417,9 @@ func _play_card_destroy_animation_and_free(card: Node2D) -> void:
 	if cshape:
 		cshape.disabled = true
 
-	var sfx := AudioStreamPlayer.new()
-	sfx.name = "DestroyVibrationSFX"
-	sfx.stream = destroy_vibration_sfx
-	add_child(sfx)
+	await _play_pre_destroy_impact_fx_if_any(card)
 
-	if sfx.stream != null:
-		sfx.play()
+	_play_duel_sfx("destroy_vibration")
 
 	var offsets := [
 		-3.0,
@@ -3200,8 +3439,6 @@ func _play_card_destroy_animation_and_free(card: Node2D) -> void:
 
 	for x in offsets:
 		if not is_instance_valid(card):
-			if is_instance_valid(sfx):
-				sfx.queue_free()
 			_end_duel_animation_lock()
 			return
 
@@ -3224,9 +3461,6 @@ func _play_card_destroy_animation_and_free(card: Node2D) -> void:
 		card.visible = false
 		card.queue_free()
 
-	if is_instance_valid(sfx):
-		sfx.queue_free()
-
 	_end_duel_animation_lock()
 
 func _play_destroy_explosion_on_card(card: Node2D) -> void:
@@ -3235,6 +3469,8 @@ func _play_destroy_explosion_on_card(card: Node2D) -> void:
 
 	if destroy_explosion_scene == null:
 		return
+
+	_play_duel_sfx("destroy_explosion")
 
 	var explosion = destroy_explosion_scene.instantiate()
 	if not is_instance_valid(explosion):
@@ -3273,3 +3509,173 @@ func _get_card_visual_center_global(card: Node2D) -> Vector2:
 		return anchor.global_position
 
 	return card.global_position
+
+func _reserve_slot_for_card(card: Node2D, slot: Node2D) -> void:
+	if not is_instance_valid(card) or not is_instance_valid(slot):
+		return
+
+	_set_card_slot(card, slot)
+	slot.set("card_in_slot", true)
+	slot.set_meta("card_ref", card)
+
+
+func _anchored_position_for_slot_with_scale(card: Node2D, slot: Node2D, target_scale: Vector2) -> Vector2:
+	if not is_instance_valid(card) or not is_instance_valid(slot):
+		return Vector2.ZERO
+
+	var slot_anchor := slot.get_node_or_null("Anchor") as Node2D
+	var target_node := slot_anchor if is_instance_valid(slot_anchor) else slot
+	var target_global := target_node.global_position
+
+	var card_anchor := card.get_node_or_null("AnchorCenter") as Node2D
+	if not is_instance_valid(card_anchor):
+		return target_global
+
+	var old_scale := card.scale
+	var old_pos := card.global_position
+
+	card.scale = target_scale
+	var anchor_delta := card_anchor.global_position - card.global_position
+
+	card.scale = old_scale
+	card.global_position = old_pos
+
+	return target_global - anchor_delta
+
+
+func _animate_card_to_slot_visual(card: Node2D, slot: Node2D, duration: float = 0.25) -> void:
+	if not is_instance_valid(card) or not is_instance_valid(slot):
+		return
+
+	var cm := get_node_or_null("../CardManager")
+	var target_scale := card.scale
+
+	if cm != null and "FIELD_SCALE" in cm:
+		target_scale = Vector2(cm.FIELD_SCALE, cm.FIELD_SCALE)
+
+	var target_pos := _anchored_position_for_slot_with_scale(card, slot, target_scale)
+
+	var original_z := card.z_index
+	card.z_index = 100
+
+	var tw := get_tree().create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(card, "global_position", target_pos, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(card, "scale", target_scale, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	await tw.finished
+
+	if is_instance_valid(card):
+		card.global_position = target_pos
+		card.scale = target_scale
+		card.z_index = original_z
+
+#------
+#Card used/unused
+#------
+func _set_card_usage_dimmed(card: Node, dimmed: bool, reason: String = "") -> void:
+	if not is_instance_valid(card):
+		return
+
+	if card.has_method("set_usage_dimmed"):
+		card.set_usage_dimmed(dimmed, reason)
+
+
+func _refresh_card_usage_overlays() -> void:
+	var all_cards: Array = []
+	all_cards.append_array(player_cards_on_battlefield)
+	all_cards.append_array(opponent_cards_on_battlefield)
+
+	for card in all_cards:
+		if not is_instance_valid(card):
+			continue
+
+		var kind := _card_kind(card)
+		var owner := _norm_owner(_owner_of(card))
+
+		var dimmed := false
+		var reason := ""
+
+		if kind == "TRAP":
+			dimmed = true
+			reason = "TRAP_REACTIVE_ONLY"
+
+		elif owner == "Player" and card in player_cards_that_attacked_this_turn:
+			dimmed = true
+			reason = "ALREADY_ATTACKED_THIS_TURN"
+
+		elif owner == "Opponent" and card in opponent_cards_that_attacked_this_turn:
+			dimmed = true
+			reason = "ALREADY_ATTACKED_THIS_TURN"
+
+		elif kind == "MONSTER" and _has_kw(card, "PARALYZED"):
+			dimmed = true
+			reason = "PARALYZED"
+
+		_set_card_usage_dimmed(card, dimmed, reason)
+
+#DUEL FX HELPERS
+func _get_duel_fx_manager():
+	var fxm = get_node_or_null("../DuelFxManager")
+	if fxm == null:
+		fxm = get_node_or_null("/root/DuelFxManager")
+	return fxm
+
+
+func _play_duel_sfx(key: String, volume_db: float = 0.0, pitch_scale: float = 1.0) -> void:
+	var fxm = _get_duel_fx_manager()
+	if fxm != null and fxm.has_method("play_sfx_key"):
+		fxm.play_sfx_key(key, volume_db, pitch_scale)
+
+
+func _play_duel_vfx_on_card(key: String, card: Node2D) -> void:
+	var fxm = _get_duel_fx_manager()
+	if fxm != null and fxm.has_method("play_vfx_key_on_card"):
+		await fxm.play_vfx_key_on_card(key, card)
+
+
+func _activation_sfx_key_for_card(card: Node) -> String:
+	var kind := _card_kind(card)
+
+	match kind:
+		"SPELL":
+			return "spell_activate"
+		"TRAP":
+			return "trap_reactive"
+		"MONSTER":
+			return "monster_effect_activate"
+		_:
+			return "spell_activate"
+
+func _play_card_activation_sfx(card: Node, ctx: Dictionary = {}) -> void:
+	var key := ""
+
+	var presentation = ctx.get("presentation", {})
+	if typeof(presentation) == TYPE_DICTIONARY:
+		key = str(presentation.get("activation_sfx_key", ""))
+
+	if key == "":
+		key = _activation_sfx_key_for_card(card)
+
+	_play_duel_sfx(key)
+
+func _play_pre_destroy_impact_fx_if_any(card: Node2D) -> void:
+	if not is_instance_valid(card):
+		return
+
+	var sfx_key := ""
+	var vfx_key := ""
+
+	if card.has_meta("pre_destroy_sfx_key"):
+		sfx_key = str(card.get_meta("pre_destroy_sfx_key"))
+		card.remove_meta("pre_destroy_sfx_key")
+
+	if card.has_meta("pre_destroy_vfx_key"):
+		vfx_key = str(card.get_meta("pre_destroy_vfx_key"))
+		card.remove_meta("pre_destroy_vfx_key")
+
+	if sfx_key != "":
+		_play_duel_sfx(sfx_key)
+
+	if vfx_key != "":
+		await _play_duel_vfx_on_card(vfx_key, card)

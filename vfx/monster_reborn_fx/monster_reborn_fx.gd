@@ -18,8 +18,6 @@ signal finished
 @export var heat_frequency: float = 24.0
 @export var horizontal_edge_columns: int = 10
 
-@onready var audio: AudioStreamPlayer = get_node_or_null("AudioStreamPlayer")
-
 var target_card: Node2D = null
 var target_original_modulate: Color = Color.WHITE
 
@@ -82,9 +80,6 @@ func setup_from_card(card: Node2D, forced_size: Vector2 = Vector2.ZERO) -> void:
 func play() -> void:
 	_playing = true
 	visible = true
-
-	if audio:
-		audio.play()
 
 	if not is_instance_valid(target_card):
 		await get_tree().create_timer(total_duration).timeout

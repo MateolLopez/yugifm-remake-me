@@ -54,7 +54,7 @@
 	"atk": 900,
 	"def": 700,
 	"guardian_star": ["JUPITER","MOON"],
-	"tags": ["beast","winged","w-beast","earth"],
+	"tags": ["beast","winged","winged-beast","earth"],
 	"keywords": [],
 	"description": "Un gato con alas y una extraña cola, sus capacidades de vuelo son superiores a las de muchas aves.",
 	"effects": []
@@ -144,7 +144,7 @@
 	"atk": 1200,
 	"def": 1000,
 	"guardian_star": ["NEPTUNE","JUPITER"],
-	"tags": ["aqua","water","w-beast","penguin"],
+	"tags": ["aqua","water","winged-beast","penguin"],
 	"keywords": [],
 	"description": "Un extraño pinguino que vuela utilizando las alas de su cabeza.",
 	"effects": []
@@ -261,7 +261,7 @@
   "atk": 600,
   "def": 500,
   "guardian_star": ["MARS","SUN"],
-  "tags": ["beast","fire","w-beast","winged"],
+  "tags": ["beast","fire","winged-beast","winged"],
   "keywords": [],
   "description": "Esta fiera potencia a los monstruos FUEGO aliados y debilita a todos los seres de AGUA.",
   "effects": [
@@ -435,7 +435,7 @@
   "atk": 900,
   "def": 800,
   "guardian_star": ["JUPITER","VENUS"],
-  "tags": ["w-beast","earth"],
+  "tags": ["winged-beast","earth"],
   "keywords": [],
   "description": "Traga a sus enemigos enteros y utiliza su esencia como energía.",
   "effects": []
@@ -450,7 +450,7 @@
   "atk": 1900,
   "def": 1700,
   "guardian_star": ["STURN","VENUS"],
-  "tags": ["w-beast","wind","winged","skull"],
+  "tags": ["winged-beast","wind","winged","skull"],
   "keywords": [],
   "description": "El aliento de esta ave roba la fuerza vital de sus presas.",
   "effects": []
@@ -874,7 +874,7 @@
 	"atk": 2100,
 	"def": 1800,
 	"guardian_star": ["NEPTUNE","MARS"],
-	"tags": ["water","aqua","s-serpent","snake","jaws"],
+	"tags": ["water","aqua","sea-serpent","snake","jaws"],
 	"keywords": [],
 	"description": "Una masiva serpiente marina qeu crea inmensas olas para ahogar a sus enemigos.",
 	"effects": []
@@ -1083,7 +1083,7 @@
 	"effects": []
 },
 {
-	"id": "25882881",
+	"id": "26378150",
 	"kind": "MONSTER",
 	"cardname": "Rude Kaiser",
 	"attribute": "EARTH",
@@ -1188,7 +1188,7 @@
 	"effects": []
 },
 {
-	"id": "34460851",
+	"id": "34690519",
 	"kind": "MONSTER",
 	"cardname": "Spirit of the Mountain",
 	"attribute": "EARTH",
@@ -1227,7 +1227,7 @@
 	"atk": 2000,
 	"def": 1900,
 	"guardian_star": ["SATURN","MERCURY"],
-	"tags": ["wind","giant","w-beast","winged","claw"],
+	"tags": ["wind","giant","winged-beast","winged","claw"],
 	"keywords": [],
 	"description": "Un ave inmensa con un poder descomunal, se la ha visto robar el ganado de los aldeanos en extrañas ocasiones.",
 	"effects": []
@@ -1471,7 +1471,7 @@
 	"atk": 2300,
 	"def": 1800,
 	"guardian_star": ["MARS","MERCURY"],
-	"tags": ["pyro","fire","w-beast","winged","claw"],
+	"tags": ["pyro","fire","winged-beast","winged","claw"],
 	"keywords": [],
 	"description": "Un monstruo que arde en llamas carmesí y es capaz de lanzar una lluvia de chispas batiendo sus alas.",
 	"effects": []
@@ -1748,7 +1748,7 @@
 	"atk": 1800,
 	"def": 800,
 	"guardian_star": ["NEPTUNE","SUN"],
-	"tags": ["water","aqua","giant","snake","s-serpent","jaws"],
+	"tags": ["water","aqua","giant","snake","sea-serpent","jaws"],
 	"keywords": [],
 	"description": "Una inmensa serpiente que surca los mares, aquellos que cruzan su camino son deborados sin piedad.",
 	"effects": []
@@ -1778,7 +1778,7 @@
 	"atk": 1300,
 	"def": 900,
 	"guardian_star": ["MARS","MERCURY"],
-	"tags": ["fire","w-beast","pyro","winged","claw"],
+	"tags": ["fire","winged-beast","pyro","winged","claw"],
 	"keywords": [],
 	"description": "Esta criatura, emparentada con el fénix, habita en las montañas. Su aliento de fuego es extremadamente abrasador.",
 	"effects": []
@@ -2160,7 +2160,7 @@
 	"atk": 1900,
 	"def": 1700,
 	"guardian_star": ["SATURN","MARS"],
-	"tags": ["w-beast","turtle","aqua","winged","water"],
+	"tags": ["winged-beast","turtle","aqua","winged","water"],
 	"keywords": [],
 	"description": "Esta extraña criatura reside en los mares, en ocasiones se le puede ver sobrevolando las aguas donde ella misma habita.",
 	"effects": []
@@ -2190,7 +2190,7 @@
 	"atk": 1200,
 	"def": 2000,
 	"guardian_star": ["SATURN","MOON"],
-	"tags": ["w-beast","wind","king","winged"],
+	"tags": ["winged-beast","wind","king","winged"],
 	"keywords": [],
 	"description": "Un inmenso ave considerada la reina entre las aves de su especie, protege a su bandada generando un muro de viento al agitar sus alas.",
 	"effects": []
@@ -2560,7 +2560,7 @@
 	"atk": 1600,
 	"def": 1300,
 	"guardian_star": ["PLUTO","MERCURY"],
-	"tags": ["s-serpent","water","snake","thunder"],
+	"tags": ["sea-serpent","water","snake","thunder"],
 	"keywords": [],
 	"description": "Utilizando las púas que brotan de su cuerpo, esta criatura apuñala a sus oponentes y los inunda de electricidad.",
 	"effects": []
@@ -2596,7 +2596,7 @@
 	"effects": []
 },
 {
-	"id": "86088138",
+	"id": "86100785",
 	"kind": "MONSTER",
 	"cardname": "Zone Eater",
 	"attribute": "WATER",
@@ -2765,7 +2765,7 @@
 	"effects": []
 },
 {
-	"id": "89272878",
+	"id": "89312388",
 	"kind": "MONSTER",
 	"cardname": "E. HERO Prisma",
 	"attribute": "LIGHT",
@@ -2815,6 +2815,36 @@
 	"tags": ["dragon","blue-eyes","jaws","winged","light","claw"],
 	"keywords": [],
 	"description": "Una carta extremadamente rara con un poder de ataque y defensa insuperable.",
+	"effects": []
+},
+{
+	"id": "91152256",
+	"kind": "MONSTER",
+	"cardname": "Celtic Guardian",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 1400,
+	"def": 1200,
+	"guardian_star": ["SUN","URANUS"],
+	"tags": ["warrior","elf","earth","armored"],
+	"keywords": [],
+	"description": "Un elfo que aprendió a blandir la espada, acaba con sus enemigos con veloces cortes.",
+	"effects": []
+},
+{
+	"id": "28546905",
+	"kind": "MONSTER",
+	"cardname": "Illusionist Faceless Mage",
+	"attribute": "DARK",
+	"race": "Spellcaster",
+	"level": 5,
+	"atk": 1200,
+	"def": 2200,
+	"guardian_star": ["VENUS","MARS"],
+	"tags": ["spellcaster","puppet","illusion","dark"],
+	"keywords": [],
+	"description": "Una marioneta viviente que confunde a sus oponentes con ilusiones.",
 	"effects": []
 },
 

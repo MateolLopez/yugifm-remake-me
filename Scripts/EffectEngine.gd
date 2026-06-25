@@ -176,7 +176,7 @@ func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void
 
 	print("EVENT=", ev)
 	print("PAYLOAD controller=", payload.get("controller", ""), " suppress_trap_reactions=", payload.get("suppress_trap_reactions", false))
-	print("FIELD_CARDS=", field_cards.map(func(c): return c.cardname if ("cardname" in c) else str(c)))
+	#print("FIELD_CARDS=", field_cards.map(func(c): return c.cardname if ("cardname" in c) else str(c)))
 	print("NON_TRAP_CANDIDATES=", non_trap_candidates.map(func(c): return c.cardname if ("cardname" in c) else str(c)))
 	print("TRAP_CANDIDATES(before sort)=", trap_candidates.map(func(c): return c.cardname if ("cardname" in c) else str(c)))
 
@@ -236,6 +236,9 @@ func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void
 
 			executed_trap = _execute_effect(card, payload, e)
 			print("TRY TRAP:", card.cardname if ("cardname" in card) else str(card), " executed=", executed_trap)
+			if executed_trap:
+				_play_trap_reactive_sfx(card, payload, e)
+				break
 
 			if executed_trap:
 				break
@@ -275,72 +278,102 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 				return false
 			once_per_turn_used[turn_key] = turn_stamp
 
+	var presentation_state := _push_effect_presentation(ctx, effect_def)
+	var result := false
+
 	match template:
 		"destroy_target":
 			_tpl_destroy_target(source, ctx, params)
-			return true
+			result = true
+
 		"reveal_set_cards":
 			_tpl_reveal_set_cards(source, ctx, params)
-			return true
+			result = true
+
 		"guardian_star_bonus_multiplier":
 			_tpl_guardian_star_bonus_multiplier(source, ctx, params)
-			return true
+			result = true
+
 		"change_self_position_when_attacked_end_of_battle":
 			_tpl_change_self_position_when_attacked_end_of_battle(source, ctx, params)
-			return true
+			result = true
+
 		"apply_keyword_to_new_summons_while_source_faceup":
 			_tpl_apply_keyword_to_new_summons_while_source_faceup(source, ctx, params)
-			return true
+			result = true
+
 		"summon_token_copy_source_stats_on_send_to_grave_by_effect":
 			_tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source, ctx, params)
-			return true
+			result = true
+
 		"summon_random_from_db":
-			return _tpl_summon_random_from_db(source, ctx, params)
+			result = _tpl_summon_random_from_db(source, ctx, params)
+
 		"revive_self_at_turn_end_if_destroyed":
-			return _tpl_revive_self_at_turn_end_if_destroyed(source, ctx, params)
+			result = _tpl_revive_self_at_turn_end_if_destroyed(source, ctx, params)
+
 		"revive_last_destroyed_monster_from_graveyard":
-			return _tpl_revive_last_destroyed_monster_from_graveyard(source, ctx, params)
+			result = _tpl_revive_last_destroyed_monster_from_graveyard(source, ctx, params)
+
 		"set_random_spelltrap_from_db":
-			return _tpl_set_random_spelltrap_from_db(source, ctx, params)
+			result = _tpl_set_random_spelltrap_from_db(source, ctx, params)
+
 		"inflict_effect_damage":
 			_tpl_inflict_effect_damage(source, ctx, params)
-			return true
+			result = true
+
 		"recover_lp":
 			_tpl_recover_lp(source, ctx, params)
-			return true
+			result = true
+
 		"summon_token_from_source_basestats":
 			_tpl_summon_token_from_source_basestats(source, ctx, params)
-			return true
+			result = true
+
 		"negate_attack_and_destroy":
-			return _tpl_negate_attack_and_destroy(source, ctx, params)
+			result = _tpl_negate_attack_and_destroy(source, ctx, params)
+
 		"destroy_by_effect":
 			_tpl_destroy_by_effect(source, ctx, params)
-			return true
+			result = true
+
 		"equip_spell_to_target":
 			_tpl_equip_spell_to_target(source, ctx, params)
-			return true
+			result = true
+
 		"aura_stat_buff_while_source_faceup":
 			_tpl_aura_stat_buff_while_source_faceup(source, ctx, params)
-			return true
+			result = true
+
 		"grant_protection_profile_while_faceup":
 			_tpl_grant_protection_profile_while_faceup(source, ctx, params)
-			return true
+			result = true
+
 		"grant_keyword_to_selected_target":
 			_tpl_grant_keyword_to_selected_target(source, ctx, params)
-			return true
+			result = true
+
 		"reveal_hidden_cards":
 			_tpl_reveal_hidden_cards(source, ctx, params)
-			return true
+			result = true
+
 		"graveyard_count_stat_buff_while_source_faceup":
 			_tpl_graveyard_count_stat_buff_while_source_faceup(source, ctx, params)
-			return true
+			result = true
+
 		"inflict_destroyed_monster_atk_as_effect_damage":
-			return _tpl_inflict_destroyed_monster_atk_as_effect_damage(source, ctx, params)
+			result = _tpl_inflict_destroyed_monster_atk_as_effect_damage(source, ctx, params)
+
 		"recover_lp_equal_to_destroyed_monster_original_atk":
-			return _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source, ctx, params)
+			result = _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source, ctx, params)
+
 		_:
 			push_warning("EffectEngine: Template no implementado: %s" % template)
-			return false
+			result = false
+
+	_pop_effect_presentation(ctx, presentation_state)
+
+	return result
 
 func _get_limit_per_instance(params: Dictionary) -> int:
 	if params.has("limit_per_instance"):
@@ -816,6 +849,10 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 		"activation_type": ("TRAP" if is_instance_valid(source) and ("kind" in source) and str(source.kind).to_upper() == "TRAP" else ("SPELL" if is_instance_valid(source) and ("kind" in source) and str(source.kind).to_upper() == "SPELL" else "MONSTER_EFFECT"))
 	}
 
+	var presentation := _presentation_from_ctx(ctx)
+	if not presentation.is_empty():
+		effect_ctx["presentation"] = presentation
+
 	var eng = null
 	if bm.has_method("_get_effect_engine"):
 		eng = bm._get_effect_engine()
@@ -901,7 +938,7 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 			activation_type = "SPELL"
 		elif sk == "TRAP":
 			activation_type = "TRAP"
-
+	var presentation := _presentation_from_ctx(ctx)
 	var target_side := str(params.get("target_side", "OPPONENT")).to_upper()
 	var faceup_only := bool(params.get("faceup_only", false))
 	var facedown_only := bool(params.get("facedown_only", false))
@@ -1151,6 +1188,8 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 			"controller": controller,
 			"activation_type": activation_type
 		}
+		if not presentation.is_empty():
+			effect_ctx["presentation"] = presentation
 
 		if c == bm.active_field_spell:
 			var eng = bm._get_effect_engine()
@@ -1600,3 +1639,65 @@ func _tpl_revive_last_destroyed_monster_from_graveyard(source: Node, ctx: Dictio
 		return false
 
 	return bool(bm.revive_last_destroyed_monster_from_graveyard(source, ctx, params))
+
+#HELPERS:
+func _presentation_from_ctx(ctx: Dictionary) -> Dictionary:
+	var p = ctx.get("presentation", {})
+	if typeof(p) == TYPE_DICTIONARY:
+		return p
+	return {}
+
+
+func _effect_presentation(effect_def: Dictionary) -> Dictionary:
+	var p = effect_def.get("presentation", {})
+	if typeof(p) == TYPE_DICTIONARY:
+		return p
+	return {}
+
+func _play_trap_reactive_sfx(card: Node, ctx: Dictionary, effect_def: Dictionary) -> void:
+	var bm := _get_battle_manager(ctx)
+	if bm == null:
+		return
+
+	var key := "trap_reactive"
+
+	var presentation := _effect_presentation(effect_def)
+	if presentation.has("activation_sfx_key"):
+		key = str(presentation.get("activation_sfx_key", key))
+
+	if bm.has_method("_play_duel_sfx"):
+		bm._play_duel_sfx(key)
+
+func _push_effect_presentation(ctx: Dictionary, effect_def: Dictionary) -> Dictionary:
+	var state := {
+		"changed": false,
+		"had_presentation": ctx.has("presentation"),
+		"previous_presentation": ctx.get("presentation", null)
+	}
+
+	var presentation := _effect_presentation(effect_def)
+	if presentation.is_empty():
+		return state
+
+	var merged := {}
+
+	if ctx.has("presentation") and typeof(ctx["presentation"]) == TYPE_DICTIONARY:
+		merged = (ctx["presentation"] as Dictionary).duplicate(true)
+
+	for k in presentation.keys():
+		merged[k] = presentation[k]
+
+	ctx["presentation"] = merged
+	state["changed"] = true
+
+	return state
+
+
+func _pop_effect_presentation(ctx: Dictionary, state: Dictionary) -> void:
+	if not bool(state.get("changed", false)):
+		return
+
+	if bool(state.get("had_presentation", false)):
+		ctx["presentation"] = state.get("previous_presentation", {})
+	else:
+		ctx.erase("presentation")

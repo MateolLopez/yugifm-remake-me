@@ -25,6 +25,10 @@ func _process(_delta: float) -> void:
 	if card_being_dragged == null:
 		return
 
+	if _player_interaction_locked():
+		cancel_drag_and_restore()
+		return
+
 	var mp := get_global_mouse_position()
 	var anchor := card_being_dragged.get_node_or_null("AnchorCenter") as Node2D
 	if anchor:
@@ -50,33 +54,47 @@ func is_dragging() -> bool:
 	return card_being_dragged != null
 
 func click_to_drop() -> void:
+	if _player_interaction_locked():
+		cancel_drag_and_restore()
+		return
+
 	finish_drag()
 
 func card_clicked(card: Card) -> void:
 	if card == null:
 		return
 
+	if _player_interaction_locked():
+		return
+
 	var bm = _battle_manager()
+
 	if card.is_on_field():
 		if bm.is_opponent_turn:
 			return
+
 		if card in bm.player_cards_that_attacked_this_turn and not bm._has_kw(card, "MULTI_ATTACK_ALL"):
 			return
+
 		if bm.spell_targeting:
 			bm.receive_spell_target(card)
 			return
+
 		if card.is_spell_like():
 			activate_spell(card)
 			return
 
 		if card.in_defense:
 			return
+
 		if card not in bm.player_cards_that_attacked_this_turn:
 			if bm.opponent_cards_on_battlefield.size() == 0:
 				await bm.direct_attack(card, "Player")
+
 				var im = _input_manager()
 				if im:
 					im.inputs_disabled = false
+
 				bm.enable_end_turn_button(true)
 			else:
 				select_card_for_battle(card)
@@ -102,8 +120,18 @@ func select_card_for_battle(card: Card) -> void:
 		card.position.y -= 20
 
 func start_drag(card: Card) -> void:
+	if _player_interaction_locked():
+		return
+
 	if card == null or card.is_on_field():
 		return
+
+	if not player_hand_reference or not player_hand_reference.has_method("has_card"):
+		return
+
+	if not player_hand_reference.has_card(card):
+		return
+
 	card_being_dragged = card
 	card.z_index = 3
 	card.scale = Vector2(DRAG_SCALE, DRAG_SCALE)
@@ -159,6 +187,10 @@ func finish_drag() -> void:
 	if card_being_dragged == null:
 		return
 
+	if _player_interaction_locked():
+		_restore_visual_and_return_to_hand()
+		return
+
 	var slot = raycast_check_for_card_slot()
 	var card := card_being_dragged
 	is_hovering_on_card = false
@@ -166,25 +198,28 @@ func finish_drag() -> void:
 	var fusion_manager := get_node_or_null("../FusionManager")
 	if fusion_manager and fusion_manager.has_method("has_pending_fusion") and fusion_manager.has_pending_fusion() and card == fusion_manager.get("pending_fusion_card"):
 		if slot and not bool(slot.get("card_in_slot")):
-			if fusion_manager.call("place_fusion_card", slot):
+			if fusion_manager.has_method("place_fusion_card") and fusion_manager.place_fusion_card(slot):
 				card_being_dragged = null
-				fusion_manager.set("pending_fusion_card", null)
 				return
 			else:
+				_restore_visual_and_return_to_hand()
 				return
 		else:
+			_restore_visual_and_return_to_hand()
 			return
 
 	if slot and not bool(slot.get("card_in_slot")) and _card_matches_slot(card, slot):
 		if card.is_monster() and played_monster_card_this_turn:
 			_restore_visual_and_return_to_hand()
 			return
+
 		if card.is_spell_like() and played_spellortrap_card_this_turn:
 			_restore_visual_and_return_to_hand()
 			return
 
 		if player_hand_reference and player_hand_reference.has_method("remove_card_from_hand"):
 			player_hand_reference.remove_card_from_hand(card)
+
 		_place_card_in_slot(card, slot)
 
 		var shape := slot.get_node_or_null("Area2D/CollisionShape2D") as CollisionShape2D
@@ -192,10 +227,13 @@ func finish_drag() -> void:
 			shape.disabled = true
 
 		var bm = _battle_manager()
+
 		if card.is_monster():
 			if not bm.player_cards_on_battlefield.has(card):
 				bm.player_cards_on_battlefield.append(card)
+
 			played_monster_card_this_turn = true
+
 			if card.has_method("ensure_guardian_initialized"):
 				card.ensure_guardian_initialized()
 		else:
@@ -212,9 +250,6 @@ func finish_drag() -> void:
 func reset_played_cards() -> void:
 	played_monster_card_this_turn = false
 	played_spellortrap_card_this_turn = false
-	var fusion_manager := get_node_or_null("../FusionManager")
-	if fusion_manager:
-		fusion_manager.set("fusion_performed_this_turn", false)
 
 func raycast_check_for_card():
 	var space_state = get_world_2d().direct_space_state
@@ -294,6 +329,10 @@ func highlight_card(card: Card, hovered: bool) -> void:
 
 func on_left_click_released() -> void:
 	if card_being_dragged:
+		if _player_interaction_locked():
+			cancel_drag_and_restore()
+			return
+
 		finish_drag()
 
 func _restore_visual_and_return_to_hand() -> void:
@@ -307,3 +346,30 @@ func _restore_visual_and_return_to_hand() -> void:
 
 func reset_played_monster() -> void:
 	played_monster_card_this_turn = false
+
+func _player_interaction_locked() -> bool:
+	var bm := _battle_manager()
+
+	if bm != null:
+		if bool(bm.get("is_opponent_turn")):
+			return true
+
+		if bm.has_method("is_duel_animating") and bool(bm.is_duel_animating()):
+			return true
+
+	var im := _input_manager()
+	if im != null:
+		if "is_animating" in im and bool(im.is_animating):
+			return true
+
+		if "inputs_disabled" in im and bool(im.inputs_disabled):
+			return true
+
+	return false
+
+
+func cancel_drag_and_restore() -> void:
+	if card_being_dragged == null:
+		return
+
+	_restore_visual_and_return_to_hand()

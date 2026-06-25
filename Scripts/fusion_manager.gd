@@ -11,7 +11,10 @@ var fusion: FusionService
 var generic_materials: Array = []
 var specific_materials: Array = []
 
-var fusion_performed_this_turn: bool = false
+var fusion_performed_this_turn_by_owner := {
+	"Player": false,
+	"Opponent": false
+}
 var pending_fusion_card = null
 var fusion_in_progress: bool = false
 
@@ -55,16 +58,111 @@ func _refresh_hands_layout():
 	if oh and oh.has_method("update_hand_positions"):
 		oh.update_hand_positions(0.2)
 
+func _norm_owner(owner_value) -> String:
+	var s := str(owner_value).strip_edges().to_upper()
+
+	if s == "PLAYER":
+		return "Player"
+
+	if s == "OPPONENT":
+		return "Opponent"
+
+	return "Player" if s == "" else str(owner_value)
+
+func _opponent_ia():
+	return get_node_or_null("../OpponentIA")
+
+
+func _fusion_performed_by_owner(owner: String) -> bool:
+	owner = _norm_owner(owner)
+	return bool(fusion_performed_this_turn_by_owner.get(owner, false))
+
+
+func _set_fusion_performed_by_owner(owner: String, value: bool) -> void:
+	owner = _norm_owner(owner)
+	fusion_performed_this_turn_by_owner[owner] = value
+
+
+func _monster_play_consumed_this_turn(owner: String) -> bool:
+	owner = _norm_owner(owner)
+
+	if _fusion_performed_by_owner(owner):
+		return true
+
+	if owner == "Player":
+		var cm = _card_manager()
+		if cm != null and "played_monster_card_this_turn" in cm:
+			return bool(cm.played_monster_card_this_turn)
+
+	elif owner == "Opponent":
+		var ia = _opponent_ia()
+		if ia != null and "played_monster_card_this_turn" in ia:
+			return bool(ia.played_monster_card_this_turn)
+
+	return false
+
+
+func _consume_monster_play_for_turn(owner: String) -> void:
+	owner = _norm_owner(owner)
+
+	_set_fusion_performed_by_owner(owner, true)
+
+	if owner == "Player":
+		var cm = _card_manager()
+		if cm != null and "played_monster_card_this_turn" in cm:
+			cm.played_monster_card_this_turn = true
+
+	elif owner == "Opponent":
+		var ia = _opponent_ia()
+		if ia != null and "played_monster_card_this_turn" in ia:
+			ia.played_monster_card_this_turn = true
+
+
+func _reveal_fusion_cards(cards: Array) -> void:
+	for card in cards:
+		if not is_instance_valid(card):
+			continue
+
+		_force_card_faceup_attack(card)
+
+
+func _force_card_faceup_attack(card) -> void:
+	if not is_instance_valid(card):
+		return
+
+	if card.has_method("set_show_back_only"):
+		card.set_show_back_only(false)
+
+	if card.has_method("set_face_down"):
+		card.set_face_down(false)
+	elif card.has_method("set_facedown"):
+		card.set_facedown(false)
+	elif "face_down" in card:
+		card.face_down = false
+	elif "is_facedown" in card:
+		card.is_facedown = false
+
+	if card.has_method("set_defense_position"):
+		card.set_defense_position(false)
+	elif "in_defense" in card:
+		card.in_defense = false
+
+	if card.has_method("_update_visuals"):
+		card._update_visuals()
+
 func _execute_generic_fusion_with_animation(fusion_owner: String) -> Dictionary:
 	if generic_materials.size() < 2:
 		return {"success": false, "message": "No hay suficientes materiales para fusión genérica"}
-	
+
 	fusion_in_progress = true
 	is_animating_fusion = true
-	
+
+	var original_materials = generic_materials.duplicate()
+	_reveal_fusion_cards(original_materials)
+
 	var hand_node = get_node_or_null("../PlayerHand") if fusion_owner == "Player" else get_node_or_null("../OpponentHand")
 	if hand_node and hand_node.has_method("remove_card_from_hand"):
-		for card in generic_materials:
+		for card in original_materials:
 			if is_instance_valid(card):
 				hand_node.remove_card_from_hand(card)
 	
@@ -79,25 +177,22 @@ func _execute_generic_fusion_with_animation(fusion_owner: String) -> Dictionary:
 	
 	emit_signal("fusion_animation_started")
 	
-	var original_materials = generic_materials.duplicate()
-	current_fusion_chain = _prepare_fusion_chain(generic_materials.duplicate())
+	current_fusion_chain = _prepare_fusion_chain(original_materials.duplicate())
 	current_fusion_step = 0
 	fusion_result_so_far = null
 	
 	await _execute_next_fusion_step(fusion_owner)
 	
 	var final_result = fusion_result_so_far
-	var is_fusion_result = false
-	
-	for material in original_materials:
-		if final_result != material:
-			is_fusion_result = true
-			break
+	var is_fusion_result := false
+
+	if is_instance_valid(final_result):
+		is_fusion_result = not original_materials.has(final_result)
 	
 	if is_fusion_result:
 		pending_fusion_card = final_result
 		_setup_pending_fusion_card(pending_fusion_card, fusion_owner)
-		fusion_performed_this_turn = true
+		
 		emit_signal("fusion_card_ready", pending_fusion_card)
 		_position_mouse_at_fusion_point()
 	else:
@@ -278,18 +373,31 @@ func _show_fusion_result(result_card, _success: bool, _fusion_owner: String):
 	await get_tree().create_timer(0.5).timeout
 
 func try_fusion(fusion_owner: String) -> Dictionary:
-	if fusion_performed_this_turn or fusion_in_progress:
-		return {"success": false, "message": "Ya se realizó una fusión este turno"}
-	
+	fusion_owner = _norm_owner(fusion_owner)
+
+	if _monster_play_consumed_this_turn(fusion_owner):
+		return {"success": false, "message": "Ya invocaste o fusionaste este turno"}
+
+	if fusion_in_progress:
+		return {"success": false, "message": "Hay una fusión en progreso"}
+
 	if pending_fusion_card:
 		return {"success": false, "message": "Fusión pendiente a colocar"}
-	
-	if generic_materials.size() >= 2 and specific_materials.size() == 0:
-		return await _execute_generic_fusion_with_animation(fusion_owner)
-	elif specific_materials.size() >= 2 and generic_materials.size() == 0:
-		return await _execute_specific_fusion_with_animation(fusion_owner)
-	else:
+
+	var can_try_generic := generic_materials.size() >= 2 and specific_materials.size() == 0
+	var can_try_specific := specific_materials.size() >= 2 and generic_materials.size() == 0
+
+	if not can_try_generic and not can_try_specific:
 		return {"success": false, "message": "Faltan materiales o mezclaste tipos de fusión"}
+
+	# Intentar una fusión válida consume la jugada de monstruo,
+	# aunque la fusión falle.
+	_consume_monster_play_for_turn(fusion_owner)
+
+	if can_try_generic:
+		return await _execute_generic_fusion_with_animation(fusion_owner)
+
+	return await _execute_specific_fusion_with_animation(fusion_owner)
 
 func _execute_specific_fusion_with_animation(fusion_owner: String) -> Dictionary:
 	if specific_materials.size() < 2:
@@ -297,6 +405,8 @@ func _execute_specific_fusion_with_animation(fusion_owner: String) -> Dictionary
 	
 	fusion_in_progress = true
 	is_animating_fusion = true
+	var original_materials = specific_materials.duplicate()
+	_reveal_fusion_cards(original_materials)
 	
 	var input_manager = get_node_or_null("../InputManager")
 	if input_manager:
@@ -311,21 +421,21 @@ func _execute_specific_fusion_with_animation(fusion_owner: String) -> Dictionary
 	
 	var hand_node = get_node_or_null("../PlayerHand") if fusion_owner == "Player" else get_node_or_null("../OpponentHand")
 	if hand_node:
-		for card in specific_materials:
+		for card in original_materials:
 			if hand_node.has_method("remove_card_from_hand"):
 				hand_node.remove_card_from_hand(card)
 	
-	for material in specific_materials:
+	for material in original_materials:
 		if is_instance_valid(material):
 			material.visible = true
 			material.scale = Vector2(0.8, 0.8)
 			material.set_fusion_marker(material.FusionMarker.NONE)
 	
-	_reset_card_positions_for_animation(specific_materials.duplicate())
-	await _animate_materials_to_fusion_point(specific_materials.duplicate())
-	
-	var result_card = fusion.find_specific_fusion(specific_materials.duplicate())
-	var last_card = specific_materials[specific_materials.size() - 1]
+	_reset_card_positions_for_animation(original_materials.duplicate())
+	await _animate_materials_to_fusion_point(original_materials.duplicate())
+
+	var result_card = fusion.find_specific_fusion(original_materials.duplicate())
+	var last_card = original_materials[original_materials.size() - 1]
 	var success = (result_card != last_card)
 	
 	await _show_fusion_result(result_card, success, fusion_owner)
@@ -333,11 +443,11 @@ func _execute_specific_fusion_with_animation(fusion_owner: String) -> Dictionary
 	if success:
 		pending_fusion_card = result_card
 		_setup_pending_fusion_card(pending_fusion_card, fusion_owner)
-		fusion_performed_this_turn = true
+		
 		emit_signal("fusion_card_ready", pending_fusion_card)
 		_position_mouse_at_fusion_point()
 	else:
-		for card in specific_materials:
+		for card in original_materials:
 			if card != last_card:
 				_destroy_card_for_fusion(card, fusion_owner)
 		
@@ -345,7 +455,7 @@ func _execute_specific_fusion_with_animation(fusion_owner: String) -> Dictionary
 		if is_instance_valid(last_card):
 			last_card.set_fusion_marker(last_card.FusionMarker.NONE)
 		_setup_pending_fusion_card(pending_fusion_card, fusion_owner)
-		fusion_performed_this_turn = true
+		
 		emit_signal("fusion_card_ready", pending_fusion_card)
 	
 	_finalize_fusion_animation(fusion_point, input_manager)
@@ -373,26 +483,112 @@ func _finalize_fusion_animation(fusion_point, input_manager):
 	
 	emit_signal("fusion_animation_finished")
 
-func add_material(card, fusion_type: String) -> bool:
-	if fusion_performed_this_turn or fusion_in_progress or is_animating_fusion:
-		emit_signal("fusion_error", "Ya realizaste una fusión este turno o hay una fusión en progreso")
+func add_material(card, fusion_type: String, owner: String = "Player") -> bool:
+	owner = _norm_owner(owner)
+
+	if _monster_play_consumed_this_turn(owner):
+		emit_signal("fusion_error", "Ya invocaste o fusionaste este turno")
 		return false
-	
+
+	if fusion_in_progress or is_animating_fusion:
+		emit_signal("fusion_error", "Hay una fusión en progreso")
+		return false
+
+	if not is_instance_valid(card):
+		return false
+
+	if pending_fusion_card:
+		emit_signal("fusion_error", "Primero colocá la fusión pendiente")
+		return false
+
 	if fusion_type == "generic" and specific_materials.size() > 0:
 		emit_signal("fusion_error", "Ya tienes materiales para fusión específica seleccionados")
 		return false
+
 	elif fusion_type == "specific" and generic_materials.size() > 0:
 		emit_signal("fusion_error", "Ya tienes materiales para fusión genérica seleccionados")
 		return false
-	
+
 	var target_array = generic_materials if fusion_type == "generic" else specific_materials
-	
+
 	if target_array.has(card):
 		return false
-	
+
 	target_array.append(card)
 	_update_card_visual(card, true, fusion_type)
 	materials_updated.emit(generic_materials.size(), specific_materials.size())
+
+	return true
+
+func place_fusion_card(slot) -> bool:
+	if not is_instance_valid(pending_fusion_card):
+		return false
+
+	if not is_instance_valid(slot):
+		return false
+
+	if bool(slot.get("card_in_slot")):
+		return false
+
+	if str(slot.get("card_slot_type")) != "Monster":
+		return false
+
+	var battle_manager = get_node_or_null("../BattleManager")
+	if battle_manager == null:
+		return false
+
+	var card = pending_fusion_card
+
+	var owner := "Player"
+	if card.get("owner_side") != null:
+		owner = "Player" if str(card.owner_side).to_upper() == "PLAYER" else "Opponent"
+
+	_force_card_faceup_attack(card)
+
+	if card.has_method("set_field_slot"):
+		card.set_field_slot(slot)
+	elif "current_slot" in card:
+		card.current_slot = slot
+	elif "card_slot_card_is_in" in card:
+		card.card_slot_card_is_in = slot
+
+	slot.set("card_in_slot", true)
+	slot.set_meta("card_ref", card)
+
+	if battle_manager.has_method("register_card_played"):
+		battle_manager.register_card_played(card, owner)
+	else:
+		if owner == "Player":
+			if not battle_manager.player_cards_on_battlefield.has(card):
+				battle_manager.player_cards_on_battlefield.append(card)
+		else:
+			if not battle_manager.opponent_cards_on_battlefield.has(card):
+				battle_manager.opponent_cards_on_battlefield.append(card)
+
+	if card.has_method("apply_owner_collision_layers"):
+		card.apply_owner_collision_layers()
+
+	if card.has_method("set_in_hand_mask"):
+		card.set_in_hand_mask(false)
+
+	var shape = card.get_node_or_null("Area2D/CollisionShape2D") as CollisionShape2D
+	if shape:
+		shape.disabled = false
+
+	if card.has_method("ensure_guardian_initialized"):
+		card.ensure_guardian_initialized()
+
+	var card_manager = get_node_or_null("../CardManager")
+	if card_manager != null:
+		if "card_being_dragged" in card_manager and card_manager.card_being_dragged == card:
+			card_manager.card_being_dragged = null
+
+	var fusion_point = get_node_or_null("../FusionPoint")
+	if fusion_point:
+		fusion_point.visible = false
+
+	pending_fusion_card = null
+
 	return true
 
 func _on_materials_updated(generic_count: int, specific_count: int) -> void:
@@ -485,103 +681,57 @@ func _destroy_card_for_fusion(card, fusion_owner: String):
 		card.queue_free()
 
 func _setup_pending_fusion_card(card, fusion_owner: String):
-	if not card:
+	if not is_instance_valid(card):
 		return
-	
+
 	var player_hand = get_node_or_null("../PlayerHand")
 	var opponent_hand = get_node_or_null("../OpponentHand")
+
 	if player_hand and player_hand.has_method("remove_card_from_hand"):
 		player_hand.remove_card_from_hand(card)
+
 	if opponent_hand and opponent_hand.has_method("remove_card_from_hand"):
 		opponent_hand.remove_card_from_hand(card)
+
 	if card.get_parent() and (card.get_parent() == player_hand or card.get_parent() == opponent_hand):
 		card.get_parent().remove_child(card)
-	
+
 	if not card.is_inside_tree():
 		get_tree().current_scene.add_child(card)
-	
+
+	_force_card_faceup_attack(card)
+
 	var card_manager = get_node_or_null("../CardManager")
 	if card_manager:
 		card.scale = Vector2(card_manager.DRAG_SCALE, card_manager.DRAG_SCALE)
 		card.z_index = 10
+
 		if fusion_owner == "Player":
 			card_manager.card_being_dragged = card
 		else:
 			card.z_index = 2
-		
-		card.owner_side = fusion_owner.to_upper()
-		
-		if card.has_method("set_in_hand_mask"):
-			card.set_in_hand_mask(false)
-		if card.has_method("set_show_back_only"):
-			card.set_show_back_only(false)
-		
-		if card.has_method("apply_owner_collision_layers"):
-			card.apply_owner_collision_layers()
 
-func place_fusion_card(slot) -> bool:
-	if not pending_fusion_card:
-		return false
-	
-	var card_manager = get_node_or_null("../CardManager")
-	var battle_manager = get_node_or_null("../BattleManager")
-	if not card_manager or not battle_manager:
-		return false
-	if slot.card_in_slot:
-		return false
-	if slot.card_slot_type != "Monster":
-		return false
-	
-	var the_owner = "Player"
-	if pending_fusion_card.get("owner_side") != null:
-		the_owner = "Player" if str(pending_fusion_card.owner_side).to_upper() == "PLAYER" else "Opponent"
-	
-	card_manager._place_card_in_slot(pending_fusion_card, slot)
-	
-	if pending_fusion_card.has_method("set_field_slot"):
-		pending_fusion_card.set_field_slot(slot)
-	slot.card_in_slot = true
-	if "card_ref" in slot:
-		slot.card_ref = pending_fusion_card
-	
-	if battle_manager.has_method("register_card_played"):
-		battle_manager.register_card_played(pending_fusion_card, the_owner)
-	else:
-		# fallback mínimo
-		if the_owner == "Player":
-			if not battle_manager.player_cards_on_battlefield.has(pending_fusion_card):
-				battle_manager.player_cards_on_battlefield.append(pending_fusion_card)
-		else:
-			if not battle_manager.opponent_cards_on_battlefield.has(pending_fusion_card):
-				battle_manager.opponent_cards_on_battlefield.append(pending_fusion_card)
-	
-	if pending_fusion_card.has_method("apply_owner_collision_layers"):
-		pending_fusion_card.apply_owner_collision_layers()
-	
-	var shape = pending_fusion_card.get_node_or_null("Area2D/CollisionShape2D") as CollisionShape2D
-	if shape:
-		shape.disabled = false 
-	
-	if pending_fusion_card.has_method("ensure_guardian_initialized"):
-		pending_fusion_card.ensure_guardian_initialized()
-	
-	if pending_fusion_card.has_method("set_in_hand_mask"):
-		pending_fusion_card.set_in_hand_mask(false)
-	
-	if the_owner == "Player" and pending_fusion_card in battle_manager.player_cards_that_attacked_this_turn:
-		battle_manager.player_cards_that_attacked_this_turn.erase(pending_fusion_card)
-	
-	pending_fusion_card = null
-	return true
+	card.owner_side = fusion_owner.to_upper()
 
-func can_select_material(fusion_type: String) -> bool:
-	if fusion_performed_this_turn or fusion_in_progress or pending_fusion_card:
+	if card.has_method("set_in_hand_mask"):
+		card.set_in_hand_mask(false)
+
+	if card.has_method("apply_owner_collision_layers"):
+		card.apply_owner_collision_layers()
+
+func can_select_material(fusion_type: String, owner: String = "Player") -> bool:
+	owner = _norm_owner(owner)
+
+	if _monster_play_consumed_this_turn(owner):
 		return false
-	
+
+	if fusion_in_progress or pending_fusion_card:
+		return false
+
 	if fusion_type == "generic":
 		return specific_materials.size() == 0
-	else:
-		return generic_materials.size() == 0
+
+	return generic_materials.size() == 0
 
 func has_materials_selected() -> bool:
 	return generic_materials.size() > 0 or specific_materials.size() > 0
@@ -606,16 +756,27 @@ func update_pending_fusion_position(mouse_global_position: Vector2):
 			var half = pending_fusion_card.get_visual_half_size() * pending_fusion_card.global_scale
 			pending_fusion_card.global_position = mouse_global_position - half
 
-func reset_turn():
-	fusion_performed_this_turn = false
+func reset_turn(owner: String = "") -> void:
+	var normalized_owner := str(owner).strip_edges()
+
+	if normalized_owner == "":
+		fusion_performed_this_turn_by_owner["Player"] = false
+		fusion_performed_this_turn_by_owner["Opponent"] = false
+	else:
+		_set_fusion_performed_by_owner(normalized_owner, false)
+
 	fusion_in_progress = false
-	
+	is_animating_fusion = false
+
 	if pending_fusion_card:
 		var the_owner = "Player"
+
 		if pending_fusion_card.get("owner_side") != null:
 			the_owner = "Player" if str(pending_fusion_card.owner_side).to_upper() == "PLAYER" else "Opponent"
+
 		_destroy_card_for_fusion(pending_fusion_card, the_owner)
 		pending_fusion_card = null
+
 	clear_materials()
 
 func _reset_card_positions_for_animation(materials: Array):
@@ -674,3 +835,10 @@ func _calculate_position(index: int, total: int, arrangement: String) -> Vector2
 		
 		_:
 			return Vector2.ZERO
+
+func _battle_manager():
+	return get_node_or_null("../BattleManager")
+
+
+func _card_manager():
+	return get_node_or_null("../CardManager")

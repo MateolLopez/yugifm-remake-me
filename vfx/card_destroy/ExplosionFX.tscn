@@ -1,9 +1,8 @@
-[gd_scene load_steps=14 format=3 uid="uid://c7b6dne8xl2j4"]
+[gd_scene load_steps=13 format=3 uid="uid://c7b6dne8xl2j4"]
 
 [ext_resource type="Script" uid="uid://dqwjefb3niou2" path="res://vfx/card_destroy/explosion_fx.gd" id="1_vnft5"]
 [ext_resource type="Texture2D" uid="uid://d1m40woeg4ya7" path="res://vfx/card_destroy/ImpactMetal7OrangeBrown 2.png" id="2_gwo7k"]
 [ext_resource type="Texture2D" uid="uid://lgi4doglfdua" path="res://vfx/card_destroy/ImpactMetal7OrangeBrown 1.png" id="2_ucrm8"]
-[ext_resource type="AudioStream" uid="uid://cngyqxd5foqc0" path="res://sfx/card_destroy.mp3" id="4_kwhfg"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_kwhfg"]
 atlas = ExtResource("2_ucrm8")
@@ -77,6 +76,3 @@ scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_nf725")
 animation = &"explode"
 frame_progress = 0.4779012
-
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("4_kwhfg")

@@ -976,12 +976,14 @@ texture = ExtResource("2_4dx8l")
 metadata/_edit_use_anchors_ = true
 
 [node name="CardArt" type="TextureRect" parent="."]
+texture_filter = 4
 offset_left = 34.0
 offset_top = 110.0
 offset_right = 292.0
 offset_bottom = 368.0
 scale = Vector2(1.01, 1.01)
 texture = ExtResource("3_qbjcq")
+stretch_mode = 3
 
 [node name="card_frame" type="TextureRect" parent="."]
 offset_left = -10.5

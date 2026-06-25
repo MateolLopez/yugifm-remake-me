@@ -38,7 +38,7 @@
 {
 	"fusion_id": "e_hero_avian",
 	"result_id": "21817254",
-	"required_groups": [["hero"],["winged","w-beast","bird"]],
+	"required_groups": [["hero"],["winged","winged-beast","bird"]],
 	"priority": 1.01
 },
 {
@@ -66,6 +66,12 @@
 	"priority": 1.202
 },
 {
+	"fusion_id": "illusion_faceless_mage",
+	"result_id": "28546905",
+	"required_groups": [["puppet"],["spellcaster","illusion"]],
+	"priority": 1.203
+},
+{
 	"fusion_id": "big_eye",
 	"result_id": "16768387",
 	"required_groups":[["eye"],["fiend"]],
@@ -74,19 +80,19 @@
 {
 	"fusion_id": "mavelus",
 	"result_id": "59036972",
-	"required_groups":[["fire","pyro"],["w-beast"]],
+	"required_groups":[["fire","pyro"],["winged-beast"]],
 	"priority": 1.22
 },
 {
 	"fusion_id": "queen_bird",
 	"result_id": "73081602",
-	"required_groups":[["king"],["w-beast"]],
+	"required_groups":[["king"],["winged-beast"]],
 	"priority": 1.221
 },
 {
 	"fusion_id": "spirit_mountain",
 	"result_id": "34690519",
-	"required_groups":[["spirit"],["earth","rock"]],
+	"required_groups":[["spirit"],["rock"]],
 	"priority": 1.3
 },
 {
@@ -104,13 +110,13 @@
 {
 	"fusion_id": "tatsunootoshigo",
 	"result_id": "47922711",
-	"required_groups":[["horse"],["water","fish"]],
+	"required_groups":[["horse"],["sea-serpent","fish"]],
 	"priority": 1.35
 },
 {
 	"fusion_id":"fiend_sword",
 	"result_id":"22855882",
-	"required_groups":[["sword","weapon"],["fiend","dark"]],
+	"required_groups":[["sword","weapon"],["fiend"]],
 	"priority":1.4
 },
 {
@@ -140,7 +146,7 @@
 {
 	"fusion_id": "uraby",
 	"result_id": "01784619",
-	"required_groups": [["dinosaur","dino"],["dark","wild"]],
+	"required_groups": [["dinosaur","dino"],["fiend","wild"]],
 	"priority": 1.5
 },
 {
@@ -188,7 +194,7 @@
 {
 	"fusion_id":"spike_seadra",
 	"result_id":"85326399",
-	"required_groups":[["snake","dragon"],["s-serpent","thunder"]],
+	"required_groups":[["snake","dragon"],["sea-serpent","thunder"]],
 	"priority": 1.612
 },
 {
@@ -212,7 +218,7 @@
 {
 	"fusion_id": "marine_beast",
 	"result_id": "29929832",
-	"required_groups":[["fish","water"],["beast"]],
+	"required_groups":[["fish"],["beast"]],
 	"priority": 1.72
 },
 {
@@ -224,7 +230,14 @@
 {
 	"fusion_id": "ansatsu",
 	"result_id": "48365709",
-	"required_groups":[["ninja"],["earth"]],
+	"required_groups": [
+		{ "any": ["ninja"] },
+		{
+			"any_of_all": [
+				["earth", "warrior"]
+			]
+		}
+	],
 	"priority": 1.74
 },
 {
@@ -241,20 +254,20 @@
 },
 {
 	"fusion_id": "rude_kaiser",
-	"result_id": "25882881",
+	"result_id": "26378150",
 	"required_groups":[["reptile","dinosaur"],["armor","armored","axe"]],
 	"priority": 1.81
 },
 {
 	"fusion_id": "giant_red_ssnake",
 	"result_id": "58831685",
-	"required_groups":[["snake","s-serpent"],["giant"]],
+	"required_groups":[["snake","sea-serpent"],["giant"]],
 	"priority": 1.82
 },
 {
 	"fusion_id": "skull_bird",
 	"result_id": "08327462",
-	"required_groups":[["w-beast","bird","winged"],["skull","bone"]],
+	"required_groups":[["winged-beast","bird","winged"],["skull","bone"]],
 	"priority": 1.9
 },
 {
@@ -266,49 +279,66 @@
 {
 	"fusion_id": "granadora",
 	"result_id": "13944422",
-	"required_groups":[["reptile"],["water"]],
+	"required_groups":[["reptile"],["water","aqua"]],
 	"priority": 1.92
 },
 {
 	"fusion_id": "turtle_bird",
 	"result_id": "72929454",
-	"required_groups":[["turtle"],["w-beast","winged"]],
+	"required_groups":[["turtle"],["winged-beast","winged"]],
 	"priority": 1.921
 },
 {
 	"fusion_id": "monstrous_bird",
 	"result_id": "35712107",
-	"required_groups":[["w-beast","winged"],["giant"]],
+	"required_groups":[["winged-beast","winged"],["giant"]],
 	"priority": 2.0
 },
 {
 	"fusion_id": "roaring_ocea_s",
 	"result_id": "19066538",
-	"required_groups":[["snake","s-serpent"],["water","aqua"]],
+	"required_groups":[["snake","sea-serpent"],["aqua","sea-serpent"]],
 	"priority": 2.1
 },
 {
 	"fusion_id": "mystical_sand",
 	"result_id": "32751480",
-	"required_groups":[["witch"],["earth","rock"]],
+	"required_groups":[["witch"],["rock"]],
 	"priority": 2.11
 },
 {
 	"fusion_id": "crimson_sunbird",
 	"result_id": "46696593",
-	"required_groups":[["w-beast"],["fire","pyro"]],
+	"required_groups":[["winged-beast"],["fire","pyro"]],
 	"priority": 2.3
 },
 {
 	"fusion_id": "serpent_night_d",
 	"result_id": "66516792",
-	"required_groups":[["snake","dragon"],["fiend","dark"]],
+	"required_groups": [
+		{ "any": ["snake", "sea-serpent", "dragon"] },
+		{
+			"any_of_all": [
+				["fiend", "dark"],
+				["warrior", "dark"],
+				["fiend", "spellcaster"]
+			]
+		}
+	],
 	"priority": 2.35
 },
 {
 	"fusion_id": "red_eyes_b_dragon",
 	"result_id": "74677422",
-	"required_groups":[["dragon"],["dark","fiend","red-eyes"]],
+	"required_groups": [
+		{ "any": ["dragon"] },
+		{
+			"any_of_all": [
+				["fiend", "dark"],
+				["red-eyes"]
+			]
+		}
+	],
 	"priority": 2.4
 },
 {

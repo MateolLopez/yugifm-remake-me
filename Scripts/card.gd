@@ -25,6 +25,18 @@ signal clicked(card)
 
 @onready var card_text_box: Label = get_node_or_null("TextBox")
 
+
+# -------------------------
+# Card used/unused
+# -------------------------
+@export var usage_dim_overlay_color: Color = Color(0.0, 0.0, 0.0, 0.20)
+@export var usage_dim_overlay_z_index: int = 80
+@export var usage_dim_overlay_inset: float = 0.0
+
+var _usage_dim_overlay: Polygon2D = null
+var _usage_dimmed: bool = false
+var _usage_dim_reason: String = ""
+
 # -------------------------
 # Card DB fields
 # -------------------------
@@ -91,6 +103,7 @@ var fusion_result: bool = false
 func _ready() -> void:
 	_connect_area_signals()
 	_configure_texture_rects()
+	call_deferred("_ensure_usage_dim_overlay")
 	if is_instance_valid(fusion_spiral):
 		_fusion_spiral_original_material = fusion_spiral.material
 	_update_visuals()
@@ -582,3 +595,97 @@ func equip_has_keyword(k: String) -> bool:
 		if str(eq_k).to_upper() == k:
 			return true
 	return false
+
+#------------
+#Card used/unused
+#------------
+
+func set_usage_dimmed(dimmed: bool, reason: String = "") -> void:
+	_usage_dimmed = dimmed
+	_usage_dim_reason = reason
+
+	_ensure_usage_dim_overlay()
+
+	if _usage_dim_overlay:
+		_usage_dim_overlay.visible = dimmed
+		_usage_dim_overlay.color = usage_dim_overlay_color
+
+
+func is_usage_dimmed() -> bool:
+	return _usage_dimmed
+
+
+func get_usage_dim_reason() -> String:
+	return _usage_dim_reason
+
+
+func _ensure_usage_dim_overlay() -> void:
+	if is_instance_valid(_usage_dim_overlay):
+		_update_usage_dim_overlay_geometry()
+		return
+
+	_usage_dim_overlay = Polygon2D.new()
+	_usage_dim_overlay.name = "UsageDimOverlay"
+	_usage_dim_overlay.visible = false
+	_usage_dim_overlay.color = usage_dim_overlay_color
+	_usage_dim_overlay.z_index = usage_dim_overlay_z_index
+	_usage_dim_overlay.z_as_relative = true
+
+	add_child(_usage_dim_overlay)
+	_update_usage_dim_overlay_geometry()
+
+
+func _update_usage_dim_overlay_geometry() -> void:
+	if not is_instance_valid(_usage_dim_overlay):
+		return
+
+	var anchor := get_node_or_null("AnchorCenter") as Node2D
+	var size := _guess_visual_size_from_anchor()
+
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = Vector2(329, 479)
+
+	var half := size * 0.5
+	var inset := usage_dim_overlay_inset
+
+	if is_instance_valid(anchor):
+		_usage_dim_overlay.position = anchor.position
+	else:
+		_usage_dim_overlay.position = half
+
+	_usage_dim_overlay.rotation = 0.0
+	_usage_dim_overlay.scale = Vector2.ONE
+
+	_usage_dim_overlay.polygon = PackedVector2Array([
+		Vector2(-half.x + inset, -half.y + inset),
+		Vector2(half.x - inset, -half.y + inset),
+		Vector2(half.x - inset, half.y - inset),
+		Vector2(-half.x + inset, half.y - inset)
+	])
+
+
+func _guess_visual_size_from_anchor() -> Vector2:
+	var anchor := get_node_or_null("AnchorCenter") as Node2D
+	if is_instance_valid(anchor):
+		if anchor.position.x > 0.0 and anchor.position.y > 0.0:
+			return anchor.position * 2.0
+
+	var card_back := get_node_or_null("CardBack")
+	if card_back is TextureRect:
+		return (card_back as TextureRect).size
+
+	if card_back is Sprite2D:
+		var spr := card_back as Sprite2D
+		if spr.texture:
+			return spr.texture.get_size()
+
+	var card_front := get_node_or_null("CardFront")
+	if card_front is TextureRect:
+		return (card_front as TextureRect).size
+
+	if card_front is Sprite2D:
+		var spr2 := card_front as Sprite2D
+		if spr2.texture:
+			return spr2.texture.get_size()
+
+	return Vector2(329, 479)

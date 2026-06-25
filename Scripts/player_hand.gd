@@ -17,7 +17,6 @@ func add_card_to_hand(card: Node2D, speed: float) -> void:
 	if card in player_hand:
 		animate_card_to_position(card, card.starting_position, DEFAULT_CARD_MOVE_SPEED)
 		return
-
 	if card.get("owner_side") != null:
 		card.owner_side = "PLAYER"
 	if card.has_method("apply_owner_collision_layers"):
@@ -57,6 +56,8 @@ func update_hand_positions(speed: float) -> void:
 		var new_pos: Vector2 = Vector2(calculate_card_position(i), HAND_Y_POSITION)
 		card.starting_position = new_pos
 		animate_card_to_position(card, new_pos, speed)
+	
+	
 
 func calculate_card_position(index: int) -> float:
 	var total_width := float(max(player_hand.size() - 1, 0)) * CARD_WIDTH
@@ -95,3 +96,8 @@ func _set_card_interaction(card: Node2D, enabled: bool) -> void:
 	if area:
 		area.monitoring = enabled
 		area.input_pickable = enabled
+
+func _play_duel_sfx(key: String) -> void:
+	var fxm = get_node_or_null("../DuelFxManager")
+	if fxm != null and fxm.has_method("play_sfx_key"):
+		fxm.play_sfx_key(key)

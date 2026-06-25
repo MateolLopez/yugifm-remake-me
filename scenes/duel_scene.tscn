@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://cv3psty7bf6sh"]
+[gd_scene load_steps=40 format=3 uid="uid://cv3psty7bf6sh"]
 
 [ext_resource type="Script" uid="uid://ddwrxhfr5nnlw" path="res://Scripts/card_manager.gd" id="1_sooux"]
 [ext_resource type="Script" uid="uid://c2bwtc3j72nmj" path="res://Scripts/player_hand.gd" id="2_qattd"]
@@ -15,16 +15,25 @@
 [ext_resource type="Script" uid="uid://q3kdx072n7j6" path="res://Scripts/battle_manager.gd" id="11_flypn"]
 [ext_resource type="Texture2D" uid="uid://x5bxsg0ni8wq" path="res://assets/placeholders/bgduel.jpg" id="13_jmg8l"]
 [ext_resource type="Texture2D" uid="uid://dypaf1l8b8p0" path="res://assets/Deck.png" id="15_h1aux"]
-[ext_resource type="AudioStream" uid="uid://rrau8rmckveo" path="res://sfx/bzzzt.wav" id="15_h8wu8"]
+[ext_resource type="AudioStream" uid="uid://blhv7n3lhx1he" path="res://sfx/monster_attack.mp3" id="15_tcgqt"]
 [ext_resource type="Script" uid="uid://r727c8vuvmas" path="res://Scripts/duel_flow.gd" id="16_qattd"]
 [ext_resource type="PackedScene" uid="uid://c7b6dne8xl2j4" path="res://vfx/card_destroy/ExplosionFX.tscn" id="16_sjiiy"]
 [ext_resource type="PackedScene" uid="uid://bksbn3k68dxoa" path="res://vfx/monster_reborn_fx/monster_reborn_fx.tscn" id="17_flypn"]
+[ext_resource type="Script" uid="uid://bi30lx6vfa0gw" path="res://Scripts/rotating_bg.gd" id="19_5q81d"]
 [ext_resource type="Script" uid="uid://7pswykviq5ol" path="res://Scripts/guardian_star_manager.gd" id="19_5r5qm"]
 [ext_resource type="Script" uid="uid://u8cf3ha250wd" path="res://Scripts/fusion_manager.gd" id="19_gatq4"]
 [ext_resource type="Script" uid="uid://gxyjvmaxr58m" path="res://Scripts/OpponentIA.gd" id="20_gatq4"]
 [ext_resource type="Script" uid="uid://cghynuk8yhf5v" path="res://Scripts/fusion_point.gd" id="21_h8wu8"]
 [ext_resource type="Shader" uid="uid://bvgt7o8x8wamb" path="res://shaders/GenericFusion.gdshader" id="21_v5elv"]
 [ext_resource type="Texture2D" uid="uid://lh0bvihtk75j" path="res://_resources/animationiguess/pngegg.png" id="21_vhs7o"]
+[ext_resource type="Script" uid="uid://diexjgnfsthit" path="res://Scripts/DuelFxManager.gd" id="27_jmg8l"]
+[ext_resource type="AudioStream" uid="uid://v7k3q0w3ykh" path="res://sfx/monster_summon.mp3" id="28_g6765"]
+[ext_resource type="AudioStream" uid="uid://t3gspug0ts40" path="res://sfx/effect_activation.mp3" id="28_h1aux"]
+[ext_resource type="AudioStream" uid="uid://bubv7fap8a8rs" path="res://vfx/monster_reborn_fx/MonsterRebornSFX.mp3" id="28_q21jv"]
+[ext_resource type="AudioStream" uid="uid://dxo5f8e04x8do" path="res://sfx/draw_card.mp3" id="28_qj6dy"]
+[ext_resource type="AudioStream" uid="uid://286nwvbnlqnp" path="res://sfx/trap_activated.mp3" id="29_tcgqt"]
+[ext_resource type="AudioStream" uid="uid://6medvkiuhyrj" path="res://sfx/set_card.mp3" id="30_5pmm0"]
+[ext_resource type="AudioStream" uid="uid://borymsw5xy7gp" path="res://sfx/monster_destroyed.mp3" id="34_c2vfe"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_t45xh"]
 load_path = "res://.godot/imported/756652.jpg-ac6c3d5ebd245cf2e8902e5d9ae068ff.ctex"
@@ -230,7 +239,6 @@ script = ExtResource("10_sjiiy")
 
 [node name="BattleManager" type="Node" parent="."]
 script = ExtResource("11_flypn")
-destroy_vibration_sfx = ExtResource("15_h8wu8")
 destroy_explosion_scene = ExtResource("16_sjiiy")
 monster_reborn_fx_scene = ExtResource("17_flypn")
 
@@ -259,10 +267,13 @@ offset_right = 1689.0
 offset_bottom = 541.0
 text = "--"
 
-[node name="Bgduel" type="Sprite2D" parent="."]
+[node name="BgA" type="Sprite2D" parent="."]
 z_index = -20
+texture_repeat = 2
 position = Vector2(1036, 482)
 texture = ExtResource("13_jmg8l")
+region_enabled = true
+script = ExtResource("19_5q81d")
 
 [node name="CardDescScreen" type="Node2D" parent="."]
 
@@ -294,6 +305,7 @@ script = ExtResource("20_gatq4")
 
 [node name="FusionPoint" type="Node2D" parent="."]
 visible = false
+z_index = 400
 position = Vector2(1040, 520)
 script = ExtResource("21_h8wu8")
 
@@ -319,6 +331,7 @@ autoplay = "animationSpiral"
 [node name="UILayer" type="CanvasLayer" parent="."]
 
 [node name="CardContextMenu" type="PopupMenu" parent="UILayer"]
+oversampling_override = 1.0
 
 [node name="RevealAckPanel" type="Control" parent="."]
 visible = false
@@ -353,5 +366,19 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0)
+
+[node name="DuelFxManager" type="Node" parent="."]
+script = ExtResource("27_jmg8l")
+draw_sfx = ExtResource("28_qj6dy")
+summon_faceup_sfx = ExtResource("28_g6765")
+summon_set_sfx = ExtResource("30_5pmm0")
+set_spelltrap_sfx = ExtResource("30_5pmm0")
+spell_activate_sfx = ExtResource("28_h1aux")
+monster_effect_activate_sfx = ExtResource("28_h1aux")
+trap_reactive_sfx = ExtResource("29_tcgqt")
+summon_by_effect_sfx = ExtResource("28_q21jv")
+destroy_vibration_sfx = ExtResource("15_tcgqt")
+destroy_explosion_sfx = ExtResource("34_c2vfe")
+monster_reborn_summon_fx_scene = ExtResource("17_flypn")
 
 [connection signal="pressed" from="EndTurnButton" to="BattleManager" method="_on_end_turn_button_pressed"]

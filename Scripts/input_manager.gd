@@ -29,8 +29,14 @@ func _input(event: InputEvent) -> void:
 	if is_animating:
 		return
 
-	if Input.is_action_just_pressed("activate_from_hand") and not inputs_disabled:
-		if $"../BattleManager".is_opponent_turn:
+	var bm_main = _battle_manager()
+	var opponent_turn := bm_main != null and bool(bm_main.get("is_opponent_turn"))
+
+	# -------------------------
+	# Activar Spell desde mano
+	# -------------------------
+	if Input.is_action_just_pressed("activate_from_hand") and not _duel_input_locked():
+		if opponent_turn:
 			return
 
 		var hovered_card = _get_hovered_card()
@@ -38,149 +44,194 @@ func _input(event: InputEvent) -> void:
 			print("activate_from_hand: no hovered_card")
 			return
 
-		print("activate_from_hand hovered:", hovered_card.cardname, " zone=", str(hovered_card.current_zone), " kind=", str(hovered_card.kind), " race=", str(hovered_card.race))
+		print(
+			"activate_from_hand hovered:",
+			hovered_card.cardname if ("cardname" in hovered_card) else hovered_card.name,
+			" zone=", _card_zone(hovered_card),
+			" kind=", _card_kind(hovered_card),
+			" race=", str(hovered_card.race) if ("race" in hovered_card) else ""
+		)
 
-		var bm0 = get_node_or_null("../BattleManager")
-		if bm0 and bm0.has_method("try_activate_from_hand"):
-			bm0.try_activate_from_hand(hovered_card)
+		if bm_main != null and bm_main.has_method("try_activate_from_hand"):
+			bm_main.try_activate_from_hand(hovered_card)
+
 		return
 
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and not inputs_disabled:
-		var card = _get_card_under_mouse_any_side()
-		if not is_instance_valid(card):
+	# -------------------------
+	# Click derecho: menú contextual
+	# -------------------------
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and not _duel_input_locked():
+		if opponent_turn:
 			return
 
-		# solo cartas propias
-		if str(card.owner_side).to_upper() != "PLAYER":
+		var right_clicked_card = _get_card_under_mouse_any_side()
+		if not is_instance_valid(right_clicked_card):
 			return
 
-		_show_context_menu_for_card(card, get_global_mouse_position())
+		if not _is_player_card(right_clicked_card):
+			return
+
+		_show_context_menu_for_card(right_clicked_card, get_global_mouse_position())
 		return
 
-	if Input.is_action_just_pressed("change_pos") and not inputs_disabled:
-		if $"../BattleManager".is_opponent_turn:
+	# -------------------------
+	# Cambiar posición
+	# -------------------------
+	if Input.is_action_just_pressed("change_pos") and not _duel_input_locked():
+		if opponent_turn:
 			return
+
 		if card_manager_reference and card_manager_reference.is_dragging():
 			return
 
-		var space_state := get_world_2d().direct_space_state
-		var parameters := PhysicsPointQueryParameters2D.new()
-		parameters.position = get_global_mouse_position()
-		parameters.collide_with_areas = true
-		parameters.collision_mask = COLLISION_MASK_CARD
-		var result := space_state.intersect_point(parameters)
-
-		if result.size() > 0:
-			var picked = result[0].collider.get_parent()
-			if result.size() > 1:
-				var highest_card = picked
-				var highest_z = picked.z_index
-				for hit in result:
-					var c = hit.collider.get_parent()
-					if is_instance_valid(c) and c.z_index > highest_z:
-						highest_card = c
-						highest_z = c.z_index
-				picked = highest_card
-
-			if is_instance_valid(picked) and str(picked.kind) == "MONSTER" and picked.has_method("is_on_field") and picked.is_on_field():
-				var bm = $"../BattleManager"
-				if bm and (picked in bm.player_cards_that_attacked_this_turn):
-					return
-
-				if bm and bm.has_method("_set_position"):
-					bm._set_position(picked, "DEFENSE" if not bool(picked.in_defense) else "ATTACK")
-				else:
-					if picked.has_method("set_defense_position"):
-						picked.set_defense_position(not bool(picked.in_defense))
-					else:
-						picked.in_defense = not bool(picked.in_defense)
-		return
-
-	if Input.is_action_just_pressed("star_guardian_changer") and not inputs_disabled:
-		if $"../BattleManager".is_opponent_turn:
+		var position_card = _get_hovered_card()
+		if not _is_player_card(position_card):
 			return
 
-		var p := get_global_mouse_position()
-		var space_state2 := get_world_2d().direct_space_state
-		var query := PhysicsPointQueryParameters2D.new()
-		query.position = p
-		query.collide_with_areas = true
-		query.collision_mask = COLLISION_MASK_CARD
+		if not _is_monster_on_field(position_card):
+			return
 
-		var result2 := space_state2.intersect_point(query, 1)
+		if _has_attacked_this_turn(position_card):
+			return
 
-		if result2.size() > 0:
-			var card = result2[0].collider.get_parent()
-			if card and card.card_type == "Monster" and card.card_slot_card_is_in:
-				var bm2 := $"../BattleManager"
-				if bm2 and (card in bm2.player_cards_that_attacked_this_turn):
-					return
-				card.toggle_guardian_star()
+		_toggle_monster_position(position_card)
+		return
 
+	# -------------------------
+	# Cambiar Guardian Star
+	# -------------------------
+	if Input.is_action_just_pressed("star_guardian_changer") and not _duel_input_locked():
+		if opponent_turn:
+			return
+
+		if card_manager_reference and card_manager_reference.is_dragging():
+			return
+
+		var guardian_card = _get_hovered_card()
+		if not _is_player_card(guardian_card):
+			return
+
+		if not _is_monster_on_field(guardian_card):
+			return
+
+		if _has_attacked_this_turn(guardian_card):
+			return
+
+		if guardian_card.has_method("toggle_guardian_star"):
+			guardian_card.toggle_guardian_star()
+
+		return
+
+	# -------------------------
+	# Activar efecto de monstruo en campo
+	# -------------------------
+	if event.is_action_pressed("activate_effect") and not _duel_input_locked():
+		if opponent_turn:
+			return
+
+		var effect_card = _get_hovered_card()
+		if not is_instance_valid(effect_card):
+			return
+
+		if _card_kind(effect_card) == "SPELL":
+			return
+
+		if bm_main != null and bm_main.has_method("try_activate_card"):
+			bm_main.try_activate_card(effect_card)
+
+		return
+
+	# -------------------------
+	# Fusión
+	# Importante:
+	# No usamos _duel_input_locked(), porque ese helper incluye inputs_disabled.
+	# La fusión solo debe bloquearse por animación/duelo animando.
+	# -------------------------
+	var card_manager := get_node_or_null("../CardManager")
+	var can_fuse := true
+
+	if card_manager != null and "played_monster_card_this_turn" in card_manager:
+		can_fuse = not bool(card_manager.played_monster_card_this_turn)
+
+	if event.is_action_pressed("select_for_fusion_generic") and can_fuse and not _fusion_input_locked():
+		if opponent_turn:
+			return
+
+		var fusion_card_generic = _get_hovered_card()
+		if is_instance_valid(fusion_card_generic):
+			var fusion_manager_generic = get_node_or_null("../FusionManager")
+			if fusion_manager_generic != null and bool(fusion_manager_generic.get("is_animating_fusion")):
+				return
+
+			if fusion_manager_generic != null and fusion_manager_generic.has_method("can_select_material"):
+				if fusion_manager_generic.can_select_material("generic"):
+					fusion_manager_generic.add_material(fusion_card_generic, "generic")
+
+		return
+
+	if event.is_action_pressed("select_for_fusion_specific") and can_fuse and not _fusion_input_locked():
+		if opponent_turn:
+			return
+
+		var fusion_card_specific = _get_hovered_card()
+		if is_instance_valid(fusion_card_specific):
+			var fusion_manager_specific = get_node_or_null("../FusionManager")
+			if fusion_manager_specific != null and bool(fusion_manager_specific.get("is_animating_fusion")):
+				return
+
+			if fusion_manager_specific != null and fusion_manager_specific.has_method("can_select_material"):
+				if fusion_manager_specific.can_select_material("specific"):
+					fusion_manager_specific.add_material(fusion_card_specific, "specific")
+
+		return
+
+	if event.is_action_pressed("try_to_fuse") and can_fuse and not _fusion_input_locked():
+		if opponent_turn:
+			return
+
+		var fusion_manager_try = get_node_or_null("../FusionManager")
+		if fusion_manager_try == null:
+			return
+
+		var fusion_result = await fusion_manager_try.try_fusion("Player")
+
+		if not fusion_result.success:
+			print("Fusión: ", fusion_result.message)
+
+		return
+
+	# -------------------------
+	# Click izquierdo
+	# -------------------------
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if _duel_input_locked() or opponent_turn:
+			return
+
 		if event.pressed:
 			emit_signal("left_mouse_button_clicked")
+
 			if card_manager_reference and card_manager_reference.is_dragging():
 				card_manager_reference.click_to_drop()
 				return
+
 			raycast_at_cursor()
 		else:
 			emit_signal("left_mouse_button_released")
 
-	var can_fuse = !$"../CardManager".played_monster_card_this_turn
+		return
 
-	if event.is_action_pressed("activate_effect"):
-		if $"../BattleManager".is_opponent_turn:
-			return
+	# -------------------------
+	# Cancelar
+	# -------------------------
+	if event.is_action_pressed("cancel") and not _duel_input_locked():
+		var fusion_manager_cancel = get_node_or_null("../FusionManager")
+		if fusion_manager_cancel != null and fusion_manager_cancel.has_method("clear_materials"):
+			fusion_manager_cancel.clear_materials()
 
-		var hovered_card2 = _get_hovered_card()
-		if not is_instance_valid(hovered_card2):
-			return
+		if bm_main != null and bool(bm_main.get("equip_targeting")) and bm_main.has_method("_cancel_equip_targeting"):
+			bm_main._cancel_equip_targeting()
 
-		if str(hovered_card2.kind).to_upper() == "SPELL":
-			return
-
-		var bm3 = get_node_or_null("../BattleManager")
-		if bm3 and bm3.has_method("try_activate_card"):
-			bm3.try_activate_card(hovered_card2)
-
-	if event.is_action_pressed("select_for_fusion_generic") and can_fuse:
-		if $"../BattleManager".is_opponent_turn:
-			return
-
-		var hovered_card3 = _get_hovered_card()
-		if hovered_card3:
-			var fusion_manager = $"../FusionManager"
-			if fusion_manager and fusion_manager.is_animating_fusion:
-				return
-			if fusion_manager.can_select_material("generic"):
-				fusion_manager.add_material(hovered_card3, "generic")
-
-	if event.is_action_pressed("select_for_fusion_specific") and can_fuse:
-		if $"../BattleManager".is_opponent_turn:
-			return
-
-		var hovered_card4 = _get_hovered_card()
-		if hovered_card4:
-			var fusion_manager2 = $"../FusionManager"
-			if fusion_manager2.can_select_material("specific"):
-				fusion_manager2.add_material(hovered_card4, "specific")
-
-	if event.is_action_pressed("try_to_fuse") and can_fuse:
-		if $"../BattleManager".is_opponent_turn:
-			return
-
-		var fusion_manager3 = $"../FusionManager"
-		var result3 = await fusion_manager3.try_fusion("Player")
-
-		if not result3.success:
-			print("Fusión: ", result3.message)
-
-	if event.is_action_pressed("cancel") and not inputs_disabled:
-		$"../FusionManager".clear_materials()
-		var bm := get_node_or_null("../BattleManager")
-		if bm and bool(bm.get("equip_targeting")) and bm.has_method("_cancel_equip_targeting"):
-			bm._cancel_equip_targeting()
+		return
 
 func _get_hovered_card():
 	var space_state = get_world_2d().direct_space_state
@@ -283,18 +334,18 @@ func _show_context_menu_for_card(card, mouse_pos: Vector2) -> void:
 	menu.clear()
 	menu.set_meta("card", card)
 
-	var zone := str(card.current_zone).to_upper() if ("current_zone" in card) else ""
+	var zone := _card_zone(card)
 	var is_in_hand := (zone == "HAND")
 	var is_on_field = (card.has_method("is_on_field") and card.is_on_field())
 
-	var kind := str(card.kind).to_upper()
-	var spell_subtype := str(card.race).to_upper() 
+	var kind := _card_kind(card)
 
 	# --- Mano ---
 	if is_in_hand:
 		if kind == "MONSTER":
-			menu.add_item("Jugar boca abajo", ACT_PLAY_FACEDOWN)
-			menu.add_item("Jugar boca arriba", ACT_PLAY_FACEUP)
+			if _can_fuse_now():
+				menu.add_item("Jugar boca abajo", ACT_PLAY_FACEDOWN)
+				menu.add_item("Jugar boca arriba", ACT_PLAY_FACEUP)
 
 		elif kind == "TRAP":
 			menu.add_item("Colocar", ACT_SET_SPELLTRAP)
@@ -303,14 +354,18 @@ func _show_context_menu_for_card(card, mouse_pos: Vector2) -> void:
 			menu.add_item("Activar", ACT_ACTIVATE_FROM_HAND)
 			menu.add_item("Colocar", ACT_SET_SPELLTRAP)
 
-		menu.add_separator()
-		menu.add_item("Generic Fusion", ACT_FUSION_GENERIC)
-		menu.add_item("Specific Fusion", ACT_FUSION_SPECIFIC)
+		if _can_fuse_now():
+			menu.add_separator()
+			menu.add_item("Generic Fusion", ACT_FUSION_GENERIC)
+			menu.add_item("Specific Fusion", ACT_FUSION_SPECIFIC)
 
 	# --- Campo ---
 	elif is_on_field:
 		if kind == "SPELL":
 			menu.add_item("Activar", ACT_ACTIVATE_ON_FIELD)
+
+		elif kind == "TRAP":
+			pass
 
 		elif kind == "MONSTER":
 			var facedown := bool(card.face_down) if ("face_down" in card) else false
@@ -325,7 +380,7 @@ func _show_context_menu_for_card(card, mouse_pos: Vector2) -> void:
 
 				if card.has_method("get_effects"):
 					for e in (card.get_effects() as Array):
-						if e is Dictionary and str(e.get("trigger","")).to_upper() == "ON_ACTIVATE":
+						if e is Dictionary and str(e.get("trigger", "")).to_upper() == "ON_ACTIVATE":
 							menu.add_item("Activar", ACT_ACTIVATE_ON_FIELD)
 							break
 
@@ -335,6 +390,7 @@ func _show_context_menu_for_card(card, mouse_pos: Vector2) -> void:
 		menu.id_pressed.connect(_on_context_menu_id_pressed)
 
 	await get_tree().process_frame
+
 	var size := menu.size
 	var pos := mouse_pos
 	pos.y -= size.y + 8
@@ -345,6 +401,7 @@ func _on_context_menu_id_pressed(id: int) -> void:
 	var menu := _get_context_menu()
 	if menu == null:
 		return
+
 	var card = menu.get_meta("card", null)
 	if not is_instance_valid(card):
 		return
@@ -352,6 +409,16 @@ func _on_context_menu_id_pressed(id: int) -> void:
 	var bm := get_node_or_null("../BattleManager")
 	var cm := get_node_or_null("../CardManager")
 	var fm := get_node_or_null("../FusionManager")
+
+	if bm != null and bool(bm.get("is_opponent_turn")):
+		return
+
+	if is_animating:
+		return
+
+	if bm != null and bm.has_method("is_duel_animating"):
+		if bool(bm.is_duel_animating()):
+			return
 
 	match id:
 		ACT_ACTIVATE_FROM_HAND:
@@ -369,26 +436,40 @@ func _on_context_menu_id_pressed(id: int) -> void:
 				print("Falta BattleManager.try_set_from_hand(card)")
 
 		ACT_PLAY_FACEDOWN:
+			if not _can_fuse_now():
+				return
+
 			if bm and bm.has_method("try_play_monster_from_hand"):
 				bm.try_play_monster_from_hand(card, true)
 			else:
 				print("Falta BattleManager.try_play_monster_from_hand(card, facedown)")
 
 		ACT_PLAY_FACEUP:
+			if not _can_fuse_now():
+				return
+
 			if bm and bm.has_method("try_play_monster_from_hand"):
 				bm.try_play_monster_from_hand(card, false)
 			else:
 				print("Falta BattleManager.try_play_monster_from_hand(card, facedown)")
 
 		ACT_TOGGLE_POSITION:
-			if bm and bm.has_method("_set_position"):
-				bm._set_position(card, "DEFENSE" if not bool(card.in_defense) else "ATTACK")
+			if not _can_change_battle_state(card):
+				return
+
+			await _toggle_monster_position(card)
 
 		ACT_FLIP_FACEUP:
+			if not _can_change_battle_state(card):
+				return
+
 			if bm and bm.has_method("reveal_card"):
 				bm.reveal_card(card)
 
 		ACT_CHANGE_GUARDIAN_STAR:
+			if not _can_change_battle_state(card):
+				return
+
 			if card.has_method("toggle_guardian_star"):
 				card.toggle_guardian_star()
 
@@ -397,14 +478,178 @@ func _on_context_menu_id_pressed(id: int) -> void:
 				cm.selected_monster = card
 
 		ACT_FUSION_GENERIC:
-			if fm and fm.has_method("add_material"):
-				fm.add_material(card, "generic")
+			if not _can_fuse_now():
+				return
+
+			if not _is_player_card(card):
+				return
+
+			if _card_zone(card) != "HAND":
+				return
+
+			if fm and fm.has_method("can_select_material") and fm.has_method("add_material"):
+				if fm.can_select_material("generic"):
+					fm.add_material(card, "generic")
 
 		ACT_FUSION_SPECIFIC:
-			if fm and fm.has_method("add_material"):
-				fm.add_material(card, "specific")
-	
-	var m := _get_context_menu() #Cuestionable
+			if not _can_fuse_now():
+				return
+
+			if not _is_player_card(card):
+				return
+
+			if _card_zone(card) != "HAND":
+				return
+
+			if fm and fm.has_method("can_select_material") and fm.has_method("add_material"):
+				if fm.can_select_material("specific"):
+					fm.add_material(card, "specific")
+
+	var m := _get_context_menu()
 	if m != null:
 		m.hide()
 		m.set_meta("card", null)
+
+#HELPERS:
+func _battle_manager():
+	return get_node_or_null("../BattleManager")
+
+
+func _duel_input_locked() -> bool:
+	if is_animating:
+		return true
+
+	if inputs_disabled:
+		return true
+
+	var bm = _battle_manager()
+	if bm != null and bm.has_method("is_duel_animating"):
+		if bool(bm.is_duel_animating()):
+			return true
+
+	return false
+
+
+func _card_kind(card) -> String:
+	if not is_instance_valid(card):
+		return ""
+
+	if "kind" in card:
+		return str(card.kind).to_upper()
+
+	if card.has_method("is_monster") and card.is_monster():
+		return "MONSTER"
+
+	return ""
+
+
+func _card_zone(card) -> String:
+	if not is_instance_valid(card):
+		return ""
+
+	if "current_zone" in card:
+		return str(card.current_zone).to_upper()
+
+	return ""
+
+
+func _card_owner(card) -> String:
+	if not is_instance_valid(card):
+		return ""
+
+	if "owner_side" in card:
+		return str(card.owner_side).to_upper()
+
+	return ""
+
+
+func _is_player_card(card) -> bool:
+	return is_instance_valid(card) and _card_owner(card) == "PLAYER"
+
+
+func _is_monster_card(card) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	if card.has_method("is_monster"):
+		return bool(card.is_monster())
+
+	return _card_kind(card) == "MONSTER"
+
+
+func _is_monster_on_field(card) -> bool:
+	if not _is_monster_card(card):
+		return false
+
+	if card.has_method("is_on_field"):
+		return bool(card.is_on_field())
+
+	return _card_zone(card) == "FIELD"
+
+
+func _has_attacked_this_turn(card) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	var bm = _battle_manager()
+	if bm == null:
+		return false
+
+	if "player_cards_that_attacked_this_turn" in bm:
+		return card in bm.player_cards_that_attacked_this_turn
+
+	return false
+
+
+func _toggle_monster_position(card) -> void:
+	if not is_instance_valid(card):
+		return
+
+	var bm = _battle_manager()
+	var new_position := "DEFENSE"
+
+	if "in_defense" in card:
+		new_position = "ATTACK" if bool(card.in_defense) else "DEFENSE"
+
+	if bm != null and bm.has_method("_set_position"):
+		bm._set_position(card, new_position)
+		return
+
+	if card.has_method("set_defense_position"):
+		card.set_defense_position(not bool(card.in_defense))
+	elif "in_defense" in card:
+		card.in_defense = not bool(card.in_defense)
+
+
+func _can_change_battle_state(card) -> bool:
+	if not _is_player_card(card):
+		return false
+
+	if not _is_monster_on_field(card):
+		return false
+
+	if _has_attacked_this_turn(card):
+		return false
+
+	return true
+
+func _fusion_input_locked() -> bool:
+	if is_animating:
+		return true
+
+	var bm = _battle_manager()
+	if bm != null and bm.has_method("is_duel_animating"):
+		if bool(bm.is_duel_animating()):
+			return true
+
+	return false
+
+func _can_fuse_now() -> bool:
+	var cm := get_node_or_null("../CardManager")
+	if cm == null:
+		return true
+
+	if "played_monster_card_this_turn" in cm:
+		return not bool(cm.played_monster_card_this_turn)
+
+	return true

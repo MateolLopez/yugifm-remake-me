@@ -2,6 +2,7 @@ extends Node
 
 enum Mode { STORY, FREE_DUEL }
 
+var opponent_name_style := "western"
 var mode := Mode.STORY
 var current_timeline := ""
 var current_episode := ""
@@ -33,6 +34,7 @@ func next_timeline() -> String:
 	return str(current_rules.get("next", ""))
 
 func resolve_opponent_deck() -> Array:
+	ensure_current_opponent_id()
 	return OpponentDB.get_deck_for_opponent(current_opponent_id)
 
 func resolve_player_deck() -> Array:
@@ -59,15 +61,16 @@ func mark_opponent_unlocked(id: String) -> void:
 # SAVE / LOAD 
 func save_to_disk():
 	var data = {
-		"mode": int(mode),
-		"episode": current_episode,
-		"timeline": current_timeline,
-		"opponent": current_opponent_id,
-		"player_decks": player_decks,
-		"active_player_deck_key": active_player_deck_key,
-		"collection": collection,
-		"unlocks": unlocks,
-		"current_rules": current_rules,
+	"mode": int(mode),
+	"episode": current_episode,
+	"timeline": current_timeline,
+	"opponent": current_opponent_id,
+	"opponent_name_style": opponent_name_style,
+	"player_decks": player_decks,
+	"active_player_deck_key": active_player_deck_key,
+	"collection": collection,
+	"unlocks": unlocks,
+	"current_rules": current_rules,
 	}
 	var f = FileAccess.open("user://save.json", FileAccess.WRITE)
 	if f:
@@ -92,3 +95,19 @@ func load_from_disk():
 			current_rules = cr
 		else:
 			clear_duel_routes()
+
+func ensure_current_opponent_id(default_id: String = "kaiba_01") -> void:
+	var opp := str(current_opponent_id).strip_edges()
+	if opp == "":
+		opp = default_id
+	current_opponent_id = opp
+
+
+func resolve_current_opponent_data() -> Dictionary:
+	ensure_current_opponent_id()
+	return OpponentDB.get_opponent_data(current_opponent_id)
+
+
+func resolve_current_opponent_display_name() -> String:
+	ensure_current_opponent_id()
+	return OpponentDB.get_display_name_for_opponent(current_opponent_id, opponent_name_style)
