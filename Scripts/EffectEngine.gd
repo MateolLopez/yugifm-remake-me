@@ -309,6 +309,9 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 		"summon_random_from_db":
 			result = _tpl_summon_random_from_db(source, ctx, params)
 
+		"activate_field_spell_from_db":
+			result = _tpl_activate_field_spell_from_db(source, ctx, params)
+
 		"revive_self_at_turn_end_if_destroyed":
 			result = _tpl_revive_self_at_turn_end_if_destroyed(source, ctx, params)
 
@@ -330,6 +333,9 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 			_tpl_summon_token_from_source_basestats(source, ctx, params)
 			result = true
 
+		"activate_sacrifice_self_to_summon_temporary_token_copies":
+			result = _tpl_activate_sacrifice_self_to_summon_temporary_token_copies(source, ctx, params)
+
 		"negate_attack_and_destroy":
 			result = _tpl_negate_attack_and_destroy(source, ctx, params)
 
@@ -344,6 +350,9 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 		"aura_stat_buff_while_source_faceup":
 			_tpl_aura_stat_buff_while_source_faceup(source, ctx, params)
 			result = true
+
+		"debuff_opponent_monsters_conditional_field":
+			result = _tpl_debuff_opponent_monsters_conditional_field(source, ctx, params)
 
 		"grant_protection_profile_while_faceup":
 			_tpl_grant_protection_profile_while_faceup(source, ctx, params)
@@ -366,6 +375,9 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 
 		"recover_lp_equal_to_destroyed_monster_original_atk":
 			result = _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source, ctx, params)
+
+		"activate_elegant_egotist":
+			result = _tpl_activate_elegant_egotist(source, ctx, params)
 
 		_:
 			push_warning("EffectEngine: Template no implementado: %s" % template)
@@ -516,7 +528,7 @@ func _tpl_destroy_target(source: Node, ctx: Dictionary, params: Dictionary) -> v
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
 		return
-	bm.destroy_by_selector(source, selector, ctx)
+	bm.destruction_service.destroy_by_selector(source, selector, ctx)
 
 func _tpl_reveal_set_cards(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var selector = params.get("target", null)
@@ -525,7 +537,7 @@ func _tpl_reveal_set_cards(source: Node, ctx: Dictionary, params: Dictionary) ->
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
 		return
-	bm.reveal_set_cards_by_selector(source, selector, count, reveal_to, ctx)
+	bm.reveal_service.reveal_set_cards_by_selector(source, selector, count, reveal_to, ctx)
 
 func _tpl_guardian_star_bonus_multiplier(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var mult := int(params.get("multiplier", 1))
@@ -538,7 +550,7 @@ func _tpl_change_self_position_when_attacked_end_of_battle(source: Node, ctx: Di
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
 		return
-	bm.schedule_change_position_end_of_battle(source, new_pos, ctx)
+	bm.atk_state_service.schedule_change_position_end_of_battle(source, new_pos, ctx)
 
 func _tpl_apply_keyword_to_new_summons_while_source_faceup(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var played = ctx.get("source", null)
@@ -551,13 +563,13 @@ func _tpl_apply_keyword_to_new_summons_while_source_faceup(source: Node, ctx: Di
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
 		return
-	bm.apply_keyword_to_card_if_matches_side(source, played, target_side, kw, ctx)
+	bm.kw_service.apply_keyword_to_card_if_matches_side(source, played, target_side, kw, ctx)
 
 func _tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
 		return
-	bm.summon_token_from_source_basestats(source, params, ctx)
+	bm.summon_service.summon_token_from_source_basestats(source, params, ctx)
 
 func _tpl_summon_random_from_db(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
 	print("TPL summon_random_from_db source=", source.cardname if is_instance_valid(source) and ("cardname" in source) else "<null>", " params=", params)
@@ -567,23 +579,50 @@ func _tpl_summon_random_from_db(source: Node, ctx: Dictionary, params: Dictionar
 		print("TPL summon_random_from_db bm=NULL")
 		return false
 
-	if not bm.has_method("summon_random_from_db"):
+	if not bm.summon_service.has_method("summon_random_from_db"):
 		print("TPL summon_random_from_db missing battle_manager.summon_random_from_db")
 		return false
 
-	var ok := bool(bm.summon_random_from_db(source, ctx, params))
+	var ok := bool(bm.summon_service.summon_random_from_db(source, ctx, params))
 	print("TPL summon_random_from_db result=", ok)
 	return ok
+
+func _tpl_activate_field_spell_from_db(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	if not bm.field_spell_service.has_method("activate_field_spell_from_db"):
+		push_warning("EffectEngine: BattleManager no tiene activate_field_spell_from_db.")
+		return false
+
+	var controller := _resolve_effect_controller(source, ctx, params)
+
+	if controller == "":
+		return false
+
+	var field_id := str(params.get("field_id", params.get("id", ""))).strip_edges()
+	var field_name := str(params.get("field_name", "")).strip_edges()
+
+	if field_id == "" and field_name == "":
+		return false
+
+	var activation_ctx := ctx.duplicate(true)
+	activation_ctx["effect_source"] = source
+	activation_ctx["activated_by_effect"] = true
+
+	return bool(bm.field_spell_service.activate_field_spell_from_db(field_id, field_name, controller, activation_ctx))
 
 func _tpl_set_random_spelltrap_from_db(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
 		return false
 
-	if not bm.has_method("set_random_spelltrap_from_db"):
+	if not bm.summon_service.has_method("set_random_spelltrap_from_db"):
 		return false
 
-	return bool(bm.set_random_spelltrap_from_db(source, ctx, params))
+	return bool(bm.summon_service.set_random_spelltrap_from_db(source, ctx, params))
 
 func _get_battle_manager(ctx: Dictionary) -> Node:
 	if ctx.has("battle_manager") and ctx["battle_manager"] != null:
@@ -739,8 +778,20 @@ func _tpl_summon_token_from_source_basestats(source: Node, ctx: Dictionary, para
 	var bm := _get_battle_manager(ctx)
 	if bm == null:
 		return
-	if bm.has_method("summon_token_from_source_basestats"):
-		bm.summon_token_from_source_basestats(source, params, ctx)
+	if bm.summon_service.has_method("summon_token_from_source_basestats"):
+		bm.summon_service.summon_token_from_source_basestats(source, params, ctx)
+
+func _tpl_activate_sacrifice_self_to_summon_temporary_token_copies(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	if not bm.summon_service.has_method("activate_sacrifice_self_to_summon_temporary_token_copies"):
+		push_warning("EffectEngine: BattleManager no tiene activate_sacrifice_self_to_summon_temporary_token_copies.")
+		return false
+
+	return bool(bm.summon_service.activate_sacrifice_self_to_summon_temporary_token_copies(source, ctx, params))
 
 func _tpl_inflict_effect_damage(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
@@ -794,7 +845,7 @@ func _tpl_inflict_effect_damage(source: Node, ctx: Dictionary, params: Dictionar
 
 	target_player = _norm_owner(target_player)
 
-	bm._apply_effect_damage_to_side(target_player, amount, {"source": source})
+	bm.damage_service._apply_effect_damage_to_side(target_player, amount, {"source": source})
 
 func _tpl_recover_lp(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
@@ -819,8 +870,8 @@ func _tpl_recover_lp(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 
 	target_player = _norm_owner(target_player)
 
-	if bm.has_method("recover_lp_to_side"):
-		bm.recover_lp_to_side(target_player, amount, {"source": source})
+	if bm.damage_service.has_method("recover_lp_to_side"):
+		bm.damage_service.recover_lp_to_side(target_player, amount, {"source": source})
 
 func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
 	var bm := _get_battle_manager(ctx)
@@ -854,18 +905,18 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 		effect_ctx["presentation"] = presentation
 
 	var eng = null
-	if bm.has_method("_get_effect_engine"):
-		eng = bm._get_effect_engine()
+	if bm.event_service.has_method("_get_effect_engine"):
+		eng = bm.event_service._get_effect_engine()
 
 	if eng and eng.has_method("is_effect_application_blocked"):
 		if eng.is_effect_application_blocked(attacker_card, effect_ctx, "AFFECT"):
 			var source_owner0 := _norm_owner(bm._owner_of(source))
-			if bm.has_method("_send_spell_to_graveyard"):
-				bm._send_spell_to_graveyard(source, source_owner0)
-			elif bm.has_method("send_spell_to_graveyard"):
-				bm.send_spell_to_graveyard(source, source_owner0)
+			if bm.card_play_service.has_method("_send_spell_to_graveyard"):
+				bm.card_play_service._send_spell_to_graveyard(source, source_owner0)
+			elif bm.card_play_service.has_method("send_spell_to_graveyard"):
+				bm.card_play_service.send_spell_to_graveyard(source, source_owner0)
 			else:
-				bm.destroy_card(source, source_owner0, "DESTROY_EFFECT", effect_ctx)
+				bm.destruction_service.destroy_card(source, source_owner0, "DESTROY_EFFECT", effect_ctx)
 			return true
 
 	ctx["prevent_attack"] = true
@@ -874,18 +925,18 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 	var destroy_mode := str(params.get("destroy_mode", "attacker")).to_lower()
 
 	if destroy_mode == "attacker":
-		var owner := _norm_owner(bm._owner_of(attacker_card))
-		bm.destroy_card(attacker_card, owner, "DESTROY_EFFECT", effect_ctx)
+		var owner := _norm_owner(bm.zone_service._owner_of(attacker_card))
+		bm.destruction_service.destroy_card(attacker_card, owner, "DESTROY_EFFECT", effect_ctx)
 
 	elif destroy_mode == "all_attack_position_of_attacker_controller":
-		var attacker_owner := _norm_owner(bm._owner_of(attacker_card))
+		var attacker_owner := _norm_owner(bm.zone_service._owner_of(attacker_card))
 		var field_arr: Array = bm.player_cards_on_battlefield if attacker_owner == "Player" else bm.opponent_cards_on_battlefield
 
 		var to_destroy: Array = []
 		for c in field_arr:
 			if not is_instance_valid(c):
 				continue
-			if bm._card_kind(c) != "MONSTER":
+			if bm.card_runtime_service._card_kind(c) != "MONSTER":
 				continue
 			if bool(c.in_defense):
 				continue
@@ -901,20 +952,20 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 		for c in to_destroy:
 			if not is_instance_valid(c):
 				continue
-			var owner2 := _norm_owner(bm._owner_of(c))
-			bm.destroy_card(c, owner2, "DESTROY_EFFECT", effect_ctx)
+			var owner2 := _norm_owner(bm.zone_service._owner_of(c))
+			bm.destruction_service.destroy_card(c, owner2, "DESTROY_EFFECT", effect_ctx)
 
 	else:
-		var owner3 := _norm_owner(bm._owner_of(attacker_card))
-		bm.destroy_card(attacker_card, owner3, "DESTROY_EFFECT", effect_ctx)
+		var owner3 := _norm_owner(bm.zone_service._owner_of(attacker_card))
+		bm.destruction_service.destroy_card(attacker_card, owner3, "DESTROY_EFFECT", effect_ctx)
 
 	var source_owner := _norm_owner(bm._owner_of(source))
-	if bm.has_method("_send_spell_to_graveyard"):
-		bm._send_spell_to_graveyard(source, source_owner)
-	elif bm.has_method("send_spell_to_graveyard"):
-		bm.send_spell_to_graveyard(source, source_owner)
+	if bm.card_play_service.has_method("_send_spell_to_graveyard"):
+		bm.card_play_service._send_spell_to_graveyard(source, source_owner)
+	elif bm.card_play_service.has_method("send_spell_to_graveyard"):
+		bm.card_play_service.send_spell_to_graveyard(source, source_owner)
 	else:
-		bm.destroy_card(source, source_owner, "DESTROY_EFFECT", effect_ctx)
+		bm.destruction_service.destroy_card(source, source_owner, "DESTROY_EFFECT", effect_ctx)
 
 	return true
 
@@ -1192,18 +1243,18 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 			effect_ctx["presentation"] = presentation
 
 		if c == bm.active_field_spell:
-			var eng = bm._get_effect_engine()
+			var eng = bm.event_service._get_effect_engine()
 			if eng and eng.has_method("is_effect_application_blocked"):
 				if eng.is_effect_application_blocked(c, effect_ctx, "DESTROY"):
 					continue
 
 			c.set_meta("ethereal_field_spell", false)
-			bm._unregister_card_with_effect_engine(c)
+			bm.event_service._unregister_card_with_effect_engine(c)
 			var fs_owner := _norm_owner(bm.active_field_spell_controller)
 			bm.active_field_spell = null
 			bm.active_field_spell_controller = ""
-			bm._update_field_spell_name_ui()
-			bm._send_spell_to_graveyard(c, fs_owner)
+			bm.field_spell_service._update_field_spell_name_ui()
+			bm.card_play_service._send_spell_to_graveyard(c, fs_owner)
 			continue
 
 		var ck2 := ""
@@ -1211,16 +1262,16 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 			ck2 = str(c.kind).to_upper()
 
 		if ck2 == "MONSTER":
-			var owner := _norm_owner(bm._owner_of(c))
-			bm.destroy_card(c, owner, "DESTROY_EFFECT", effect_ctx)
+			var owner := _norm_owner(bm.zone_service._owner_of(c))
+			bm.destruction_service.destroy_card(c, owner, "DESTROY_EFFECT", effect_ctx)
 		elif ck2 == "SPELL" or ck2 == "TRAP":
-			var eng2 = bm._get_effect_engine()
+			var eng2 = bm.event_service._get_effect_engine()
 			if eng2 and eng2.has_method("is_effect_application_blocked"):
 				if eng2.is_effect_application_blocked(c, effect_ctx, "DESTROY"):
 					continue
 
 			var owner2 := _norm_owner(bm._owner_of(c))
-			bm._send_spell_to_graveyard(c, owner2)
+			bm.card_play_service._send_spell_to_graveyard(c, owner2)
 
 func _tpl_equip_spell_to_target(source: Node, ctx: Dictionary, _params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
@@ -1231,8 +1282,8 @@ func _tpl_equip_spell_to_target(source: Node, ctx: Dictionary, _params: Dictiona
 	if controller == "":
 		return
 
-	if bm.has_method("start_equip_from_hand"):
-		bm.start_equip_from_hand(source, controller)
+	if bm.equip_service.has_method("start_equip_from_hand"):
+		bm.equip_service.start_equip_from_hand(source, controller)
 
 func _tpl_aura_stat_buff_while_source_faceup(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	_refresh_aura_stat_buffs()
@@ -1276,6 +1327,8 @@ func _refresh_aura_stat_buffs() -> void:
 		if template == "aura_stat_buff_while_source_faceup":
 			var target_side := str(params.get("target_side","SELF")).to_upper()
 			var filter_attribute := str(params.get("filter_attribute","")).to_upper()
+			var filter_race := str(params.get("filter_race","")).to_upper()
+			var filter_tag := str(params.get("filter_tag","")).to_lower()
 			var atk_delta := int(params.get("atk_delta", 0))
 			var def_delta := int(params.get("def_delta", 0))
 
@@ -1294,13 +1347,12 @@ func _refresh_aura_stat_buffs() -> void:
 					ok_side = (t_controller != src_controller)
 				elif target_side == "BOTH":
 					ok_side = true
+
 				if not ok_side:
 					continue
 
-				if filter_attribute != "":
-					var a2 := str(t.attribute).to_upper() if ("attribute" in t) else ""
-					if a2 != filter_attribute:
-						continue
+				if not _card_matches_filters(t, filter_attribute, filter_race, filter_tag, true):
+					continue
 
 				var tid := str(t.get_instance_id())
 				if not acc.has(tid):
@@ -1430,6 +1482,159 @@ func _apply_aura_as_virtual_equip(target: Node, instance_id: String, source: Nod
 
 	target.add_equip_instance(equip_instance)
 
+func _active_field_matches(bm: Node, field_id: String, field_name: String) -> bool:
+	if bm == null:
+		return false
+
+	if not ("active_field_spell" in bm):
+		return false
+
+	var field = bm.active_field_spell
+
+	if not is_instance_valid(field):
+		return false
+
+	field_id = str(field_id).strip_edges()
+	field_name = str(field_name).strip_edges().to_lower()
+
+	if field_id != "":
+		if "id" in field and str(field.id) == field_id:
+			return true
+
+	if field_name != "":
+		if "cardname" in field and str(field.cardname).strip_edges().to_lower() == field_name:
+			return true
+
+	return false
+
+func _apply_permanent_stat_modifier(target: Node, source: Node, atk_delta: int, def_delta: int, label: String) -> void:
+	if not is_instance_valid(target):
+		return
+
+	var source_id := "effect"
+	var source_name := label
+
+	if is_instance_valid(source):
+		source_id = str(source.get_instance_id())
+
+		if "cardname" in source:
+			source_name = str(source.cardname)
+
+	var instance_id := "perm_stat|%s|%s|%s" % [
+		source_id,
+		str(target.get_instance_id()),
+		str(Time.get_ticks_msec())
+	]
+
+	var mod_instance := {
+		"instance_id": instance_id,
+		"spell_id": "",
+		"spell_name": source_name,
+		"mod": {
+			"atk": atk_delta,
+			"def": def_delta
+		},
+		"set": {},
+		"grant_keywords": [],
+		"meta": {
+			"is_debuff": atk_delta < 0 or def_delta < 0,
+			"is_permanent_stat_modifier": true,
+			"source_id": source_id
+		}
+	}
+
+	if target.has_method("add_equip_instance"):
+		target.add_equip_instance(mod_instance)
+		return
+
+	# Fallback si alguna carta no tuviera add_equip_instance.
+	if "atk" in target:
+		target.atk += atk_delta
+
+	if "def" in target:
+		target.def += def_delta
+
+	if target.has_method("_update_visuals"):
+		target._update_visuals()
+
+func _tpl_debuff_opponent_monsters_conditional_field(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	var source_controller := _norm_owner(ctx.get("controller", ""))
+
+	if source_controller == "" and is_instance_valid(source) and ("owner_side" in source):
+		source_controller = "Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent"
+
+	source_controller = _norm_owner(source_controller)
+
+	if source_controller == "":
+		return false
+
+	var target_side := str(params.get("target_side", "OPPONENT")).to_upper()
+
+	var base_amount := int(params.get("base_amount", 300))
+	var field_amount := int(params.get("field_amount", 500))
+	var field_id := str(params.get("field_id", "")).strip_edges()
+	var field_name := str(params.get("field_name", "")).strip_edges()
+	var faceup_only := bool(params.get("faceup_only", false))
+
+	var amount := base_amount
+
+	# Importante:
+	# Esta verificación es global. No importa quién activó el campo.
+	if _active_field_matches(bm, field_id, field_name):
+		amount = field_amount
+
+	var atk_delta = -abs(amount)
+	var def_delta = -abs(amount)
+
+	var targets: Array = []
+
+	match target_side:
+		"SELF", "OWNER":
+			if source_controller == "Player":
+				targets = bm.player_cards_on_battlefield.duplicate()
+			else:
+				targets = bm.opponent_cards_on_battlefield.duplicate()
+
+		"OPPONENT":
+			if source_controller == "Player":
+				targets = bm.opponent_cards_on_battlefield.duplicate()
+			else:
+				targets = bm.player_cards_on_battlefield.duplicate()
+
+		"BOTH":
+			targets = bm.player_cards_on_battlefield.duplicate()
+			targets.append_array(bm.opponent_cards_on_battlefield.duplicate())
+
+		_:
+			if source_controller == "Player":
+				targets = bm.opponent_cards_on_battlefield.duplicate()
+			else:
+				targets = bm.player_cards_on_battlefield.duplicate()
+
+	var applied := false
+
+	for t in targets:
+		if not is_instance_valid(t):
+			continue
+
+		if str(t.get("kind")).to_upper() != "MONSTER":
+			continue
+
+		if faceup_only:
+			var facedown := bool(t.get("face_down")) if ("face_down" in t) else false
+			if facedown:
+				continue
+
+		_apply_permanent_stat_modifier(t, source, atk_delta, def_delta, "Witch Curse")
+		applied = true
+
+	return applied
+
 func _tpl_grant_protection_profile_while_faceup(_source: Node, _ctx: Dictionary, _params: Dictionary) -> void:
 	return
 
@@ -1471,7 +1676,7 @@ func _tpl_grant_keyword_to_selected_target(source: Node, ctx: Dictionary, params
 		for c in arr:
 			if not is_instance_valid(c):
 				continue
-			if bm._card_kind(c) != "MONSTER":
+			if bm.card_runtime_service._card_kind(c) != "MONSTER":
 				continue
 
 			var is_facedown := false
@@ -1521,7 +1726,7 @@ func _tpl_grant_keyword_to_selected_target(source: Node, ctx: Dictionary, params
 		"activation_type": "MONSTER_EFFECT"
 	}
 
-	var eng = bm._get_effect_engine()
+	var eng = bm.event_service._get_effect_engine()
 	for target in selected:
 		if not is_instance_valid(target):
 			continue
@@ -1530,7 +1735,7 @@ func _tpl_grant_keyword_to_selected_target(source: Node, ctx: Dictionary, params
 			if eng.is_effect_application_blocked(target, effect_ctx, "AFFECT"):
 				continue
 
-		bm.apply_keyword_to_target(target, keyword, duration, controller)
+		bm.kw_service.apply_keyword_to_target(target, keyword, duration, controller)
 
 func _tpl_reveal_hidden_cards(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	print("TPL REVEAL HIDDEN source=", source.cardname if is_instance_valid(source) and ("cardname" in source) else "<null>", " params=", params)
@@ -1538,14 +1743,26 @@ func _tpl_reveal_hidden_cards(source: Node, ctx: Dictionary, params: Dictionary)
 	if bm == null:
 		print("TPL REVEAL HIDDEN bm=NULL")
 		return
-	if bm.has_method("reveal_hidden_cards_by_effect"):
+	if bm.reveal_service.has_method("reveal_hidden_cards_by_effect"):
 		print("TPL REVEAL HIDDEN calling battle_manager")
-		bm.reveal_hidden_cards_by_effect(source, ctx, params)
+		bm.reveal_service.reveal_hidden_cards_by_effect(source, ctx, params)
 	else:
 		print("TPL REVEAL HIDDEN bm missing reveal_hidden_cards_by_effect")
 
 func _tpl_graveyard_count_stat_buff_while_source_faceup(_source: Node, _ctx: Dictionary, _params: Dictionary) -> void:
 	return
+
+func _tpl_activate_elegant_egotist(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	if not bm.special_effect_service.has_method("activate_elegant_egotist"):
+		push_warning("EffectEngine: BattleManager no tiene activate_elegant_egotist.")
+		return false
+
+	return bool(bm.special_effect_service.activate_elegant_egotist(source, ctx, params))
 
 func _tpl_inflict_destroyed_monster_atk_as_effect_damage(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
 	var bm := _get_battle_manager(ctx)
@@ -1570,7 +1787,7 @@ func _tpl_inflict_destroyed_monster_atk_as_effect_damage(source: Node, ctx: Dict
 		target_player = source_controller
 
 	target_player = _norm_owner(target_player)
-	bm._apply_effect_damage_to_side(target_player, destroyed_atk, {"source": source})
+	bm.damage_service._apply_effect_damage_to_side(target_player, destroyed_atk, {"source": source})
 	return true
 
 func _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
@@ -1597,8 +1814,8 @@ func _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source: Node, ctx: 
 
 	target_player = _norm_owner(target_player)
 
-	if bm.has_method("recover_lp_to_side"):
-		bm.recover_lp_to_side(target_player, destroyed_original_atk, {"source": source})
+	if bm.damage_service.has_method("recover_lp_to_side"):
+		bm.damage_service.recover_lp_to_side(target_player, destroyed_original_atk, {"source": source})
 
 	return true
 
@@ -1619,10 +1836,10 @@ func _tpl_revive_self_at_turn_end_if_destroyed(source: Node, ctx: Dictionary, pa
 		controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
 	controller = _norm_owner(controller)
 
-	if not bm.has_method("_schedule_self_revival_at_turn_end"):
+	if not bm.graveyard_service.has_method("_schedule_self_revival_at_turn_end"):
 		return false
 
-	return bool(bm._schedule_self_revival_at_turn_end(
+	return bool(bm.graveyard_service._schedule_self_revival_at_turn_end(
 		source,
 		controller,
 		position,
@@ -1635,10 +1852,10 @@ func _tpl_revive_last_destroyed_monster_from_graveyard(source: Node, ctx: Dictio
 	if bm == null:
 		return false
 
-	if not bm.has_method("revive_last_destroyed_monster_from_graveyard"):
+	if not bm.graveyard_service.has_method("revive_last_destroyed_monster_from_graveyard"):
 		return false
 
-	return bool(bm.revive_last_destroyed_monster_from_graveyard(source, ctx, params))
+	return bool(bm.graveyard_service.revive_last_destroyed_monster_from_graveyard(source, ctx, params))
 
 #HELPERS:
 func _presentation_from_ctx(ctx: Dictionary) -> Dictionary:
@@ -1665,8 +1882,8 @@ func _play_trap_reactive_sfx(card: Node, ctx: Dictionary, effect_def: Dictionary
 	if presentation.has("activation_sfx_key"):
 		key = str(presentation.get("activation_sfx_key", key))
 
-	if bm.has_method("_play_duel_sfx"):
-		bm._play_duel_sfx(key)
+	if bm.animation_service.has_method("_play_duel_sfx"):
+		bm.animation_service._play_duel_sfx(key)
 
 func _push_effect_presentation(ctx: Dictionary, effect_def: Dictionary) -> Dictionary:
 	var state := {
@@ -1701,3 +1918,30 @@ func _pop_effect_presentation(ctx: Dictionary, state: Dictionary) -> void:
 		ctx["presentation"] = state.get("previous_presentation", {})
 	else:
 		ctx.erase("presentation")
+
+func _opponent_of(controller: String) -> String:
+	controller = _norm_owner(controller)
+
+	if controller == "Player":
+		return "Opponent"
+
+	if controller == "Opponent":
+		return "Player"
+
+	return ""
+
+
+func _resolve_effect_controller(source: Node, ctx: Dictionary, params: Dictionary) -> String:
+	var controller := _norm_owner(ctx.get("controller", ""))
+
+	if controller == "" and is_instance_valid(source) and ("owner_side" in source):
+		controller = "Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent"
+
+	controller = _norm_owner(controller)
+
+	var controller_param := str(params.get("controller", "SELF")).to_upper()
+
+	if controller_param == "OPPONENT":
+		controller = _opponent_of(controller)
+
+	return controller

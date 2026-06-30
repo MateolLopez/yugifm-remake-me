@@ -1,0 +1,498 @@
+[gd_scene load_steps=70 format=3 uid="uid://cv3psty7bf6sh"]
+
+[ext_resource type="Script" uid="uid://mgdicx3susd8" path="res://Scripts/duel_state.gd" id="1_oo1qr"]
+[ext_resource type="Script" uid="uid://ddwrxhfr5nnlw" path="res://Scripts/card_manager.gd" id="1_sooux"]
+[ext_resource type="Script" uid="uid://sccgda64vpn2" path="res://Scripts/services/DuelFieldSpellService.gd" id="2_2oh7o"]
+[ext_resource type="Script" uid="uid://c2bwtc3j72nmj" path="res://Scripts/player_hand.gd" id="2_qattd"]
+[ext_resource type="Script" uid="uid://c2srd7ttp8mdo" path="res://Scripts/services/duel_rule_service.gd" id="2_siaty"]
+[ext_resource type="Script" uid="uid://cubr2tyhos1e1" path="res://Scripts/opponent_hand.gd" id="3_1dr3c"]
+[ext_resource type="Script" uid="uid://cvung437meaw5" path="res://Scripts/services/duel_event_service.gd" id="3_10rrw"]
+[ext_resource type="Script" uid="uid://6myr0unq0q3y" path="res://Scripts/services/DuelSummonService.gd" id="3_siaty"]
+[ext_resource type="PackedScene" uid="uid://q80u81wy25ad" path="res://scenes/title_scene.tscn" id="3_t45xh"]
+[ext_resource type="PackedScene" uid="uid://hseij654024p" path="res://scenes/story_scene.tscn" id="4_5r5qm"]
+[ext_resource type="Script" uid="uid://c5slxhlifjy26" path="res://Scripts/services/DuelGraveyardService.gd" id="4_10rrw"]
+[ext_resource type="Script" uid="uid://dbfe8b6halxnj" path="res://Scripts/services/duel_card_db_service.gd" id="4_icvu8"]
+[ext_resource type="PackedScene" uid="uid://d3od4tls7t86i" path="res://scenes/deck.tscn" id="4_t45xh"]
+[ext_resource type="Script" uid="uid://duo61yjc0ogd7" path="res://Scripts/input_manager.gd" id="5_5r5qm"]
+[ext_resource type="Script" uid="uid://cktdpf6r63unn" path="res://Scripts/services/duel_card_run_time_service.gd" id="5_6rmsw"]
+[ext_resource type="Script" uid="uid://dg5uhql4vigk0" path="res://Scripts/services/DuelSelectionService.gd" id="5_icvu8"]
+[ext_resource type="Script" uid="uid://byicsuba1018y" path="res://Scripts/services/DuelSpecialEffectService.gd" id="6_6rmsw"]
+[ext_resource type="PackedScene" uid="uid://dy0kpc88l8ic1" path="res://scenes/Opponent_card_slot.tscn" id="6_gatq4"]
+[ext_resource type="Script" uid="uid://ds7ck3oqlnayt" path="res://Scripts/services/duel_zone_service.gd" id="6_gkp04"]
+[ext_resource type="Script" uid="uid://cln2j3b14pnsc" path="res://Scripts/services/DuelStatEffectService.gd" id="7_gkp04"]
+[ext_resource type="Script" uid="uid://dru3j2tirbdgr" path="res://Scripts/magic_card_slot.gd" id="7_vhs7o"]
+[ext_resource type="PackedScene" uid="uid://qh13x66ithux" path="res://scenes/card_slot.tscn" id="8_v5elv"]
+[ext_resource type="Script" uid="uid://b8pn83e8463lt" path="res://Scripts/services/duel_turn_service.gd" id="8_yst2b"]
+[ext_resource type="PackedScene" uid="uid://kqebt535l1q6" path="res://scenes/Opponent_deck.tscn" id="9_h8wu8"]
+[ext_resource type="Script" uid="uid://nshsafc38hxr" path="res://Scripts/services/duel_draw_service.gd" id="9_i3jdp"]
+[ext_resource type="Script" uid="uid://cpfqevbygfcxp" path="res://Scripts/services/duel_combat_service.gd" id="10_1rybd"]
+[ext_resource type="Script" uid="uid://c3cq8iq62h58f" path="res://Scripts/opponent_deck.gd" id="10_sjiiy"]
+[ext_resource type="Script" uid="uid://q3kdx072n7j6" path="res://Scripts/battle_manager.gd" id="11_flypn"]
+[ext_resource type="Script" uid="uid://go13tfn10uvq" path="res://Scripts/services/duel_attack_state_service.gd" id="11_n1f31"]
+[ext_resource type="Script" uid="uid://c7ih6ddherqtb" path="res://Scripts/services/duel_damage_service.gd" id="12_bjfks"]
+[ext_resource type="Script" uid="uid://dmcd22yav4q1c" path="res://Scripts/services/duel_destruction_service.gd" id="13_fw4lj"]
+[ext_resource type="Texture2D" uid="uid://x5bxsg0ni8wq" path="res://assets/placeholders/bgduel.jpg" id="13_jmg8l"]
+[ext_resource type="Texture2D" uid="uid://dypaf1l8b8p0" path="res://assets/Deck.png" id="15_h1aux"]
+[ext_resource type="AudioStream" uid="uid://blhv7n3lhx1he" path="res://sfx/monster_attack.mp3" id="15_tcgqt"]
+[ext_resource type="Script" uid="uid://r727c8vuvmas" path="res://Scripts/duel_flow.gd" id="16_qattd"]
+[ext_resource type="PackedScene" uid="uid://c7b6dne8xl2j4" path="res://vfx/card_destroy/ExplosionFX.tscn" id="16_sjiiy"]
+[ext_resource type="PackedScene" uid="uid://bksbn3k68dxoa" path="res://vfx/monster_reborn_fx/monster_reborn_fx.tscn" id="17_flypn"]
+[ext_resource type="Script" uid="uid://537ufb1acl14" path="res://Scripts/services/duel_card_play_service.gd" id="17_r70ar"]
+[ext_resource type="Script" uid="uid://c6aiu70e7xnil" path="res://Scripts/services/duel_card_activation_service.gd" id="18_cd1gk"]
+[ext_resource type="Script" uid="uid://bi30lx6vfa0gw" path="res://Scripts/rotating_bg.gd" id="19_5q81d"]
+[ext_resource type="Script" uid="uid://7pswykviq5ol" path="res://Scripts/guardian_star_manager.gd" id="19_5r5qm"]
+[ext_resource type="Script" uid="uid://u8cf3ha250wd" path="res://Scripts/fusion_manager.gd" id="19_gatq4"]
+[ext_resource type="Script" uid="uid://m16h3g0redsr" path="res://Scripts/services/duel_equip_service.gd" id="19_smnlv"]
+[ext_resource type="Script" uid="uid://dbd0edx8jptfj" path="res://Scripts/services/duel_keyword_service.gd" id="20_08bje"]
+[ext_resource type="Script" uid="uid://gxyjvmaxr58m" path="res://Scripts/OpponentIA.gd" id="20_gatq4"]
+[ext_resource type="Script" uid="uid://cghynuk8yhf5v" path="res://Scripts/fusion_point.gd" id="21_h8wu8"]
+[ext_resource type="Shader" uid="uid://bvgt7o8x8wamb" path="res://shaders/GenericFusion.gdshader" id="21_v5elv"]
+[ext_resource type="Texture2D" uid="uid://lh0bvihtk75j" path="res://_resources/animationiguess/pngegg.png" id="21_vhs7o"]
+[ext_resource type="Script" uid="uid://cicstbne4pu6q" path="res://Scripts/services/duel_reveal_service.gd" id="22_d6s8b"]
+[ext_resource type="Script" uid="uid://xcb2vw2nifcd" path="res://Scripts/services/duel_animation_service.gd" id="23_wrqmj"]
+[ext_resource type="Script" uid="uid://dho2n7omfnfmg" path="res://Scripts/services/duel_ui_service.gd" id="24_x5cm1"]
+[ext_resource type="Script" uid="uid://b6klm7piusmvi" path="res://Scripts/services/duel_fusion_replacement_service.gd" id="25_iumx2"]
+[ext_resource type="Script" uid="uid://diexjgnfsthit" path="res://Scripts/DuelFxManager.gd" id="27_jmg8l"]
+[ext_resource type="AudioStream" uid="uid://v7k3q0w3ykh" path="res://sfx/monster_summon.mp3" id="28_g6765"]
+[ext_resource type="AudioStream" uid="uid://t3gspug0ts40" path="res://sfx/effect_activation.mp3" id="28_h1aux"]
+[ext_resource type="AudioStream" uid="uid://bubv7fap8a8rs" path="res://vfx/monster_reborn_fx/MonsterRebornSFX.mp3" id="28_q21jv"]
+[ext_resource type="AudioStream" uid="uid://dxo5f8e04x8do" path="res://sfx/draw_card.mp3" id="28_qj6dy"]
+[ext_resource type="AudioStream" uid="uid://286nwvbnlqnp" path="res://sfx/trap_activated.mp3" id="29_tcgqt"]
+[ext_resource type="AudioStream" uid="uid://6medvkiuhyrj" path="res://sfx/set_card.mp3" id="30_5pmm0"]
+[ext_resource type="AudioStream" uid="uid://borymsw5xy7gp" path="res://sfx/monster_destroyed.mp3" id="34_c2vfe"]
+[ext_resource type="AudioStream" uid="uid://6v2am0ispc4k" path="res://sfx/fusion_material.mp3" id="35_xrdeg"]
+[ext_resource type="AudioStream" uid="uid://b52tk25h75gnh" path="res://sfx/fusion_result.mp3" id="36_7gdid"]
+[ext_resource type="AudioStream" uid="uid://3dqvryu4gg18" path="res://sfx/fusion_summon_result.mp3" id="37_e51ji"]
+[ext_resource type="PackedScene" uid="uid://6g7cw24e81c" path="res://vfx/fusion_result_summoned_fx/fusion_result_summoned_fx.tscn" id="38_7gdid"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_t45xh"]
+load_path = "res://.godot/imported/756652.jpg-ac6c3d5ebd245cf2e8902e5d9ae068ff.ctex"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_h8wu8"]
+shader = ExtResource("21_v5elv")
+shader_parameter/enabled = true
+
+[sub_resource type="Animation" id="Animation_h8wu8"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("fusionSpiral:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="Animation" id="Animation_v5elv"]
+resource_name = "animationSpiral"
+length = 2.3
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("fusionSpiral:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 2.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 6.2831855]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_sjiiy"]
+_data = {
+&"RESET": SubResource("Animation_h8wu8"),
+&"animationSpiral": SubResource("Animation_v5elv")
+}
+
+[node name="Duel_scene" type="Node2D"]
+
+[node name="DuelState" type="Node" parent="."]
+script = ExtResource("1_oo1qr")
+
+[node name="CardManager" type="Node2D" parent="."]
+position = Vector2(-606, -526)
+script = ExtResource("1_sooux")
+
+[node name="DuelServices" type="Node" parent="."]
+
+[node name="DuelRuleService" type="Node" parent="DuelServices"]
+script = ExtResource("2_siaty")
+
+[node name="DuelEventService" type="Node" parent="DuelServices"]
+script = ExtResource("3_10rrw")
+
+[node name="DuelCardDbService" type="Node" parent="DuelServices"]
+script = ExtResource("4_icvu8")
+
+[node name="DuelCardRuntimeService" type="Node" parent="DuelServices"]
+script = ExtResource("5_6rmsw")
+
+[node name="DuelZoneService" type="Node" parent="DuelServices"]
+script = ExtResource("6_gkp04")
+
+[node name="DuelSelectionService" type="Node" parent="DuelServices"]
+script = ExtResource("5_icvu8")
+
+[node name="DuelTurnService" type="Node" parent="DuelServices"]
+script = ExtResource("8_yst2b")
+
+[node name="DuelDrawService" type="Node" parent="DuelServices"]
+script = ExtResource("9_i3jdp")
+
+[node name="DuelCombatService" type="Node" parent="DuelServices"]
+script = ExtResource("10_1rybd")
+
+[node name="DuelAttackStateService" type="Node" parent="DuelServices"]
+script = ExtResource("11_n1f31")
+
+[node name="DuelDamageService" type="Node" parent="DuelServices"]
+script = ExtResource("12_bjfks")
+
+[node name="DuelDestructionService" type="Node" parent="DuelServices"]
+script = ExtResource("13_fw4lj")
+
+[node name="DuelGraveyardService" type="Node" parent="DuelServices"]
+script = ExtResource("4_10rrw")
+
+[node name="DuelSummonService" type="Node" parent="DuelServices"]
+script = ExtResource("3_siaty")
+
+[node name="DuelFieldSpellService" type="Node" parent="DuelServices"]
+script = ExtResource("2_2oh7o")
+
+[node name="DuelCardPlayService" type="Node" parent="DuelServices"]
+script = ExtResource("17_r70ar")
+
+[node name="DuelCardActivationService" type="Node" parent="DuelServices"]
+script = ExtResource("18_cd1gk")
+
+[node name="DuelEquipService" type="Node" parent="DuelServices"]
+script = ExtResource("19_smnlv")
+
+[node name="DuelKeywordService" type="Node" parent="DuelServices"]
+script = ExtResource("20_08bje")
+
+[node name="DuelStatService" type="Node" parent="DuelServices"]
+script = ExtResource("7_gkp04")
+
+[node name="DuelRevealService" type="Node" parent="DuelServices"]
+script = ExtResource("22_d6s8b")
+
+[node name="DuelAnimationService" type="Node" parent="DuelServices"]
+script = ExtResource("23_wrqmj")
+
+[node name="DuelUiService" type="Node" parent="DuelServices"]
+script = ExtResource("24_x5cm1")
+
+[node name="DuelFusionReplacementService" type="Node" parent="DuelServices"]
+script = ExtResource("25_iumx2")
+
+[node name="DuelSpecialEffectService" type="Node" parent="DuelServices"]
+script = ExtResource("6_6rmsw")
+
+[node name="DuelFlow" type="Node" parent="."]
+script = ExtResource("16_qattd")
+title_scene = ExtResource("3_t45xh")
+story_scene = ExtResource("4_5r5qm")
+
+[node name="PlayerHand" type="Node2D" parent="."]
+script = ExtResource("2_qattd")
+
+[node name="OpponentHand" type="Node2D" parent="."]
+script = ExtResource("3_1dr3c")
+
+[node name="Deck" parent="." instance=ExtResource("4_t45xh")]
+visible = false
+position = Vector2(100, 950)
+scale = Vector2(0.8, 0.8)
+
+[node name="InputManager" type="Node2D" parent="."]
+script = ExtResource("5_5r5qm")
+
+[node name="CardSlotsRival" type="Node2D" parent="."]
+z_index = -3
+position = Vector2(80, -345)
+
+[node name="CardSlot" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(542, 750)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot2" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(751, 750)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot3" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(960, 750)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot4" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(1169, 750)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot5" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(1378, 750)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot6" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(542, 519)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot7" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(750.99994, 519)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot8" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(960.0001, 519)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot9" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(1169, 519)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot10" parent="CardSlotsRival" instance=ExtResource("6_gatq4")]
+z_index = -3
+position = Vector2(1378, 519)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlots" type="Node2D" parent="."]
+z_index = -5
+position = Vector2(80, 94)
+
+[node name="CardSlot" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(542, 766)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot2" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(750.99994, 766)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot3" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(960.0001, 766)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot4" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(1169, 766)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot5" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(1378, 766)
+scale = Vector2(0.8, 0.8)
+script = ExtResource("7_vhs7o")
+
+[node name="CardSlot6" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(542, 535)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot7" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(751, 535)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot8" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(960, 535)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot9" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(1169, 535)
+scale = Vector2(0.8, 0.8)
+
+[node name="CardSlot10" parent="CardSlots" instance=ExtResource("8_v5elv")]
+z_index = -3
+position = Vector2(1378, 535)
+scale = Vector2(0.8, 0.8)
+
+[node name="EndTurnButton" type="Button" parent="."]
+offset_left = 1537.0
+offset_top = 506.0
+offset_right = 1615.0
+offset_bottom = 537.0
+text = "End Turn"
+
+[node name="DeckRival" type="Node2D" parent="."]
+visible = false
+position = Vector2(1780, 180)
+
+[node name="Deck" parent="DeckRival" instance=ExtResource("9_h8wu8")]
+script = ExtResource("10_sjiiy")
+
+[node name="BattleManager" type="Node" parent="."]
+script = ExtResource("11_flypn")
+destroy_explosion_scene = ExtResource("16_sjiiy")
+monster_reborn_fx_scene = ExtResource("17_flypn")
+
+[node name="BattleTimer" type="Timer" parent="."]
+
+[node name="PlayerHP" type="RichTextLabel" parent="."]
+offset_left = 1544.0
+offset_top = 575.0
+offset_right = 1584.0
+offset_bottom = 615.0
+scale = Vector2(2, 2)
+text = "0"
+
+[node name="OpponentHP" type="RichTextLabel" parent="."]
+offset_left = 1546.0
+offset_top = 415.0
+offset_right = 1586.0
+offset_bottom = 455.0
+scale = Vector2(2, 2)
+text = "0"
+
+[node name="FieldSpellName" type="RichTextLabel" parent="."]
+offset_left = 1649.0
+offset_top = 501.0
+offset_right = 1689.0
+offset_bottom = 541.0
+text = "--"
+
+[node name="BgA" type="Sprite2D" parent="."]
+z_index = -20
+texture_repeat = 2
+position = Vector2(1036, 482)
+texture = ExtResource("13_jmg8l")
+region_enabled = true
+script = ExtResource("19_5q81d")
+
+[node name="CardDescScreen" type="Node2D" parent="."]
+
+[node name="CardImageHolder" type="Sprite2D" parent="CardDescScreen"]
+position = Vector2(282, 352)
+texture = SubResource("CompressedTexture2D_t45xh")
+
+[node name="CardDescTxtBox" type="Sprite2D" parent="CardDescScreen"]
+position = Vector2(281, 830)
+scale = Vector2(2.6055555, 1)
+texture = ExtResource("15_h1aux")
+
+[node name="CardDescScreenDesc" type="RichTextLabel" parent="CardDescScreen"]
+offset_left = 69.0
+offset_top = 715.0
+offset_right = 491.0
+offset_bottom = 943.0
+text = "Desc Card Hovered"
+
+[node name="GuardianStarManager" type="Node" parent="."]
+script = ExtResource("19_5r5qm")
+
+[node name="FusionManager" type="Node2D" parent="."]
+position = Vector2(-760, -610)
+script = ExtResource("19_gatq4")
+
+[node name="OpponentIA" type="Node" parent="."]
+script = ExtResource("20_gatq4")
+
+[node name="FusionPoint" type="Node2D" parent="."]
+visible = false
+z_index = 40
+position = Vector2(1040, 520)
+script = ExtResource("21_h8wu8")
+
+[node name="FusionDarker" type="ColorRect" parent="FusionPoint"]
+z_index = -1
+offset_left = -1136.0
+offset_top = -644.0
+offset_right = 979.0
+offset_bottom = 657.0
+color = Color(0, 0, 0, 0.45882353)
+
+[node name="fusionSpiral" type="Sprite2D" parent="FusionPoint"]
+material = SubResource("ShaderMaterial_h8wu8")
+scale = Vector2(2, 2)
+texture = ExtResource("21_vhs7o")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="FusionPoint"]
+libraries = {
+&"": SubResource("AnimationLibrary_sjiiy")
+}
+autoplay = "animationSpiral"
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="CardContextMenu" type="PopupMenu" parent="UILayer"]
+oversampling_override = 1.0
+
+[node name="RevealAckPanel" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_left = 974.0
+offset_top = 655.0
+offset_right = 1014.0
+offset_bottom = 695.0
+
+[node name="Label" type="Label" parent="RevealAckPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "ya ta perrito?"
+
+[node name="ButtonAccept" type="Button" parent="RevealAckPanel"]
+layout_mode = 0
+offset_left = 33.0
+offset_top = 28.0
+offset_right = 55.0
+offset_bottom = 59.0
+text = "Si"
+
+[node name="InputBlocker" type="ColorRect" parent="."]
+visible = false
+z_index = 90
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="DuelFxManager" type="Node" parent="."]
+script = ExtResource("27_jmg8l")
+draw_sfx = ExtResource("28_qj6dy")
+summon_faceup_sfx = ExtResource("28_g6765")
+summon_set_sfx = ExtResource("30_5pmm0")
+set_spelltrap_sfx = ExtResource("30_5pmm0")
+spell_activate_sfx = ExtResource("28_h1aux")
+monster_effect_activate_sfx = ExtResource("28_h1aux")
+trap_reactive_sfx = ExtResource("29_tcgqt")
+summon_by_effect_sfx = ExtResource("28_q21jv")
+destroy_vibration_sfx = ExtResource("15_tcgqt")
+destroy_explosion_sfx = ExtResource("34_c2vfe")
+material_absorb_sfx = ExtResource("35_xrdeg")
+fusion_intent_sfx = ExtResource("36_7gdid")
+fusion_result_sfx = ExtResource("37_e51ji")
+monster_reborn_summon_fx_scene = ExtResource("17_flypn")
+fusion_result_summoned_vfx_scene = ExtResource("38_7gdid")
+
+[connection signal="pressed" from="EndTurnButton" to="BattleManager" method="_on_end_turn_button_pressed"]

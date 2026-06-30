@@ -41,6 +41,7 @@ var _usage_dim_reason: String = ""
 # Card DB fields
 # -------------------------
 var id: String = ""
+var art_id_override: String = ""
 var kind: String = "" # MONSTER / SPELL / TRAP
 var cardname: String = ""
 var attribute: String = ""
@@ -106,6 +107,7 @@ func _ready() -> void:
 	call_deferred("_ensure_usage_dim_overlay")
 	if is_instance_valid(fusion_spiral):
 		_fusion_spiral_original_material = fusion_spiral.material
+	set_fusion_marker(FusionMarker.NONE)
 	_update_visuals()
 
 # -------------------------
@@ -136,6 +138,7 @@ func _on_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -
 # -------------------------
 func apply_db(card_def: Dictionary) -> void:
 	id = str(card_def.get("id", ""))
+	art_id_override = str(card_def.get("art_id", card_def.get("artwork_id", ""))).strip_edges()
 	kind = str(card_def.get("kind", "")).to_upper()
 
 	var n: Variant = card_def.get("cardname", null)
@@ -302,17 +305,24 @@ func _update_back_visibility() -> void:
 func _try_set_art_texture() -> void:
 	if not is_instance_valid(card_art):
 		return
-	if id == "":
+
+	var art_id := str(art_id_override).strip_edges()
+
+	if art_id == "":
+		art_id = str(id).strip_edges()
+
+	if art_id == "":
 		card_art.texture = null
 		return
 
-	var id_padded8: String = id.pad_zeros(8)
-	var id_padded10: String = id.pad_zeros(10)
+	var id_padded8: String = art_id.pad_zeros(8)
+	var id_padded10: String = art_id.pad_zeros(10)
+
 	var candidates: Array[String] = [
-		"res://_resources/_card_artwork/%s.png" % id,
-		"res://_resources/_card_artwork/%s.webp" % id,
-		"res://_resources/_card_artwork/%s.jpg" % id,
-		"res://_resources/_card_artwork/%s.jpeg" % id,
+		"res://_resources/_card_artwork/%s.png" % art_id,
+		"res://_resources/_card_artwork/%s.webp" % art_id,
+		"res://_resources/_card_artwork/%s.jpg" % art_id,
+		"res://_resources/_card_artwork/%s.jpeg" % art_id,
 		"res://_resources/_card_artwork/%s.png" % id_padded8,
 		"res://_resources/_card_artwork/%s.webp" % id_padded8,
 		"res://_resources/_card_artwork/%s.jpg" % id_padded8,
@@ -322,12 +332,19 @@ func _try_set_art_texture() -> void:
 		"res://_resources/_card_artwork/%s.jpg" % id_padded10,
 		"res://_resources/_card_artwork/%s.jpeg" % id_padded10,
 	]
+
 	for p in candidates:
 		if ResourceLoader.exists(p):
 			card_art.texture = load(p)
 			card_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			card_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			return
+
+	card_art.texture = null
+
+func set_art_id_override(value: String) -> void:
+	art_id_override = str(value).strip_edges()
+	_try_set_art_texture()
 
 func _load_kind_background_texture() -> Texture2D:
 	var candidates: Array[String] = []
@@ -479,13 +496,17 @@ func _safe_upper(v: Variant) -> String:
 var fusion_marker: int = FusionMarker.NONE
 
 func set_fusion_marker(marker: int) -> void:
+	fusion_marker = marker
+
 	if not is_instance_valid(fusion_spiral):
 		return
 
 	if marker == FusionMarker.NONE:
 		fusion_spiral.visible = false
+
 		if _fusion_spiral_original_material != null:
 			fusion_spiral.material = _fusion_spiral_original_material
+
 		return
 
 	fusion_spiral.visible = true
@@ -500,14 +521,9 @@ func set_fusion_marker(marker: int) -> void:
 			m.resource_local_to_scene = true
 			fusion_spiral.material = m
 
-			if m is ShaderMaterial:
-				var sm := m as ShaderMaterial
-				if sm.shader != null:
-					pass
 		return
 
 	fusion_spiral.material = null
-
 #----------------
 # Equip System
 #----------------

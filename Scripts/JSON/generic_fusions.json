@@ -43,9 +43,27 @@
 },
 {
 	"fusion_id": "charubin_fire_k",
-	"result_id": "37313348",
+	"result_id": "37421579",
 	"required_groups": [["fire","pyro"],["warrior","knight","armored"]],
 	"priority": 1.1
+},
+{
+	"fusion_id": "witch_of_the_black_forest_spellcaster_dark_plant",
+	"result_id": "78010363",
+	"required_groups": [
+		{ "any": ["spellcaster"] },
+		{ "all": ["plant", "dark"] }
+	],
+	"priority": 1.93
+},
+{
+	"fusion_id": "witch_of_the_black_forest_witch_plant",
+	"result_id": "78010363",
+	"required_groups": [
+		{ "any": ["witch"] },
+		{ "any": ["plant"] }
+	],
+	"priority": 1.931
 },
 {
 	"fusion_id": "gigatech-wolf",
@@ -58,6 +76,12 @@
 	"result_id": "76184692",
 	"required_groups": [["ciclop"],["giant"]],
 	"priority": 1.201
+},
+{
+	"fusion_id": "Tiger Axe",
+	"result_id": "49791927",
+	"required_groups": [["beast"],["warrior","beast-warrior"]],
+	"priority": 1.2011
 },
 {
 	"fusion_id": "fiend_kraken",
@@ -76,6 +100,12 @@
 	"result_id": "16768387",
 	"required_groups":[["eye"],["fiend"]],
 	"priority": 1.21
+},
+{
+	"fusion_id": "mammoth_graveyard",
+	"result_id": "40374923",
+	"required_groups":[["mammoth","dinosaur"],["skull","zombie"]],
+	"priority": 1.2101
 },
 {
 	"fusion_id": "mavelus",
@@ -166,12 +196,28 @@
 	"result_id": "41762634",
 	"required_groups": [["giant"],["insect"]],
 	"priority": 1.51
+},{
+  "fusion_id": "burning_beast_pyro_fire_beast",
+  "result_id": "59364406",
+  "required_groups": [
+	{ "any": ["pyro", "fire"] },
+	{ "any": ["beast"] }
+  ],
+  "priority": 1.511
 },
 {
-	"fusion_id":"burning_beast",
-	"result_id":"59364406",
-	"required_groups":[["rock","pyro","fire"],["beast"]],
-	"priority": 1.511
+  "fusion_id": "burning_beast_rock_beast_fire",
+  "result_id": "59364406",
+  "required_groups": [
+	{ "any": ["rock"] },
+	{
+	  "any_of_all": [
+		["beast", "fire"],
+		["beast", "pyro"]
+	  ]
+	}
+  ],
+  "priority": 1.5112
 },
 {
 	"fusion_id":"ocubeam",
@@ -180,10 +226,31 @@
 	"priority": 1.512
 },
 {
+	"fusion_id": "armored_lizard",
+	"result_id": "15480588",
+	"required_groups":[["armor","armored"],["reptile"]],
+	"priority": 1.52
+},
+{
 	"fusion_id": "e_hero_sparkman",
 	"result_id": "20721928",
 	"required_groups":[["hero"],["thunder"]],
 	"priority": 1.6
+},
+{
+	"fusion_id": "holy_doll",
+	"result_id": "91939608",
+	"required_groups": [
+		{ "any": ["puppet"] },
+		{
+			"any_of_all": [
+				["light", "fairy"],
+				["holy"],
+				["light","angel"]
+			]
+		}
+	],
+	"priority": 1.601
 },
 {
 	"fusion_id": "thunder_dragon",
@@ -259,6 +326,12 @@
 	"priority": 1.81
 },
 {
+	"fusion_id": "garoozis",
+	"result_id": "14977074",
+	"required_groups":[["reptile"],["beast-warrior","axe"]],
+	"priority": 1.811
+},
+{
 	"fusion_id": "giant_red_ssnake",
 	"result_id": "58831685",
 	"required_groups":[["snake","sea-serpent"],["giant"]],
@@ -321,7 +394,7 @@
 			"any_of_all": [
 				["fiend", "dark"],
 				["warrior", "dark"],
-				["fiend", "spellcaster"]
+				["spellcaster", "dark"]
 			]
 		}
 	],
@@ -346,5 +419,17 @@
 	"result_id": "46986414",
 	"required_groups":[["dark-magician"],["dark","robe","spellcaster"]],
 	"priority": 2.5
+},
+{
+	"fusion_id": "great_moth",
+	"result_id": "14141448",
+	"required_groups":[["petit-moth"],["cocoon-of-evolution"]],
+	"priority": 2.6
+},
+{
+	"fusion_id": "perfectly_ultimate_great_moth",
+	"result_id": "14141448",
+	"required_groups":[["great-moth"],["cocoon-of-evolution","level-up","evolve"]],
+	"priority": 3.5
 },
 ]

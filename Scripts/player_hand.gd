@@ -47,7 +47,7 @@ func add_card_to_hand(card: Node2D, speed: float) -> void:
 	player_hand.insert(0, card)
 	update_hand_positions(speed)
 
-func update_hand_positions(speed: float) -> void:
+func update_hand_positions(speed: float = DEFAULT_CARD_MOVE_SPEED) -> void:
 	player_hand = player_hand.filter(func(c): return is_instance_valid(c))
 	for i in range(player_hand.size()):
 		var card = player_hand[i] as Card
@@ -69,12 +69,14 @@ func animate_card_to_position(card: Node2D, new_position: Vector2, speed: float)
 	var tween := get_tree().create_tween()
 	tween.tween_property(card, "global_position", new_position, speed)
 
-func remove_card_from_hand(card: Node2D) -> void:
-	if card in player_hand:
+func remove_card_from_hand(card: Node2D, refresh_layout: bool = true) -> void:
+	while card in player_hand:
 		player_hand.erase(card)
+
 	if is_instance_valid(card):
 		if card.has_method("set_in_hand_mask"):
 			card.set_in_hand_mask(false)
+
 		_set_card_interaction(card, false)
 
 		if card.has_method("move_to_zone"):
@@ -82,7 +84,8 @@ func remove_card_from_hand(card: Node2D) -> void:
 		elif "current_zone" in card:
 			card.current_zone = "NONE"
 
-	update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
+	if refresh_layout:
+		update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
 
 func cleanup_invalid_cards() -> void:
 	player_hand = player_hand.filter(func(c): return is_instance_valid(c))

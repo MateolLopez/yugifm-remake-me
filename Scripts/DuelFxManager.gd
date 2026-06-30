@@ -40,10 +40,16 @@ var _background_target: Node = null
 @export_group("SFX - Impact / Typed")
 @export var thunder_destroy_sfx: AudioStream
 
+@export_group("SFX - Fusion")
+@export var material_absorb_sfx: AudioStream
+@export var fusion_intent_sfx: AudioStream
+@export var fusion_result_sfx: AudioStream
+
 @export_group("VFX")
 @export var default_activation_fx_scene: PackedScene
 @export var monster_reborn_summon_fx_scene: PackedScene
 @export var thunder_destroy_fx_scene: PackedScene
+@export var fusion_result_summoned_vfx_scene: PackedScene
 
 var _bgm_player: AudioStreamPlayer = null
 
@@ -253,6 +259,15 @@ func _get_sfx_stream(key: String) -> AudioStream:
 		"thunder_destroy":
 			return thunder_destroy_sfx
 
+		"material_absorb":
+			return material_absorb_sfx
+
+		"fusion_intent":
+			return fusion_intent_sfx
+
+		"fusion_result":
+			return fusion_result_sfx
+
 		_:
 			return null
 
@@ -358,6 +373,9 @@ func _get_vfx_scene(key: String) -> PackedScene:
 
 		"thunder_destroy":
 			return thunder_destroy_fx_scene
+
+		"fusion_result_summoned":
+			return fusion_result_summoned_vfx_scene
 
 		_:
 			return null

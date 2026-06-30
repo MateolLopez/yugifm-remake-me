@@ -1195,3 +1195,10 @@ libraries = {
 &"": SubResource("AnimationLibrary_ulcbd")
 }
 autoplay = "spiral_rotate"
+
+[node name="FusionNumberLabel" type="Label" parent="."]
+visible = false
+offset_left = 2.0
+offset_top = -26.0
+offset_right = 42.0
+offset_bottom = -3.0

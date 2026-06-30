@@ -2265,7 +2265,7 @@
 	"atk": 1200,
 	"def": 1000,
 	"guardian_star": ["MOON","MARS"],
-	"tags": ["b-warrior","giant","ciclop","claw"],
+	"tags": ["beast-warrior","giant","ciclop","claw"],
 	"keywords": [],
 	"description": "Un coloso de un ojo con brazos gruesos y poderosos, hechos para asestar golpes demoledores.",
 	"effects": []
@@ -2455,7 +2455,7 @@
 	"cardname": "Serpent Marauder",
 	"attribute": "EARTH",
 	"race": "Reptile",
-	"level": 4,
+	"level": 2,
 	"atk": 700,
 	"def": 600,
 	"guardian_star": ["NEPTUNE","SUN"],
@@ -2545,7 +2545,7 @@
 	"atk": 250,
 	"def": 250,
 	"guardian_star": ["URANUS","VENUS"],
-	"tags": ["samurai","earth"],
+	"tags": ["samurai","earth","warrior"],
 	"keywords": [],
 	"description": "Un samurai veterano, ha sido exiliado hace tiempo debido a su espada maldita.",
 	"effects": []
@@ -2847,6 +2847,464 @@
 	"description": "Una marioneta viviente que confunde a sus oponentes con ilusiones.",
 	"effects": []
 },
+{
+	"id": "91939608",
+	"kind": "MONSTER",
+	"cardname": "Holy Doll",
+	"attribute": "LIGHT",
+	"race": "Spellcaster",
+	"level": 4,
+	"atk": 1600,
+	"def": 1000,
+	"guardian_star": ["SUN","PLUTO"],
+	"tags": ["spellcaster","puppet","illusion","light"],
+	"keywords": [],
+	"description": "Una muñeca que cobró vida debido a poderes sagrados, confunde a sus oponentes con ilusiones.",
+	"effects": []
+},
+{
+	"id": "27324313",
+	"kind": "MONSTER",
+	"cardname": "Eleckids",
+	"attribute": "LIGHT",
+	"race": "Thunder",
+	"level": 3,
+	"atk": 1000,
+	"def": 500,
+	"guardian_star": ["PLUTO","SUN"],
+	"tags": ["thunder","light"],
+	"keywords": [],
+	"description": "Extraña criatura que ataca a sus enemigos proyectando truenos desde sus antenas.",
+	"effects": []
+},
+{
+	"id": "53829412",
+	"kind": "MONSTER",
+	"cardname": "Griffore",
+	"attribute": "EARTH",
+	"race": "Beast",
+	"level": 4,
+	"atk": 1200,
+	"def": 1500,
+	"guardian_star": ["JUPITER","MERCURY"],
+	"tags": ["thunder","earth","claw","jaws"],
+	"keywords": [],
+	"description": "Una bestia que repele los ataques de sus depredadores gracias a su tosca piel.",
+	"effects": []
+},
+{
+	"id": "80813021",
+	"kind": "MONSTER",
+	"cardname": "Torike",
+	"attribute": "EARTH",
+	"race": "Beast",
+	"level": 3,
+	"atk": 1200,
+	"def": 600,
+	"guardian_star": ["URANUS","SUN"],
+	"tags": ["horned","earth","monk","beast"],
+	"keywords": [],
+	"description": "Utiliza sus cuernos para embestir a sus oponentes, suele descuidar su defensa con frecuencia.",
+	"effects": []
+},
+{
+	"id": "26202165",
+	"kind": "MONSTER",
+	"cardname": "Sangan",
+	"attribute": "DARK",
+	"race": "Fiend",
+	"level": 3,
+	"atk": 1000,
+	"def": 600,
+	"guardian_star": ["MOON","URANUS"],
+	"tags": ["dark","fiend","claw","jaws"],
+	"keywords": [],
+	"description": "Al ser destruido, la oscuridad se desata en el campo de batalla.",
+	"effects": [{
+		"trigger": "ON_DESTROY",
+		"template": "activate_field_spell_from_db",
+		"params": {
+			"controller": "SELF",
+			"field_id": "59197169",
+			"replace_existing_field": true
+		}
+	}]
+},
+{
+  "id": "78010363",
+  "kind": "MONSTER",
+  "cardname": "Witch of the Black Forest",
+  "attribute": "DARK",
+  "race": "Spellcaster",
+  "level": 4,
+  "atk": 1100,
+  "def": 1200,
+  "guardian_star": ["MOON", "MERCURY"],
+  "tags": ["spellcaster", "witch", "dark"],
+  "keywords": [],
+  "description": "Cuando esta carta es destruida, maldice a todos los monstruos oponentes. Si Yami está activo, la maldición se vuelve más poderosa.",
+  "effects": [
+	{
+	  "trigger": "ON_DESTROY",
+	  "template": "debuff_opponent_monsters_conditional_field",
+	  "params": {
+		  "target_side": "OPPONENT",
+		  "base_amount": 300,
+		  "field_amount": 500,
+		  "field_id": "59197169",
+		  "field_name": "Yami",
+		  "faceup_only": false
+		}
+	}
+  ]
+},
+{
+	"id": "53606874",
+	"kind": "MONSTER",
+	"cardname": "Big Insect",
+	"attribute": "EARTH",
+	"race": "Insect",
+	"level": 4,
+	"atk": 1200,
+	"def": 1500,
+	"guardian_star": ["JUPITER","URANUS"],
+	"tags": ["earth","insect"],
+	"keywords": [],
+	"description": "Una hormiga gigante que habita en la jungla. Su poder y tamaño le permite vivir sin temer a los depredadores.",
+	"effects": []
+},
+{
+	"id": "15480588",
+	"kind": "MONSTER",
+	"cardname": "Armored Lizard",
+	"attribute": "EARTH",
+	"race": "Reptile",
+	"level": 4,
+	"atk": 1500,
+	"def": 1200,
+	"guardian_star": ["NEPTUNE","SUN"],
+	"tags": ["earth","reptile","armored","armor"],
+	"keywords": [],
+	"description": "La piel de este lagarto se ha endurecido a altisimas presiones, su piel es tan resistente como la armadura de un caballero.",
+	"effects": []
+},
+{
+	"id": "52584282",
+	"kind": "MONSTER",
+	"cardname": "Hercules Beetle",
+	"attribute": "EARTH",
+	"race": "Insect",
+	"level": 5,
+	"atk": 1500,
+	"def": 2000,
+	"guardian_star": ["JUPITER","NEPTUNE"],
+	"tags": ["earth","insect"],
+	"keywords": [],
+	"description": "Un escarabajo masivo con una coraza extremadamente dura.",
+	"effects": []
+},
+{
+	"id": "88979991",
+	"kind": "MONSTER",
+	"cardname": "Killer Needle",
+	"attribute": "WIND",
+	"race": "Insect",
+	"level": 4,
+	"atk": 1200,
+	"def": 1000,
+	"guardian_star": ["JUPITER","SUN"],
+	"tags": ["wind","insect"],
+	"keywords": [],
+	"description": "Un tipo de abeja que posee un poder excepcional, son particularmente peligrosas cuando están juntas.",
+	"effects": []
+},
+{
+	"id": "87756343",
+	"kind": "MONSTER",
+	"cardname": "Larvae Moth",
+	"attribute": "EARTH",
+	"race": "Insect",
+	"level": 2,
+	"atk": 500,
+	"def": 400,
+	"guardian_star": ["JUPITER","MERCURY"],
+	"tags": ["earth","insect","larvae","great-moth","horned"],
+	"keywords": [],
+	"description": "Se cree que el poder que puede alcanzar esta larva es descomunal, sin embargo parecer ser sólo una leyenda.",
+	"effects": []
+},
+{
+	"id": "14141448",
+	"kind": "MONSTER",
+	"cardname": "Great Moth",
+	"attribute": "EARTH",
+	"race": "Insect",
+	"level": 8,
+	"atk": 2600,
+	"def": 2500,
+	"guardian_star": ["JUPITER","URANUS"],
+	"tags": ["earth","insect","great-moth","winged","horned"],
+	"keywords": [],
+	"description": "Caza a sus presas asfixiándolos con el polvo venenoso que desprende de sus alas, algunos la consideran una forma imperfecta de una criatura aún más poderosa, pero parece ser sólo una leyenda.",
+	"effects": []
+},
+{
+  "id": "40640057",
+  "kind": "MONSTER",
+  "cardname": "Kuriboh",
+  "attribute": "DARK",
+  "race": "Fiend",
+  "level": 1,
+  "atk": 300,
+  "def": 200,
+  "guardian_star": ["MERCURY", "SATURN"],
+  "tags": ["kuriboh", "dark", "fiend"],
+  "keywords": [],
+  "description": "Activar: envía esta carta al cementerio; invoca tantas Fichas Kuriboh como sea posible en tu campo. Las fichas son destruidas al final del próximo turno del oponente.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "activate_sacrifice_self_to_summon_temporary_token_copies",
+	  "params": {
+		"controller": "SELF",
+		"max_tokens": 5,
+		"token_name": "Ficha Kuriboh",
+		"token_tags": ["kuriboh", "dark", "fiend", "token"],
+		"copy_attribute": true,
+		"copy_race": true,
+		"copy_level": true,
+		"copy_atk": true,
+		"copy_def": true,
+		"copy_guardian_star": true,
+		"copy_keywords": false,
+		"copy_art": true,
+		"position": "FACEUP_DEF",
+		"destroy_at_opponent_turn_end": true
+	  }
+	}
+  ]
+},
+{
+	"id": "40374923",
+	"kind": "MONSTER",
+	"cardname": "Mammoth Graveyard",
+	"attribute": "EARTH",
+	"race": "Dinosaur",
+	"level": 3,
+	"atk": 1200,
+	"def": 800,
+	"guardian_star": ["MERCURY","PLUTO"],
+	"tags": ["earth","dinosaur","mammoth","skull","horned"],
+	"keywords": [],
+	"description": "Un mamut que protege el lugar de descanso de su manada. Es implacable con los saqueadores de tumbas.",
+	"effects": []
+},
+{
+	"id": "13429800",
+	"kind": "MONSTER",
+	"cardname": "Great White",
+	"attribute": "WATER",
+	"race": "Fish",
+	"level": 4,
+	"atk": 1600,
+	"def": 800,
+	"guardian_star": ["NEPTUNE","MOON"],
+	"tags": ["water","fish","shark"],
+	"keywords": [],
+	"description": "Un tiburón blanco gigante con dientes afilados como navajas.",
+	"effects": []
+},
+{
+	"id": "49417509",
+	"kind": "MONSTER",
+	"cardname": "Wolf",
+	"attribute": "EARTH",
+	"race": "Beast",
+	"level": 3,
+	"atk": 1200,
+	"def": 800,
+	"guardian_star": ["JUPITER","PLUTO"],
+	"tags": ["earth","wolf","beast","claw","jaws"],
+	"keywords": [],
+	"description": "Un lobo rara vez visto, con un olfato poderoso para captar el rastro de un enemigo.",
+	"effects": []
+},
+{
+	"id": "76812113",
+	"kind": "MONSTER",
+	"cardname": "Harpie Lady",
+	"attribute": "WIND",
+	"race": "Winged-Beast",
+	"level": 4,
+	"atk": 1300,
+	"def": 1400,
+	"guardian_star": ["SATURN","NEPTUNE"],
+	"tags": ["wind","harpie-lady","winged-beast","claw","winged"],
+	"keywords": [],
+	"description": "Un animal con forma humana y alas. Hermoso a la vista, pero letal en combate.",
+	"effects": []
+},
+{
+	"id": "12206212",
+	"kind": "MONSTER",
+	"cardname": "Harpie Lady Sisters",
+	"attribute": "WIND",
+	"race": "Winged-Beast",
+	"level": 6,
+	"atk": 1950,
+	"def": 2100,
+	"guardian_star": ["SATURN","MARS"],
+	"tags": ["wind","harpie-lady","winged-beast","claw","winged","harpie-lady-sisters"],
+	"keywords": [],
+	"description": "Tres harpías hermanas que atacan a sus oponentes con movimientos imparables e impredecibles.",
+	"effects": []
+},
+{
+  "id": "90219263",
+  "kind": "SPELL",
+  "cardname": "Elegant Egotist",
+  "race": "NORMAL",
+  "tags": ["spell", "harpie", "harpie-lady"],
+  "keywords": [],
+  "description": "Si controlas una Harpie Lady de Nivel 4 o menor, tribútala e invoca a Harpie Lady Sisters. Si no, si controlas Harpie Lady Sisters, tribútala e invoca hasta 3 monstruos Harpie Lady de Nivel 4 o menor aleatorias.",
+  "effects": [
+	{
+	  "trigger": "ON_ACTIVATE",
+	  "template": "activate_elegant_egotist",
+	  "params": {
+		"controller": "SELF",
+		"harpie_tag": "harpie-lady",
+		"sisters_tag": "harpie-lady-sisters",
+		"sisters_id": "12206212",
+		"max_harpie_level": 4,
+		"split_max_count": 3,
+		"position": "FACEUP_ATK"
+	  }
+	}
+  ]
+},
+{
+	"id": "49791927",
+	"kind": "MONSTER",
+	"cardname": "Tiger Axe",
+	"attribute": "EARTH",
+	"race": "Beast-Warrior",
+	"level": 4,
+	"atk": 1300,
+	"def": 1100,
+	"guardian_star": ["JUPITER","NEPTUNE"],
+	"tags": ["earth","tiger","beast-warrior","claw","jaws"],
+	"keywords": [],
+	"description": "Un poderoso y veloz guerrero bestia que blande una pesada hacha.",
+	"effects": []
+},
+{
+	"id": "90357090",
+	"kind": "MONSTER",
+	"cardname": "Silver Fang",
+	"attribute": "EARTH",
+	"race": "Beast",
+	"level": 3,
+	"atk": 1200,
+	"def": 800,
+	"guardian_star": ["JUPITER","SUN"],
+	"tags": ["earth","wolf","beast","claw","jaws"],
+	"keywords": [],
+	"description": "Un lobo de las nieves cuya belleza es cautivadora, aún así es absolutamente feroz en la batalla.",
+	"effects": []
+},
+{
+	"id": "01184620",
+	"kind": "MONSTER",
+	"cardname": "Kojikocy",
+	"attribute": "EARTH",
+	"race": "Warrior",
+	"level": 4,
+	"atk": 1500,
+	"def": 1200,
+	"guardian_star": ["URANUS","MOON"],
+	"tags": ["earth","warrior"],
+	"keywords": [],
+	"description": "Un cazador de hombres cuya fuerza es capáz aplastar hasta las rocas.",
+	"effects": []
+},
+{
+	"id": "48579379",
+	"kind": "MONSTER",
+	"cardname": "Perfectly Ultimate Great Moth",
+	"attribute": "EARTH",
+	"race": "Insect",
+	"level": 8,
+	"atk": 3500,
+	"def": 3000,
+	"guardian_star": ["JUPITER","MOON"],
+	"tags": ["winged","horned","earth","insect","great-moth"],
+	"keywords": [],
+	"description": "La última encarnación del insecto definitivo.",
+	"effects": []
+},
+{
+	"id": "14977074",
+	"kind": "MONSTER",
+	"cardname": "Garoozis",
+	"attribute": "FIRE",
+	"race": "Beast-Warrior",
+	"level": 5,
+	"atk": 1800,
+	"def": 1500,
+	"guardian_star": ["MARS","VENUS"],
+	"tags": ["beast-warrior","reptile","fire"],
+	"keywords": [],
+	"description": "Un lagarto luchador, hábil en el manejo del hacha, intimida a sus rivales con su imponente presencia.",
+	"effects": []
+},
+{
+	"id": "15025844",
+	"kind": "MONSTER",
+	"cardname": "Mystical Elf",
+	"attribute": "LIGHT",
+	"race": "Spellcaster",
+	"level": 4,
+	"atk": 800,
+	"def": 2000,
+	"guardian_star": ["SUN","JUPITER"],
+	"tags": ["spellcaster","elf","light"],
+	"keywords": [],
+	"description": "Un elfo delicado que carece de capacidad ofensiva, pero posee una defensa formidable respaldada por un poder místico.",
+	"effects": []
+},
+{
+	"id": "88819587",
+	"kind": "MONSTER",
+	"cardname": "Baby Dragon",
+	"attribute": "WIND",
+	"race": "Dragon",
+	"level": 3,
+	"atk": 1200,
+	"def": 700,
+	"guardian_star": ["URANUS","SUN"],
+	"tags": ["dragon","winged","jaws","claw","baby-dragon","wind"],
+	"keywords": [],
+	"description": "Mucho más que una simple cria, este dragón está dotado de un potencial increíble.",
+	"effects": []
+},
+{
+	"id": "15303296",
+	"kind": "MONSTER",
+	"cardname": "Ryu-kishin",
+	"attribute": "DARK",
+	"race": "Fiend",
+	"level": 3,
+	"atk": 1000,
+	"def": 500,
+	"guardian_star": ["SATURN","SUN"],
+	"tags": ["fiend","winged","claw","ryu-kishin","dark"],
+	"keywords": [],
+	"description": "Una criatura muy esquiva que parece una estatua inofensiva hasta que ataca.",
+	"effects": []
+},
+
+
 
 
 
@@ -3214,6 +3672,50 @@
 		"target_side": "BOTH",
 		"filter_attribute": "WATER",
 		"atk_delta": 500,
+		"def_delta": -500
+	  }
+	}
+  ]
+},
+{
+  "id": "59197169",
+  "kind": "SPELL",
+  "cardname": "Yami",
+  "race": "FIELD",
+  "tags": ["field"],
+  "keywords": [],
+  "description": "Potencia el atk de los monstruos Fiend y Spellcaster, además reduce el poder de los Fairy.",
+   "effects": [
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"aura_id": "yami_fiend_buff",
+		"target_side": "BOTH",
+		"filter_race": "FIEND",
+		"atk_delta": 500,
+		"def_delta": 500
+	  }
+	},
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"aura_id": "yami_spellcaster_buff",
+		"target_side": "BOTH",
+		"filter_race": "SPELLCASTER",
+		"atk_delta": 500,
+		"def_delta": 500
+	  }
+	},
+	{
+	  "trigger": "PASSIVE",
+	  "template": "aura_stat_buff_while_source_faceup",
+	  "params": {
+		"aura_id": "yami_fairy_debuff",
+		"target_side": "BOTH",
+		"filter_race": "FAIRY",
+		"atk_delta": -500,
 		"def_delta": -500
 	  }
 	}

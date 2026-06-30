@@ -136,8 +136,11 @@ func _input(event: InputEvent) -> void:
 		if _card_kind(effect_card) == "SPELL":
 			return
 
-		if bm_main != null and bm_main.has_method("try_activate_card"):
-			bm_main.try_activate_card(effect_card)
+		if bm_main != null:
+			var activation_service = bm_main.get("card_activation_service")
+
+			if activation_service != null and activation_service.has_method("try_activate_card"):
+				activation_service.try_activate_card(effect_card)
 
 		return
 
@@ -211,7 +214,7 @@ func _input(event: InputEvent) -> void:
 			emit_signal("left_mouse_button_clicked")
 
 			if card_manager_reference and card_manager_reference.is_dragging():
-				card_manager_reference.click_to_drop()
+				await card_manager_reference.click_to_drop()
 				return
 
 			raycast_at_cursor()
@@ -284,16 +287,45 @@ func raycast_at_cursor() -> void:
 					k = "MONSTER"
 
 				if k == "MONSTER":
-					if bm != null and bm.has_method("resolve_equip_target"):
-						bm.resolve_equip_target(card_clicked)
+					if bm != null and bm.equip_service.has_method("resolve_equip_target"):
+						bm.equip_service.resolve_equip_target(card_clicked)
 					return
 			continue
 
 		if (layer & COLLISION_MASK_OPPONENT_CARD) != 0:
-			if bm != null and bool(bm.get("spell_targeting")):
-				bm.receive_spell_target(card_clicked)
+			if bm == null:
+				return
+
+			var combat_service = bm.get("combat_service")
+			var card_activation_service = bm.get("card_activation_service")
+			var cm := get_node_or_null("../CardManager")
+
+			# Si ya hay un monstruo propio seleccionado para atacar,
+			# este click sobre carta rival debe resolverse como ataque.
+			if cm != null and ("selected_monster" in cm) and is_instance_valid(cm.selected_monster):
+				if combat_service != null and combat_service.has_method("enemy_card_selected"):
+					combat_service.enemy_card_selected(card_clicked)
+				else:
+					push_warning("InputManager: combat_service no tiene enemy_card_selected(card).")
+				return
+
+			var spell_targeting := false
+
+			if is_instance_valid(card_activation_service) and ("spell_targeting" in card_activation_service):
+				spell_targeting = bool(card_activation_service.spell_targeting)
+
+			if spell_targeting:
+				if card_activation_service.has_method("receive_spell_target"):
+					card_activation_service.receive_spell_target(card_clicked)
+				else:
+					push_warning("InputManager: card_activation_service no puede recibir spell target.")
+				return
+
+			if combat_service != null and combat_service.has_method("enemy_card_selected"):
+				combat_service.enemy_card_selected(card_clicked)
 			else:
-				bm.enemy_card_selected(card_clicked)
+				push_warning("InputManager: combat_service no tiene enemy_card_selected(card).")
+
 			return
 
 		if (layer & COLLISION_MASK_CARD) != 0:
@@ -409,6 +441,10 @@ func _on_context_menu_id_pressed(id: int) -> void:
 	var bm := get_node_or_null("../BattleManager")
 	var cm := get_node_or_null("../CardManager")
 	var fm := get_node_or_null("../FusionManager")
+	var card_activation_service = bm.get("card_activation_service") if bm != null else null
+	var card_play_service = bm.get("card_play_service") if bm != null else null
+	var reveal_service = bm.get("reveal_service") if bm != null else null
+	var animation_service = bm.get("animation_service") if bm != null else null
 
 	if bm != null and bool(bm.get("is_opponent_turn")):
 		return
@@ -416,42 +452,42 @@ func _on_context_menu_id_pressed(id: int) -> void:
 	if is_animating:
 		return
 
-	if bm != null and bm.has_method("is_duel_animating"):
-		if bool(bm.is_duel_animating()):
+	if animation_service != null and animation_service.has_method("is_duel_animating"):
+		if bool(animation_service.is_duel_animating()):
 			return
 
 	match id:
 		ACT_ACTIVATE_FROM_HAND:
-			if bm and bm.has_method("try_activate_from_hand"):
-				bm.try_activate_from_hand(card)
+			if card_activation_service != null and card_activation_service.has_method("try_activate_from_hand"):
+				card_activation_service.try_activate_from_hand(card)
 
 		ACT_ACTIVATE_ON_FIELD:
-			if bm and bm.has_method("try_activate_card"):
-				bm.try_activate_card(card)
+			if bm and bm.card_activation_service.has_method("try_activate_card"):
+				bm.card_activation_service.try_activate_card(card)
 
 		ACT_SET_SPELLTRAP:
-			if bm and bm.has_method("try_set_from_hand"):
-				bm.try_set_from_hand(card)
+			if card_play_service != null and card_play_service.has_method("try_set_from_hand"):
+				card_play_service.try_set_from_hand(card)
 			else:
-				print("Falta BattleManager.try_set_from_hand(card)")
+				print("Falta card_play_service.try_set_from_hand(card)")
 
 		ACT_PLAY_FACEDOWN:
 			if not _can_fuse_now():
 				return
 
-			if bm and bm.has_method("try_play_monster_from_hand"):
-				bm.try_play_monster_from_hand(card, true)
+			if card_play_service != null and card_play_service.has_method("try_play_monster_from_hand"):
+				card_play_service.try_play_monster_from_hand(card, true)
 			else:
-				print("Falta BattleManager.try_play_monster_from_hand(card, facedown)")
+				print("Falta card_play_service.try_play_monster_from_hand(card, facedown)")
 
 		ACT_PLAY_FACEUP:
 			if not _can_fuse_now():
 				return
 
-			if bm and bm.has_method("try_play_monster_from_hand"):
-				bm.try_play_monster_from_hand(card, false)
+			if card_play_service != null and card_play_service.has_method("try_play_monster_from_hand"):
+				card_play_service.try_play_monster_from_hand(card, false)
 			else:
-				print("Falta BattleManager.try_play_monster_from_hand(card, facedown)")
+				print("Falta card_play_service.try_play_monster_from_hand(card, facedown)")
 
 		ACT_TOGGLE_POSITION:
 			if not _can_change_battle_state(card):
@@ -463,8 +499,8 @@ func _on_context_menu_id_pressed(id: int) -> void:
 			if not _can_change_battle_state(card):
 				return
 
-			if bm and bm.has_method("reveal_card"):
-				bm.reveal_card(card)
+			if reveal_service != null and reveal_service.has_method("reveal_card"):
+				reveal_service.reveal_card(card)
 
 		ACT_CHANGE_GUARDIAN_STAR:
 			if not _can_change_battle_state(card):
@@ -523,8 +559,8 @@ func _duel_input_locked() -> bool:
 		return true
 
 	var bm = _battle_manager()
-	if bm != null and bm.has_method("is_duel_animating"):
-		if bool(bm.is_duel_animating()):
+	if bm != null and bm.animation_service.has_method("is_duel_animating"):
+		if bool(bm.animation_service.is_duel_animating()):
 			return true
 
 	return false
@@ -600,7 +636,6 @@ func _has_attacked_this_turn(card) -> bool:
 
 	return false
 
-
 func _toggle_monster_position(card) -> void:
 	if not is_instance_valid(card):
 		return
@@ -611,15 +646,17 @@ func _toggle_monster_position(card) -> void:
 	if "in_defense" in card:
 		new_position = "ATTACK" if bool(card.in_defense) else "DEFENSE"
 
-	if bm != null and bm.has_method("_set_position"):
-		bm._set_position(card, new_position)
-		return
+	if bm != null:
+		var combat_service = bm.get("combat_service")
+
+		if combat_service != null and combat_service.has_method("_set_position"):
+			combat_service._set_position(card, new_position)
+			return
 
 	if card.has_method("set_defense_position"):
 		card.set_defense_position(not bool(card.in_defense))
 	elif "in_defense" in card:
 		card.in_defense = not bool(card.in_defense)
-
 
 func _can_change_battle_state(card) -> bool:
 	if not _is_player_card(card):
@@ -638,8 +675,8 @@ func _fusion_input_locked() -> bool:
 		return true
 
 	var bm = _battle_manager()
-	if bm != null and bm.has_method("is_duel_animating"):
-		if bool(bm.is_duel_animating()):
+	if bm != null and bm.animation_service.has_method("is_duel_animating"):
+		if bool(bm.animation_service.is_duel_animating()):
 			return true
 
 	return false

@@ -17,8 +17,6 @@ func add_card_to_hand(card: Node2D, speed: float) -> void:
 	if card in opponent_hand:
 		animate_card_to_position(card, card.starting_position, DEFAULT_CARD_MOVE_SPEED)
 		return
-	_play_duel_sfx("draw")
-	# Normalizado a Card.gd actual
 	if card.get("owner_side") != null:
 		card.owner_side = "OPPONENT"
 	if card.has_method("apply_owner_collision_layers"):
@@ -67,7 +65,7 @@ func animate_card_to_position(card: Node2D, new_position: Vector2, speed: float)
 	var tw := get_tree().create_tween()
 	tw.tween_property(card, "global_position", new_position, speed)
 
-func remove_card_from_hand(card: Node2D) -> void:
+func remove_card_from_hand(card: Node2D, refresh_layout: bool = true) -> void:
 	if card in opponent_hand:
 		opponent_hand.erase(card)
 
@@ -80,7 +78,8 @@ func remove_card_from_hand(card: Node2D) -> void:
 		elif "current_zone" in card:
 			card.current_zone = "NONE"
 
-	update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
+	if refresh_layout:
+		update_hand_positions(DEFAULT_CARD_MOVE_SPEED)
 
 func cleanup_invalid_cards() -> void:
 	opponent_hand = opponent_hand.filter(func(c): return is_instance_valid(c) and c.get_parent() != null)

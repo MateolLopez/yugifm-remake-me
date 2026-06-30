@@ -58,26 +58,39 @@ func click_to_drop() -> void:
 		cancel_drag_and_restore()
 		return
 
-	finish_drag()
+	await finish_drag()
 
 func card_clicked(card: Card) -> void:
 	if card == null:
 		return
 
+	var bm = _battle_manager()
+
+	if bm != null and bm.fusion_replacement_service.has_method("is_waiting_for_fusion_replacement"):
+		if bm.fusion_replacement_service.is_waiting_for_fusion_replacement():
+			if card.is_on_field() and bm.fusion_replacement_service.has_method("receive_fusion_replacement_card"):
+				await bm.fusion_replacement_service.receive_fusion_replacement_card(card)
+			return
+
 	if _player_interaction_locked():
 		return
-
-	var bm = _battle_manager()
 
 	if card.is_on_field():
 		if bm.is_opponent_turn:
 			return
 
-		if card in bm.player_cards_that_attacked_this_turn and not bm._has_kw(card, "MULTI_ATTACK_ALL"):
+		if card in bm.player_cards_that_attacked_this_turn and not bm.kw_service._has_kw(card, "MULTI_ATTACK_ALL"):
 			return
 
-		if bm.spell_targeting:
-			bm.receive_spell_target(card)
+		var card_activation_service = bm.get("card_activation_service") if bm != null else null
+
+		var spell_targeting := false
+		if bm != null:
+			spell_targeting = bm.get("spell_targeting") == true
+
+		if spell_targeting:
+			if card_activation_service != null and card_activation_service.has_method("receive_spell_target"):
+				card_activation_service.receive_spell_target(card)
 			return
 
 		if card.is_spell_like():
@@ -89,22 +102,23 @@ func card_clicked(card: Card) -> void:
 
 		if card not in bm.player_cards_that_attacked_this_turn:
 			if bm.opponent_cards_on_battlefield.size() == 0:
-				await bm.direct_attack(card, "Player")
+				await bm.damage_service.direct_attack(card, "Player")
 
 				var im = _input_manager()
 				if im:
 					im.inputs_disabled = false
 
-				bm.enable_end_turn_button(true)
+				bm.ui_service.enable_end_turn_button(true)
 			else:
 				select_card_for_battle(card)
+
 	else:
 		start_drag(card)
 
 func activate_spell(card: Card) -> void:
 	if card == null or not card.is_on_field():
 		return
-	_battle_manager().start_spell_activation(card, "Player")
+	_battle_manager().card_activation_service.start_spell_activation(card, "Player")
 
 func select_card_for_battle(card: Card) -> void:
 	if selected_monster:
@@ -165,22 +179,29 @@ func _place_card_in_slot(card: Card, slot: Node2D) -> void:
 		area.monitoring = true
 		area.input_pickable = true
 
-	if bool(card.get("fusion_result")):
+	if card.is_monster():
 		card.set_face_down(false)
-	else:
+	elif card.is_spell_like():
 		card.set_face_down(true)
+	else:
+		card.set_face_down(false)
 
 	card.scale = Vector2(FIELD_SCALE, FIELD_SCALE)
 	_snap_card_to_slot_center(card, slot)
 	card.z_index = -4
+
 func _card_matches_slot(card: Card, slot: Node) -> bool:
 	if card == null or slot == null:
 		return false
+
 	var slot_type := str(slot.get("card_slot_type"))
+
 	if slot_type == "Monster":
 		return card.is_monster()
-	if slot_type == "Spell":
+
+	if slot_type == "Spell" or slot_type == "SpellTrap" or slot_type == "Trap":
 		return card.is_spell_like()
+
 	return false
 
 func finish_drag() -> void:
@@ -208,44 +229,70 @@ func finish_drag() -> void:
 			_restore_visual_and_return_to_hand()
 			return
 
-	if slot and not bool(slot.get("card_in_slot")) and _card_matches_slot(card, slot):
-		if card.is_monster() and played_monster_card_this_turn:
+	if not slot or bool(slot.get("card_in_slot")) or not _card_matches_slot(card, slot):
+		_restore_visual_and_return_to_hand()
+		return
+
+	var bm = _battle_manager()
+	if bm == null:
+		_restore_visual_and_return_to_hand()
+		return
+
+	var card_play_service = bm.get("card_play_service")
+
+	if card_play_service == null:
+		push_warning("CardManager: falta card_play_service.")
+		_restore_visual_and_return_to_hand()
+		return
+
+	if card.is_monster():
+		if played_monster_card_this_turn:
 			_restore_visual_and_return_to_hand()
 			return
 
-		if card.is_spell_like() and played_spellortrap_card_this_turn:
+		if not card_play_service.has_method("try_play_monster_from_hand"):
+			push_warning("CardManager: card_play_service no tiene try_play_monster_from_hand.")
 			_restore_visual_and_return_to_hand()
 			return
 
-		if player_hand_reference and player_hand_reference.has_method("remove_card_from_hand"):
-			player_hand_reference.remove_card_from_hand(card)
-
-		_place_card_in_slot(card, slot)
-
-		var shape := slot.get_node_or_null("Area2D/CollisionShape2D") as CollisionShape2D
-		if shape:
-			shape.disabled = true
-
-		var bm = _battle_manager()
-
-		if card.is_monster():
-			if not bm.player_cards_on_battlefield.has(card):
-				bm.player_cards_on_battlefield.append(card)
-
-			played_monster_card_this_turn = true
-
-			if card.has_method("ensure_guardian_initialized"):
-				card.ensure_guardian_initialized()
-		else:
-			played_spellortrap_card_this_turn = true
-
-		if bm and bm.has_method("register_card_played"):
-			bm.register_card_played(card, "Player")
-
+		# Importante:
+		# desde acá el service toma control visual/lógico de la carta.
 		card_being_dragged = null
+
+		var ok: bool = await card_play_service.try_play_monster_from_hand(card, false, slot)
+
+		if not ok:
+			card_being_dragged = card
+			_restore_visual_and_return_to_hand()
+			return
+
+		return
+
+	if card.is_spell_like():
+		if played_spellortrap_card_this_turn:
+			_restore_visual_and_return_to_hand()
+			return
+
+		if not card_play_service.has_method("try_set_from_hand"):
+			push_warning("CardManager: card_play_service no tiene try_set_from_hand.")
+			_restore_visual_and_return_to_hand()
+			return
+
+		# Importante:
+		# desde acá el service toma control visual/lógico de la carta.
+		card_being_dragged = null
+
+		var ok: bool = await card_play_service.try_set_from_hand(card, slot)
+
+		if not ok:
+			card_being_dragged = card
+			_restore_visual_and_return_to_hand()
+			return
+
 		return
 
 	_restore_visual_and_return_to_hand()
+	return
 
 func reset_played_cards() -> void:
 	played_monster_card_this_turn = false
@@ -354,7 +401,7 @@ func _player_interaction_locked() -> bool:
 		if bool(bm.get("is_opponent_turn")):
 			return true
 
-		if bm.has_method("is_duel_animating") and bool(bm.is_duel_animating()):
+		if bm.animation_service.has_method("is_duel_animating") and bool(bm.animation_service.is_duel_animating()):
 			return true
 
 	var im := _input_manager()

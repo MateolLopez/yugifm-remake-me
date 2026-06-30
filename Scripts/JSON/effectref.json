@@ -169,7 +169,27 @@
 	"exclude_ids": "array?",
 	"exclude_self_id": "bool?"
   }
-},"reveal_hidden_cards": {
+},
+"activate_field_spell_from_db": {
+  "desc": "Activa directamente desde la DB un Field Spell para el controlador indicado. No lo coloca en zona Spell/Trap; lo activa como campo etéreo y reemplaza el campo activo anterior.",
+  "params_schema": {
+	"controller": "SELF|OPPONENT",
+	"field_id": "string?",
+	"field_name": "string?"
+  }
+},
+"debuff_opponent_monsters_conditional_field": {
+  "desc": "Aplica un debuff permanente a monstruos según el lado objetivo. Si un Field Spell específico está activo globalmente, usa un valor mayor.",
+  "params_schema": {
+	"target_side": "SELF|OPPONENT|BOTH",
+	"base_amount": "int",
+	"field_amount": "int",
+	"field_id": "string?",
+	"field_name": "string?",
+	"faceup_only": "bool?"
+  }
+},
+"reveal_hidden_cards": {
 		"desc": "Revela temporalmente cartas ocultas del campo o de la mano.",
 		"params_schema": {
 		"target_side": "SELF|OPPONENT|BOTH",
@@ -263,6 +283,18 @@
 		"target": "OPPONENT|SELF"
 	  }
 	},
+	"activate_elegant_egotist": {
+  "desc": "Si el controlador tiene una Harpie Lady de nivel bajo, la tributa e invoca Harpie Lady Sisters desde DB. Si no, puede tributar Harpie Lady Sisters para invocar hasta 3 Harpie Lady de nivel bajo desde DB.",
+  "params_schema": {
+	"controller": "SELF|OPPONENT",
+	"harpie_tag": "string",
+	"sisters_tag": "string",
+	"sisters_id": "string",
+	"max_harpie_level": "int",
+	"split_max_count": "int",
+	"position": "FACEUP_ATK|FACEUP_DEF"
+  }
+},
 	"burn_opponent_scaled_by_destroyed_monster_atk": {
 	  "desc": "Al destruir por batalla, inflige daño de efecto igual a ATK del destruido * (num/den).",
 	  "params_schema": {
@@ -311,6 +343,25 @@
 		"same_controller": "bool?"
 	  }
 	},
+	"activate_sacrifice_self_to_summon_temporary_token_copies": {
+  "desc": "Activación manual: envía la fuente al cementerio como costo e invoca fichas temporales copiando sus estadísticas base. Las fichas no copian efectos y pueden programarse para destruirse al final del próximo turno del oponente.",
+  "params_schema": {
+	"controller": "SELF|OPPONENT",
+	"max_tokens": "int",
+	"token_name": "string",
+	"token_tags": "array?",
+	"copy_attribute": "bool?",
+	"copy_race": "bool?",
+	"copy_level": "bool?",
+	"copy_atk": "bool?",
+	"copy_def": "bool?",
+	"copy_guardian_star": "bool?",
+	"copy_keywords": "bool?",
+	"copy_art": "bool?",
+	"position": "FACEUP_ATK|FACEUP_DEF",
+	"destroy_at_opponent_turn_end": "bool?"
+  }
+},
 	"change_all_other_monsters_battle_positions": {
 	  "desc": "Cambia la posición de todos los demás monstruos (ej. toggle ATK/DEF).",
 	  "params_schema": {
