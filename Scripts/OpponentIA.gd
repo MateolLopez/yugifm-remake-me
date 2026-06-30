@@ -1,9 +1,16 @@
 extends Node
 
+const AI_NEG_INF := -1000000000
+const AI_CARD_USE_COST := 350
+const AI_PLAYER_THREAT_WEIGHT := 12
+const AI_OWN_FIELD_WEIGHT := 8
+const AI_DIRECT_DAMAGE_WEIGHT := 5
+
 var fusion_manager: Node
 var battle_manager: Node
 var opponent_hand: Node
 var card_manager: Node
+
 
 var rule_service: Node
 var event_service: Node
@@ -31,11 +38,14 @@ var ui_service: Node
 var fusion_replacement_service: Node
 var special_effect_service: Node
 
+var max_fusion_materials: int = 3
 var played_monster_card_this_turn: bool = false
 var played_spellortrap_card_this_turn: bool = false
+var ai_used_cards_this_turn: Array = []
 
 @onready var _slots_root_opponent: Node = get_node_or_null("../CardSlotsRival")
 @onready var _slots_root_player: Node = get_node_or_null("../CardSlots")
+
 
 func _ready() -> void:
 	call_deferred("_setup_refs")
@@ -50,36 +60,47 @@ func _setup_refs() -> void:
 	if battle_manager == null:
 		return
 
-	rule_service = battle_manager.rule_service
-	event_service = battle_manager.event_service
-	card_db_service = battle_manager.card_db_service
-	card_runtime_service = battle_manager.card_runtime_service
-	zone_service = battle_manager.zone_service
-	selection_service = battle_manager.selection_service
-	turn_service = battle_manager.turn_service
-	draw_service = battle_manager.draw_service
-	combat_service = battle_manager.combat_service
-	atk_state_service = battle_manager.atk_state_service
-	damage_service = battle_manager.damage_service
-	destruction_service = battle_manager.destruction_service
-	graveyard_service = battle_manager.graveyard_service
-	summon_service = battle_manager.summon_service
-	field_spell_service = battle_manager.field_spell_service
-	card_play_service = battle_manager.card_play_service
-	card_activation_service = battle_manager.card_activation_service
-	equip_service = battle_manager.equip_service
-	kw_service = battle_manager.kw_service
-	stat_service = battle_manager.stat_service
-	reveal_service = battle_manager.reveal_service
-	animation_service = battle_manager.animation_service
-	ui_service = battle_manager.ui_service
-	fusion_replacement_service = battle_manager.fusion_replacement_service
-	special_effect_service = battle_manager.special_effect_service
+	rule_service = battle_manager.get("rule_service")
+	event_service = battle_manager.get("event_service")
+	card_db_service = battle_manager.get("card_db_service")
+	card_runtime_service = battle_manager.get("card_runtime_service")
+	zone_service = battle_manager.get("zone_service")
+	selection_service = battle_manager.get("selection_service")
+	turn_service = battle_manager.get("turn_service")
+	draw_service = battle_manager.get("draw_service")
+	combat_service = battle_manager.get("combat_service")
+	atk_state_service = battle_manager.get("atk_state_service")
+	damage_service = battle_manager.get("damage_service")
+	destruction_service = battle_manager.get("destruction_service")
+	graveyard_service = battle_manager.get("graveyard_service")
+	summon_service = battle_manager.get("summon_service")
+	field_spell_service = battle_manager.get("field_spell_service")
+	card_play_service = battle_manager.get("card_play_service")
+	card_activation_service = battle_manager.get("card_activation_service")
+	equip_service = battle_manager.get("equip_service")
+	kw_service = battle_manager.get("kw_service")
+	stat_service = battle_manager.get("stat_service")
+	reveal_service = battle_manager.get("reveal_service")
+	animation_service = battle_manager.get("animation_service")
+	ui_service = battle_manager.get("ui_service")
+	fusion_replacement_service = battle_manager.get("fusion_replacement_service")
+	special_effect_service = battle_manager.get("special_effect_service")
 
+func set_opponent_config(opponent_def: Dictionary) -> void:
+	if opponent_def.is_empty():
+		max_fusion_materials = 3
+		return
+
+	max_fusion_materials = max(2, int(opponent_def.get("max_fusion_materials", 3)))
 
 func _ensure_refs() -> void:
 	if battle_manager == null or zone_service == null or card_play_service == null:
 		_setup_refs()
+
+
+# -----------------------------------------------------------------------------
+# Turn flow
+# -----------------------------------------------------------------------------
 
 func make_turn_decisions() -> void:
 	_ensure_refs()
@@ -89,47 +110,217 @@ func make_turn_decisions() -> void:
 
 	reset_played_cards()
 
+	# Compatibilidad con el flujo viejo, por si aún queda alguna fusión pendiente.
 	if _has_pending_fusion():
-		place_pending_fusion()
-		if played_monster_card_this_turn:
-			adjust_all_battle_positions()
-			await execute_intelligent_attacks()
-			return
+		await place_pending_fusion()
 
-	var should_fuse := evaluate_fusion_vs_normal_play()
-	if should_fuse:
-		var fusion_done := await try_generic_fusion()
-		if fusion_done and _has_pending_fusion():
-			place_pending_fusion()
+	var plan := _build_turn_plan()
+	await _execute_turn_plan(plan)
 
-	if not _has_pending_fusion():
-		await play_optimal_monsters()
-
-	await play_one_spelltrap_set()
-
-	adjust_all_battle_positions()
-	await execute_intelligent_attacks()
 
 func reset_played_cards() -> void:
 	played_monster_card_this_turn = false
 	played_spellortrap_card_this_turn = false
+	ai_used_cards_this_turn.clear()
 
-# ---------------------------
-# Utilidades
-# ---------------------------
 
-func _has_pending_fusion() -> bool:
-	return fusion_manager != null and fusion_manager.has_method("has_pending_fusion") and fusion_manager.has_pending_fusion()
+# -----------------------------------------------------------------------------
+# Plan builder
+# -----------------------------------------------------------------------------
 
-func _get_opponent_hand_monsters() -> Array:
+func _build_turn_plan() -> Dictionary:
+	var base_state := _build_ai_state()
+	var monster_action := _get_best_monster_action()
+	var spell_actions := _get_ai_hand_action_spells()
+
+	var best_plan := {
+		"score": AI_NEG_INF,
+		"pre_summon_spell": null,
+		"post_attack_spell": null,
+		"monster_action": monster_action,
+		"debug": "no_spell"
+	}
+
+	# Plan 0: no gastar spell activable.
+	var state_no_spell := _simulate_monster_action(base_state, monster_action)
+	state_no_spell = _simulate_best_attacks(state_no_spell)
+	var score_no_spell := _score_ai_state(state_no_spell)
+
+	best_plan["score"] = score_no_spell
+
+	for spell in spell_actions:
+		if not is_instance_valid(spell):
+			continue
+
+		# Plan A: usar spell antes de invocar/atacar.
+		var state_pre := _simulate_effect_card(base_state, spell, "Opponent")
+		state_pre = _simulate_monster_action(state_pre, monster_action)
+		state_pre = _simulate_best_attacks(state_pre)
+		var score_pre := _score_ai_state(state_pre)
+
+		if score_pre > int(best_plan.get("score", AI_NEG_INF)):
+			best_plan = {
+				"score": score_pre,
+				"pre_summon_spell": spell,
+				"post_attack_spell": null,
+				"monster_action": monster_action,
+				"debug": "pre_spell"
+			}
+
+		# Plan B: invocar/atacar primero, usar spell después.
+		var state_post := _simulate_monster_action(base_state, monster_action)
+		state_post = _simulate_best_attacks(state_post)
+		state_post = _simulate_effect_card(state_post, spell, "Opponent")
+		var score_post := _score_ai_state(state_post)
+
+		if score_post > int(best_plan.get("score", AI_NEG_INF)):
+			best_plan = {
+				"score": score_post,
+				"pre_summon_spell": null,
+				"post_attack_spell": spell,
+				"monster_action": monster_action,
+				"debug": "post_spell"
+			}
+
+	return best_plan
+
+
+func _execute_turn_plan(plan: Dictionary) -> void:
+	var pre_spell = plan.get("pre_summon_spell", null)
+	if is_instance_valid(pre_spell):
+		await _ai_activate_spell_from_hand(pre_spell)
+
+	var monster_action: Dictionary = plan.get("monster_action", {"type": "NONE"})
+	await _execute_monster_action(monster_action)
+
+	adjust_all_battle_positions()
+	await execute_intelligent_attacks()
+
+	var post_spell = plan.get("post_attack_spell", null)
+	if is_instance_valid(post_spell):
+		await _ai_activate_spell_from_hand(post_spell)
+
+	await play_one_spelltrap_set()
+
+
+func _execute_monster_action(action: Dictionary) -> void:
+	if played_monster_card_this_turn:
+		return
+
+	match str(action.get("type", "NONE")):
+		"FUSION_GENERIC":
+			var combo = action.get("combo", null)
+
+			if combo is Array and combo.size() >= 2:
+				if fusion_manager.has_method("clear_materials"):
+					fusion_manager.clear_materials()
+
+				if fusion_manager.has_method("add_material"):
+					for material in combo:
+						if is_instance_valid(material):
+							fusion_manager.add_material(material, "generic", "Opponent")
+
+				if fusion_manager.has_method("try_fusion"):
+					var fusion_result = await fusion_manager.try_fusion("Opponent")
+
+					if typeof(fusion_result) == TYPE_DICTIONARY and bool(fusion_result.get("success", false)):
+						played_monster_card_this_turn = true
+
+		"NORMAL":
+			var card = action.get("card", null)
+			if is_instance_valid(card):
+				await play_monster_to_field(card)
+
+		_:
+			return
+
+
+# -----------------------------------------------------------------------------
+# Hand helpers
+# -----------------------------------------------------------------------------
+
+func _get_opponent_hand_cards() -> Array:
 	if not opponent_hand:
 		return []
-	var arr: Array = opponent_hand.get("opponent_hand")
-	if arr == null:
+
+	var arr = opponent_hand.get("opponent_hand")
+	if arr == null or not (arr is Array):
 		return []
-	return arr.filter(func(c):
+
+	return (arr as Array).filter(func(c):
+		return is_instance_valid(c)
+	)
+
+
+func _get_opponent_hand_monsters() -> Array:
+	return _get_opponent_hand_cards().filter(func(c):
+		return str(c.get("kind")).to_upper() == "MONSTER"
+	)
+
+func _get_opponent_field_monsters() -> Array:
+	if battle_manager == null:
+		return []
+
+	return battle_manager.opponent_cards_on_battlefield.filter(func(c):
 		return is_instance_valid(c) and str(c.get("kind")).to_upper() == "MONSTER"
 	)
+
+
+func _get_opponent_fusion_materials() -> Array:
+	var materials: Array = []
+
+	for c in _get_opponent_hand_monsters():
+		if is_instance_valid(c):
+			materials.append(c)
+
+	for c in _get_opponent_field_monsters():
+		if is_instance_valid(c):
+			materials.append(c)
+
+	return materials
+
+
+func _combo_uses_field_material(combo) -> bool:
+	if not (combo is Array):
+		return false
+
+	for c in combo:
+		if is_instance_valid(c) and _is_opponent_field_monster(c):
+			return true
+
+	return false
+
+
+func _is_opponent_field_monster(card: Node) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	if battle_manager == null:
+		return false
+
+	return card in battle_manager.opponent_cards_on_battlefield
+
+func _get_opponent_hand_spelltraps() -> Array:
+	return _get_opponent_hand_cards().filter(func(c):
+		var k := str(c.get("kind")).to_upper()
+		return k == "SPELL" or k == "TRAP"
+	)
+
+
+func _opponent_hand_has_card(card: Node) -> bool:
+	if not opponent_hand:
+		return false
+
+	var arr = opponent_hand.get("opponent_hand")
+	if arr == null or not (arr is Array):
+		return false
+
+	return (arr as Array).has(card)
+
+
+# -----------------------------------------------------------------------------
+# Slots
+# -----------------------------------------------------------------------------
 
 func _get_free_slots(side: String, slot_type: String) -> Array:
 	if zone_service != null:
@@ -163,20 +354,6 @@ func _get_free_slots(side: String, slot_type: String) -> Array:
 	return free
 
 
-func _pick_free_monster_slot_opponent():
-	if zone_service != null:
-		if zone_service.has_method("pick_free_monster_slot_for"):
-			return zone_service.pick_free_monster_slot_for("Opponent")
-
-		if zone_service.has_method("_get_free_monster_slot_for"):
-			return zone_service._get_free_monster_slot_for("Opponent")
-
-	var free := _get_free_slots("Opponent", "Monster")
-	if free.is_empty():
-		return null
-
-	return free[randi_range(0, free.size() - 1)]
-
 func _pick_free_spelltrap_slot_opponent():
 	if zone_service != null:
 		if zone_service.has_method("pick_free_spelltrap_slot_for"):
@@ -191,36 +368,510 @@ func _pick_free_spelltrap_slot_opponent():
 
 	return free[randi_range(0, free.size() - 1)]
 
-# ---------------------------
-# Fusión
-# ---------------------------
+
+# -----------------------------------------------------------------------------
+# Monster action evaluation
+# -----------------------------------------------------------------------------
+
+func _get_best_monster_action() -> Dictionary:
+	if played_monster_card_this_turn:
+		return {"type": "NONE"}
+
+	var free_monster_slots := _get_free_slots("Opponent", "Monster")
+	var has_free_monster_slot := not free_monster_slots.is_empty()
+
+	var hand_monsters := _get_opponent_hand_monsters()
+	var fusion_materials := _get_opponent_fusion_materials()
+
+	var best_normal = null
+	var best_normal_atk := 0
+
+	# Normal summon: solo desde mano y solo si hay slot libre.
+	if has_free_monster_slot:
+		for m in hand_monsters:
+			var m_atk := _atk(m)
+			if m_atk > best_normal_atk:
+				best_normal_atk = m_atk
+				best_normal = m
+
+	var best_combo = null
+	var best_fusion_atk := 0
+	var best_fusion_def := 0
+	var best_fusion_uses_field := false
+	var best_fusion_name := ""
+
+	var best_sequence := {}
+
+	if fusion_materials.size() >= 2:
+		best_sequence = find_best_fusion_sequence(fusion_materials, max_fusion_materials)
+
+	if not best_sequence.is_empty():
+		best_combo = best_sequence.get("combo", [])
+		best_fusion_uses_field = _combo_uses_field_material(best_combo)
+
+		# Si no hay slot libre y la fusión no usa campo, no puede colocar resultado.
+		if has_free_monster_slot or best_fusion_uses_field:
+			best_fusion_atk = int(best_sequence.get("estimated_atk", 0))
+			best_fusion_def = int(best_sequence.get("estimated_def", 0))
+			best_fusion_name = str(best_sequence.get("estimated_name", ""))
+		else:
+			best_combo = null
+			best_fusion_atk = 0
+			best_fusion_def = 0
+			best_fusion_name = ""
+
+	if best_combo != null and best_fusion_atk > best_normal_atk:
+		return {
+			"type": "FUSION_GENERIC",
+			"combo": best_combo,
+			"estimated_atk": best_fusion_atk,
+			"estimated_def": best_fusion_def,
+			"estimated_name": best_fusion_name,
+			"uses_field_material": best_fusion_uses_field
+		}
+
+	if is_instance_valid(best_normal):
+		return {
+			"type": "NORMAL",
+			"card": best_normal,
+			"estimated_atk": best_normal_atk
+		}
+
+	return {"type": "NONE"}
+
+# -----------------------------------------------------------------------------
+# Spell/effect action evaluation
+# -----------------------------------------------------------------------------
+
+func _get_ai_hand_action_spells() -> Array:
+	var out: Array = []
+
+	for c in _get_opponent_hand_cards():
+		if not is_instance_valid(c):
+			continue
+
+		if ai_used_cards_this_turn.has(c):
+			continue
+
+		if str(c.get("kind")).to_upper() != "SPELL":
+			continue
+
+		var role := _ai_get_card_effect_role(c)
+		if role == "REMOVAL" or role == "STAT_MOD" or role == "BURN":
+			out.append(c)
+
+	return out
+
+
+func _ai_get_card_effect_role(card: Node) -> String:
+	for effect_def in _get_activation_effects(card):
+		var template := str(effect_def.get("template", ""))
+
+		match template:
+			"destroy_by_effect", "destroy_target", "destroy_all_matching", "destroy_all_others_monsters":
+				return "REMOVAL"
+
+			"debuff_opponent_monsters_conditional_field", "modify_self_stats", "graveyard_count_stat_buff_while_source_faceup":
+				return "STAT_MOD"
+
+			"inflict_effect_damage", "burn_scaled_by_opponent_field_card_count", "inflict_effect_damage_scaled_by_race_on_field":
+				return "BURN"
+
+			"recover_lp":
+				return "HEAL"
+
+			"summon_random_from_db", "summon_multiple_random_from_db":
+				return "SUMMON"
+
+	return ""
+
+
+func _get_activation_effects(card: Node) -> Array:
+	if not is_instance_valid(card):
+		return []
+
+	var effects: Array = []
+
+	if card.has_method("get_effects"):
+		effects = card.get_effects()
+	elif "effects" in card and typeof(card.effects) == TYPE_ARRAY:
+		effects = card.effects
+
+	return effects.filter(func(e):
+		return e is Dictionary and str(e.get("trigger", "")).to_upper() == "ON_ACTIVATE"
+	)
+
+
+func _ai_activate_spell_from_hand(spell_card: Node) -> bool:
+	if not is_instance_valid(spell_card):
+		return false
+
+	if played_spellortrap_card_this_turn:
+		return false
+
+	if card_activation_service == null:
+		return false
+
+	var was_in_hand := _opponent_hand_has_card(spell_card)
+	var result = null
+	var called := false
+
+	if card_activation_service.has_method("try_activate_from_hand_for_owner"):
+		called = true
+		result = await card_activation_service.try_activate_from_hand_for_owner(spell_card, "Opponent")
+	elif card_activation_service.has_method("activate_from_hand_for_owner"):
+		called = true
+		result = await card_activation_service.activate_from_hand_for_owner(spell_card, "Opponent")
+	elif card_activation_service.has_method("try_activate_card_for_owner"):
+		called = true
+		result = await card_activation_service.try_activate_card_for_owner(spell_card, "Opponent")
+	elif card_activation_service.has_method("try_activate_from_hand"):
+		# Fallback. Puede no servir si el método bloquea durante turno del oponente.
+		called = true
+		result = await card_activation_service.try_activate_from_hand(spell_card)
+
+	if not called:
+		return false
+
+	var ok := false
+
+	if typeof(result) == TYPE_BOOL:
+		ok = bool(result)
+	else:
+		# Si el método viejo retorna void, inferimos éxito si salió de la mano o fue liberada.
+		ok = was_in_hand and (not is_instance_valid(spell_card) or not _opponent_hand_has_card(spell_card))
+
+	if ok:
+		played_spellortrap_card_this_turn = true
+		ai_used_cards_this_turn.append(spell_card)
+
+	return ok
+
+
+# -----------------------------------------------------------------------------
+# Simulation model
+# -----------------------------------------------------------------------------
+
+func _build_ai_state() -> Dictionary:
+	return {
+		"player_monsters": _snapshot_monsters(battle_manager.player_cards_on_battlefield),
+		"opponent_monsters": _snapshot_monsters(battle_manager.opponent_cards_on_battlefield),
+		"used_spell": null,
+		"damage_to_player": 0,
+		"damage_to_opponent": 0
+	}
+
+
+func _snapshot_monsters(cards: Array) -> Array:
+	var out: Array = []
+
+	for c in cards:
+		if is_instance_valid(c):
+			out.append(_snapshot_monster(c))
+
+	return out
+
+
+func _snapshot_monster(card: Node) -> Dictionary:
+	return {
+		"ref": card,
+		"atk": _atk(card),
+		"def": _def(card),
+		"in_defense": bool(card.get("in_defense")),
+		"face_down": bool(card.get("face_down")) if ("face_down" in card) else false,
+		"cardname": str(card.get("cardname")) if ("cardname" in card) else ""
+	}
+
+func _simulate_monster_action(state: Dictionary, action: Dictionary) -> Dictionary:
+	var next_state := state.duplicate(true)
+
+	match str(action.get("type", "NONE")):
+		"NORMAL":
+			var card = action.get("card", null)
+			if is_instance_valid(card):
+				next_state["opponent_monsters"].append(_snapshot_monster(card))
+
+		"FUSION_GENERIC":
+			var combo = action.get("combo", [])
+			if combo is Array:
+				next_state = _simulate_remove_opponent_field_materials(next_state, combo)
+
+			next_state["opponent_monsters"].append({
+				"ref": null,
+				"atk": int(action.get("estimated_atk", 0)),
+				"def": int(action.get("estimated_def", 0)),
+				"in_defense": false,
+				"face_down": false,
+				"cardname": "Estimated Fusion"
+			})
+
+	return next_state
+
+
+func _simulate_remove_opponent_field_materials(state: Dictionary, combo: Array) -> Dictionary:
+	var next_state := state.duplicate(true)
+	var monsters: Array = next_state.get("opponent_monsters", [])
+
+	for material in combo:
+		if not is_instance_valid(material):
+			continue
+
+		if not _is_opponent_field_monster(material):
+			continue
+
+		for i in range(monsters.size() - 1, -1, -1):
+			var snap: Dictionary = monsters[i]
+			if snap.get("ref", null) == material:
+				monsters.remove_at(i)
+				break
+
+	next_state["opponent_monsters"] = monsters
+	return next_state
+
+func _simulate_effect_card(state: Dictionary, card: Node, acting_side: String) -> Dictionary:
+	var next_state := state.duplicate(true)
+
+	for effect_def in _get_activation_effects(card):
+		var template := str(effect_def.get("template", ""))
+
+		match template:
+			"destroy_by_effect":
+				next_state = _simulate_destroy_by_effect(next_state, card, acting_side, effect_def)
+
+			"inflict_effect_damage":
+				next_state = _simulate_inflict_effect_damage(next_state, card, acting_side, effect_def)
+
+			_:
+				# Template desconocido para la IA: no se simula.
+				pass
+
+	return next_state
+
+
+func _simulate_destroy_by_effect(state: Dictionary, card: Node, acting_side: String, effect_def: Dictionary) -> Dictionary:
+	var next_state := state.duplicate(true)
+	var params: Dictionary = effect_def.get("params", {})
+
+	var target_side := str(params.get("target_side", "OPPONENT")).to_upper()
+	var choose := str(params.get("choose", "RANDOM")).to_upper()
+	var count = max(1, int(params.get("count", 1)))
+	var faceup_only := bool(params.get("faceup_only", false))
+
+	var target_array_name := ""
+
+	if target_side == "OPPONENT":
+		target_array_name = "player_monsters" if acting_side == "Opponent" else "opponent_monsters"
+	elif target_side == "SELF" or target_side == "OWNER":
+		target_array_name = "opponent_monsters" if acting_side == "Opponent" else "player_monsters"
+	elif target_side == "BOTH":
+		# Para evitar sobreestimar cartas globales, se simula como si afectara a ambos lados
+		# usando un tratamiento simple.
+		var after_player := _simulate_destroy_from_array(next_state, "player_monsters", choose, count, faceup_only)
+		var after_both := _simulate_destroy_from_array(after_player, "opponent_monsters", choose, count, faceup_only)
+		after_both["used_spell"] = card
+		return after_both
+	else:
+		return next_state
+
+	if target_array_name == "":
+		return next_state
+
+	next_state = _simulate_destroy_from_array(next_state, target_array_name, choose, count, faceup_only)
+	next_state["used_spell"] = card
+
+	return next_state
+
+
+func _simulate_destroy_from_array(state: Dictionary, array_name: String, choose: String, count: int, faceup_only: bool) -> Dictionary:
+	var next_state := state.duplicate(true)
+	var source_array: Array = next_state.get(array_name, [])
+	var candidates: Array = source_array.duplicate()
+
+	if faceup_only:
+		candidates = candidates.filter(func(m):
+			return not bool(m.get("face_down", false))
+		)
+
+	if candidates.is_empty():
+		return next_state
+
+	match choose:
+		"LOWEST_ATK":
+			candidates.sort_custom(func(a, b):
+				return int(a.get("atk", 0)) < int(b.get("atk", 0))
+			)
+		"HIGHEST_ATK":
+			candidates.sort_custom(func(a, b):
+				return int(a.get("atk", 0)) > int(b.get("atk", 0))
+			)
+		"LOWEST_DEF":
+			candidates.sort_custom(func(a, b):
+				return int(a.get("def", 0)) < int(b.get("def", 0))
+			)
+		"HIGHEST_DEF":
+			candidates.sort_custom(func(a, b):
+				return int(a.get("def", 0)) > int(b.get("def", 0))
+			)
+		"HIGHEST_LEVEL", "LOWEST_LEVEL":
+			# El snapshot actual no guarda level. Si luego lo necesitás, agregalo en _snapshot_monster.
+			pass
+		_:
+			candidates.shuffle()
+
+	var destroyed := candidates.slice(0, count)
+
+	for d in destroyed:
+		source_array.erase(d)
+
+	next_state[array_name] = source_array
+	return next_state
+
+
+func _simulate_inflict_effect_damage(state: Dictionary, card: Node, acting_side: String, effect_def: Dictionary) -> Dictionary:
+	var next_state := state.duplicate(true)
+	var params: Dictionary = effect_def.get("params", {})
+
+	var amount := int(params.get("amount", 0))
+	var target := str(params.get("target", "OPPONENT")).to_upper()
+
+	if amount <= 0:
+		return next_state
+
+	if target == "OPPONENT":
+		if acting_side == "Opponent":
+			next_state["damage_to_player"] = int(next_state.get("damage_to_player", 0)) + amount
+		else:
+			next_state["damage_to_opponent"] = int(next_state.get("damage_to_opponent", 0)) + amount
+	elif target == "SELF":
+		if acting_side == "Opponent":
+			next_state["damage_to_opponent"] = int(next_state.get("damage_to_opponent", 0)) + amount
+		else:
+			next_state["damage_to_player"] = int(next_state.get("damage_to_player", 0)) + amount
+
+	next_state["used_spell"] = card
+	return next_state
+
+
+func _simulate_best_attacks(state: Dictionary) -> Dictionary:
+	var next_state := state.duplicate(true)
+	var attackers: Array = next_state["opponent_monsters"].duplicate()
+	var defenders: Array = next_state["player_monsters"]
+
+	attackers.sort_custom(func(a, b):
+		return int(a.get("atk", 0)) > int(b.get("atk", 0))
+	)
+
+	for attacker in attackers:
+		if defenders.is_empty():
+			next_state["damage_to_player"] = int(next_state.get("damage_to_player", 0)) + int(attacker.get("atk", 0))
+			continue
+
+		var best_target = _sim_find_best_attack_target(attacker, defenders)
+
+		if best_target == null:
+			continue
+
+		if _sim_can_destroy(attacker, best_target):
+			defenders.erase(best_target)
+
+	next_state["player_monsters"] = defenders
+	return next_state
+
+
+func _sim_find_best_attack_target(attacker: Dictionary, defenders: Array):
+	var killable := defenders.filter(func(d):
+		return _sim_can_destroy(attacker, d)
+	)
+
+	if killable.is_empty():
+		return null
+
+	killable.sort_custom(func(a, b):
+		return _sim_monster_threat_value(a) > _sim_monster_threat_value(b)
+	)
+
+	return killable[0]
+
+
+func _sim_can_destroy(attacker: Dictionary, target: Dictionary) -> bool:
+	var atk_value := int(attacker.get("atk", 0))
+
+	if bool(target.get("in_defense", false)):
+		return atk_value > int(target.get("def", 0))
+
+	return atk_value >= int(target.get("atk", 0))
+
+
+func _sim_monster_threat_value(monster: Dictionary) -> int:
+	if bool(monster.get("in_defense", false)):
+		return max(int(monster.get("atk", 0)), int(monster.get("def", 0)))
+
+	return int(monster.get("atk", 0))
+
+
+func _score_ai_state(state: Dictionary) -> int:
+	var score := 0
+
+	for m in state.get("opponent_monsters", []):
+		score += _sim_monster_threat_value(m) * AI_OWN_FIELD_WEIGHT
+
+	for m in state.get("player_monsters", []):
+		score -= _sim_monster_threat_value(m) * AI_PLAYER_THREAT_WEIGHT
+
+	score += int(state.get("damage_to_player", 0)) * AI_DIRECT_DAMAGE_WEIGHT
+	score -= int(state.get("damage_to_opponent", 0)) * AI_DIRECT_DAMAGE_WEIGHT
+
+	if state.get("used_spell", null) != null:
+		score -= AI_CARD_USE_COST
+
+	return score
+
+
+# -----------------------------------------------------------------------------
+# Fusion
+# -----------------------------------------------------------------------------
+
+func _has_pending_fusion() -> bool:
+	if fusion_manager == null:
+		return false
+
+	if fusion_manager.has_method("has_pending_fusion"):
+		return bool(fusion_manager.has_pending_fusion())
+
+	if "pending_fusion_card" in fusion_manager:
+		return is_instance_valid(fusion_manager.get("pending_fusion_card"))
+
+	return false
+
+
+func place_pending_fusion() -> void:
+	if fusion_manager == null:
+		return
+
+	if not _has_pending_fusion():
+		return
+
+	if not fusion_manager.has_method("place_fusion_card"):
+		return
+
+	var free_slots := _get_free_slots("Opponent", "Monster")
+	if free_slots.is_empty():
+		return
+
+	var slot = free_slots[0]
+	var ok := bool(fusion_manager.place_fusion_card(slot))
+
+	if ok:
+		played_monster_card_this_turn = true
+
 
 func evaluate_fusion_vs_normal_play() -> bool:
 	if played_monster_card_this_turn:
 		return false
 
-	var available_monsters := _get_opponent_hand_monsters()
-	if available_monsters.size() < 2:
-		return false
+	var action := _get_best_monster_action()
+	return str(action.get("type", "")) == "FUSION_GENERIC"
 
-	var best_fusion_atk := find_best_possible_fusion_atk(available_monsters)
-	if best_fusion_atk <= 0:
-		return false
-
-	var best_hand_atk := find_best_monster_in_hand_atk(available_monsters)
-	var strongest_player = get_strongest_player_monster()
-
-	if is_instance_valid(strongest_player):
-		var required_atk_to_win := _required_atk_to_beat(strongest_player)
-		if best_fusion_atk >= required_atk_to_win:
-			return true
-		elif best_hand_atk >= required_atk_to_win:
-			return false
-		else:
-			return best_fusion_atk > best_hand_atk
-
-	var fusion_threshold = max(best_hand_atk, 1200)
-	return best_fusion_atk >= fusion_threshold
 
 func _required_atk_to_beat(player_monster) -> int:
 	if not is_instance_valid(player_monster):
@@ -233,38 +884,26 @@ func _required_atk_to_beat(player_monster) -> int:
 
 	return _atk(player_monster) + 50
 
+
 func _fusion_probe(card1, card2):
 	if fusion_manager == null:
 		return null
+
 	var fusion_service = fusion_manager.get("fusion")
 	if fusion_service != null and fusion_service.has_method("find_generic_fusion"):
 		return fusion_service.find_generic_fusion(card1, card2)
+
 	var generic_db = fusion_manager.get("generic_db")
 	if generic_db != null and generic_db.has_method("find_fusion"):
 		return generic_db.find_fusion(card1, card2)
+
 	return null
 
 func find_best_possible_fusion_atk(monsters: Array) -> int:
-	var best_atk := 0
+	var best := find_best_fusion_sequence(monsters, max_fusion_materials)
+	return int(best.get("estimated_atk", 0))
 
-	monsters.sort_custom(func(a, b):
-		return _atk(a) < _atk(b)
-	)
 
-	for i in range(monsters.size()):
-		for j in range(i + 1, monsters.size()):
-			var card1 = monsters[i]
-			var card2 = monsters[j]
-			var probe = _fusion_probe(card1, card2)
-
-			if not is_instance_valid(probe):
-				continue
-
-			if probe != card2 and bool(probe.get("fusion_result")):
-				best_atk = max(best_atk, _atk(probe))
-				probe.queue_free()
-
-	return best_atk
 
 func find_best_monster_in_hand_atk(monsters: Array) -> int:
 	var best := 0
@@ -275,32 +914,139 @@ func find_best_monster_in_hand_atk(monsters: Array) -> int:
 	return best
 
 func find_best_fusion_combination(monsters: Array):
-	var best_atk := 0
-	var best_combo = null
+	var best := find_best_fusion_sequence(monsters, max_fusion_materials)
 
-	monsters.sort_custom(func(a, b):
-		return _atk(a) < _atk(b)
-	)
+	if best.is_empty():
+		return null
 
-	for i in range(monsters.size()):
-		for j in range(i + 1, monsters.size()):
-			var card1 = monsters[i]
-			var card2 = monsters[j]
-			var probe = _fusion_probe(card1, card2)
+	var combo = best.get("combo", null)
 
-			if not is_instance_valid(probe):
-				continue
+	if combo is Array and combo.size() >= 2:
+		return combo
 
-			if probe != card2 and bool(probe.get("fusion_result")):
-				var fusion_atk := _atk(probe)
+	return null
 
-				if fusion_atk > best_atk:
-					best_atk = fusion_atk
-					best_combo = [card1, card2]
+func find_best_fusion_sequence(materials: Array, max_materials: int = 3) -> Dictionary:
+	var valid_materials := []
 
-				probe.queue_free()
+	for c in materials:
+		if is_instance_valid(c):
+			valid_materials.append(c)
 
-	return best_combo
+	if valid_materials.size() < 2:
+		return {}
+
+	max_materials = clamp(max_materials, 2, valid_materials.size())
+
+	var best := {
+		"combo": [],
+		"estimated_atk": 0,
+		"estimated_def": 0,
+		"estimated_name": "",
+		"material_count": 0
+	}
+
+	for start in valid_materials:
+		var used := {}
+		used[start.get_instance_id()] = true
+
+		_search_fusion_sequence_recursive(
+			start,
+			[start],
+			valid_materials,
+			used,
+			max_materials,
+			best
+		)
+
+	if int(best.get("estimated_atk", 0)) <= 0:
+		return {}
+
+	return best
+
+
+func _search_fusion_sequence_recursive(
+	current_card: Node,
+	sequence: Array,
+	materials: Array,
+	used: Dictionary,
+	max_materials: int,
+	best: Dictionary
+) -> void:
+	if sequence.size() >= max_materials:
+		return
+
+	for next_material in materials:
+		if not is_instance_valid(next_material):
+			continue
+
+		var next_id = next_material.get_instance_id()
+
+		if used.has(next_id):
+			continue
+
+		var result = _fusion_probe(current_card, next_material)
+
+		if not is_instance_valid(result):
+			continue
+
+		var success := result != next_material and bool(result.get("fusion_result"))
+
+		if not success:
+			if result != next_material and is_instance_valid(result):
+				result.queue_free()
+			continue
+
+		var new_sequence := sequence.duplicate()
+		new_sequence.append(next_material)
+
+		_register_best_fusion_sequence(best, new_sequence, result)
+
+		used[next_id] = true
+
+		_search_fusion_sequence_recursive(
+			result,
+			new_sequence,
+			materials,
+			used,
+			max_materials,
+			best
+		)
+
+		used.erase(next_id)
+
+		if is_instance_valid(result):
+			result.queue_free()
+
+
+func _register_best_fusion_sequence(best: Dictionary, sequence: Array, result_card: Node) -> void:
+	if not is_instance_valid(result_card):
+		return
+
+	var result_atk := _atk(result_card)
+	var result_def := _def(result_card)
+	var current_best_atk := int(best.get("estimated_atk", 0))
+	var current_best_def := int(best.get("estimated_def", 0))
+	var current_best_count := int(best.get("material_count", 999))
+
+	var should_replace := false
+
+	if result_atk > current_best_atk:
+		should_replace = true
+	elif result_atk == current_best_atk:
+		if result_def > current_best_def:
+			should_replace = true
+		elif result_def == current_best_def and sequence.size() < current_best_count:
+			should_replace = true
+
+	if not should_replace:
+		return
+
+	best["combo"] = sequence.duplicate()
+	best["estimated_atk"] = result_atk
+	best["estimated_def"] = result_def
+	best["estimated_name"] = str(result_card.get("cardname")) if ("cardname" in result_card) else ""
+	best["material_count"] = sequence.size()
 
 func try_generic_fusion() -> bool:
 	if fusion_manager == null:
@@ -309,74 +1055,47 @@ func try_generic_fusion() -> bool:
 	if played_monster_card_this_turn:
 		return false
 
-	if _has_pending_fusion():
+	var available_materials := _get_opponent_fusion_materials()
+
+	if available_materials.size() < 2:
 		return false
 
-	var available_monsters := _get_opponent_hand_monsters()
-	if available_monsters.size() < 2:
+	var best_sequence := find_best_fusion_sequence(available_materials, max_fusion_materials)
+
+	if best_sequence.is_empty():
 		return false
 
-	var best_combo = find_best_fusion_combination(available_monsters)
-	if best_combo == null:
+	var best_combo = best_sequence.get("combo", null)
+
+	if not (best_combo is Array) or best_combo.size() < 2:
 		return false
 
 	if fusion_manager.has_method("clear_materials"):
 		fusion_manager.clear_materials()
 
 	if fusion_manager.has_method("add_material"):
-		fusion_manager.add_material(best_combo[0], "generic", "Opponent")
-		fusion_manager.add_material(best_combo[1], "generic", "Opponent")
+		for material in best_combo:
+			if is_instance_valid(material):
+				fusion_manager.add_material(material, "generic", "Opponent")
 
 	if not fusion_manager.has_method("try_fusion"):
 		return false
 
 	var fusion_result = await fusion_manager.try_fusion("Opponent")
 
-	if typeof(fusion_result) == TYPE_DICTIONARY and bool(fusion_result.get("success", false)):
-		played_monster_card_this_turn = true
-		return true
+	if typeof(fusion_result) == TYPE_DICTIONARY:
+		return bool(fusion_result.get("success", false))
 
 	return false
 
-func place_pending_fusion() -> bool:
-	if fusion_manager == null or not _has_pending_fusion():
-		return false
-
-	var slot = _pick_free_monster_slot_opponent()
-	if slot == null:
-		return false
-
-	if not fusion_manager.has_method("place_fusion_card"):
-		return false
-
-	var placed = fusion_manager.place_fusion_card(slot)
-
-	if placed:
-		played_monster_card_this_turn = true
-
-	return placed
-# ---------------------------
-# Juego normal de monstruos
-# ---------------------------
+# -----------------------------------------------------------------------------
+# Normal monster play
+# -----------------------------------------------------------------------------
 
 func play_optimal_monsters() -> void:
-	if played_monster_card_this_turn:
-		return
-	if _has_pending_fusion():
-		return
+	var action := _get_best_monster_action()
+	await _execute_monster_action(action)
 
-	var free_slots := _get_free_slots("Opponent", "Monster")
-	if free_slots.is_empty():
-		return
-
-	var available_monsters := _get_opponent_hand_monsters()
-	if available_monsters.is_empty():
-		return
-
-	available_monsters.sort_custom(func(a, b):
-		return _atk(a) > _atk(b))
-	var best_monster = available_monsters[0]
-	await play_monster_to_field(best_monster)
 
 func play_monster_to_field(monster) -> void:
 	if not is_instance_valid(monster):
@@ -385,29 +1104,25 @@ func play_monster_to_field(monster) -> void:
 	if card_play_service == null:
 		return
 
-	var played := false
+	if not card_play_service.has_method("play_monster_from_hand_for_owner"):
+		push_warning("OpponentIA: card_play_service no tiene play_monster_from_hand_for_owner.")
+		return
 
-	if card_play_service.has_method("play_monster_from_hand_for_owner"):
-		played = await card_play_service.play_monster_from_hand_for_owner(
-			monster,
-			"Opponent",
-			"FACEDOWN_ATK"
-		)
-	elif card_play_service.has_method("play_monster_from_hand"):
-		played = await card_play_service.play_monster_from_hand(
-			monster,
-			"Opponent",
-			"FACEDOWN_ATK"
-		)
+	var played: bool = await card_play_service.play_monster_from_hand_for_owner(
+		monster,
+		"Opponent",
+		"FACEDOWN_ATK"
+	)
 
 	if played:
 		played_monster_card_this_turn = true
 
 	await get_tree().process_frame
 
-# ---------------------------
-# Posicionamiento y ataques
-# ---------------------------
+
+# -----------------------------------------------------------------------------
+# Battle position and attacks
+# -----------------------------------------------------------------------------
 
 func adjust_all_battle_positions() -> void:
 	if not battle_manager:
@@ -436,6 +1151,7 @@ func adjust_all_battle_positions() -> void:
 		elif not should_defend and in_def:
 			_set_position(card, "ATTACK")
 
+
 func _set_position(card, pos: String) -> void:
 	if not is_instance_valid(card):
 		return
@@ -460,6 +1176,7 @@ func _set_position(card, pos: String) -> void:
 			card.set_defense_position(false)
 		elif "in_defense" in card:
 			card.in_defense = false
+
 
 func can_destroy_target(attacker, target) -> bool:
 	if not is_instance_valid(attacker) or not is_instance_valid(target):
@@ -509,6 +1226,7 @@ func find_optimal_target(attacker):
 
 	return null
 
+
 func get_strongest_player_monster():
 	if battle_manager == null:
 		return null
@@ -526,6 +1244,7 @@ func get_strongest_player_monster():
 	)
 
 	return player_monsters[0]
+
 
 func execute_intelligent_attacks() -> void:
 	if battle_manager == null or combat_service == null:
@@ -564,22 +1283,11 @@ func execute_intelligent_attacks() -> void:
 
 			await get_tree().process_frame
 
-func _get_free_spelltrap_slots_opponent() -> Array:
-	return _get_free_slots("Opponent", "SpellTrap")
-	
-func _get_opponent_hand_spelltraps() -> Array:
-	if not opponent_hand:
-		return []
 
-	var arr: Array = opponent_hand.get("opponent_hand")
-	if arr == null:
-		return []
+# -----------------------------------------------------------------------------
+# Spell/trap setting
+# -----------------------------------------------------------------------------
 
-	return arr.filter(func(c):
-		return is_instance_valid(c) and (str(c.get("kind")).to_upper() == "SPELL" or str(c.get("kind")).to_upper() == "TRAP")
-	)
-
-#SPELLS/TRAPS
 func play_one_spelltrap_set() -> void:
 	if played_spellortrap_card_this_turn:
 		return
@@ -588,12 +1296,30 @@ func play_one_spelltrap_set() -> void:
 		return
 
 	var spelltraps := _get_opponent_hand_spelltraps()
+	spelltraps = spelltraps.filter(func(c):
+		return is_instance_valid(c) and not ai_used_cards_this_turn.has(c)
+	)
+
 	if spelltraps.is_empty():
 		return
 
 	var free_slot = _pick_free_spelltrap_slot_opponent()
 	if free_slot == null:
 		return
+
+	# Si hay trampa, prioriza setear trampa. Si no, setea una spell no usada.
+	spelltraps.sort_custom(func(a, b):
+		var ak := str(a.get("kind")).to_upper()
+		var bk := str(b.get("kind")).to_upper()
+
+		if ak == "TRAP" and bk != "TRAP":
+			return true
+
+		if ak != "TRAP" and bk == "TRAP":
+			return false
+
+		return false
+	)
 
 	var chosen = spelltraps[0]
 	var played := false
@@ -615,16 +1341,12 @@ func play_one_spelltrap_set() -> void:
 		played_spellortrap_card_this_turn = true
 
 	await get_tree().process_frame
-func try_play_highest_atk_card() -> void:
-	if animation_service != null:
-		if animation_service.has_method("is_duel_animating"):
-			if animation_service.is_duel_animating():
-				return
-		elif animation_service.has_method("_is_duel_animating"):
-			if animation_service._is_duel_animating():
-				return
 
-	await play_optimal_monsters()
+
+# -----------------------------------------------------------------------------
+# Generic card value helpers
+# -----------------------------------------------------------------------------
+
 func _has_keyword(card: Node, keyword: String) -> bool:
 	if not is_instance_valid(card):
 		return false

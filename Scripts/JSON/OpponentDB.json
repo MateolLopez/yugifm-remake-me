@@ -6,6 +6,7 @@
 		"western": "Seto Kaiba",
 		"eastern": "Seto Kaiba"
 	  },
+	  "max_fusion_materials": 4,
 	  "deck": [
 		"91152256",
 		"89272878",
@@ -37,6 +38,7 @@
 		"western": "Joey Wheeler",
 		"eastern": "Katsuya Jonouchi"
 	  },
+	  "max_fusion_materials": 4,
 	  "deck": [
 		"91152256",
 		"89272878",

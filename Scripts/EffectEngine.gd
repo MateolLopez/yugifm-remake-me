@@ -83,7 +83,9 @@ func register_card_entered_field(card: Node, controller: String) -> void:
 		if trig != "PASSIVE":
 			continue
 
-		if tpl == "aura_stat_buff_while_source_faceup" or tpl == "graveyard_count_stat_buff_while_source_faceup":
+		if tpl == "aura_stat_buff_while_source_faceup" \
+		or tpl == "graveyard_count_stat_buff_while_source_faceup" \
+		or tpl == "field_count_stat_buff_while_source_faceup":
 			print("  REGISTER CONTINUOUS STAT SOURCE:", card.cardname if ("cardname" in card) else str(card))
 			_active_register_aura(card, _norm_owner(controller), e)
 		elif tpl == "grant_protection_profile_while_faceup":
@@ -351,6 +353,10 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 			_tpl_aura_stat_buff_while_source_faceup(source, ctx, params)
 			result = true
 
+		"field_count_stat_buff_while_source_faceup":
+			_tpl_field_count_stat_buff_while_source_faceup(source, ctx, params)
+			result = true
+
 		"debuff_opponent_monsters_conditional_field":
 			result = _tpl_debuff_opponent_monsters_conditional_field(source, ctx, params)
 
@@ -454,6 +460,127 @@ func _card_matches_filters(card: Node, filter_attribute: String, filter_race: St
 		return false
 
 	return true
+
+func _field_side_matches(card_controller: String, source_controller: String, side_mode: String) -> bool:
+	card_controller = _norm_owner(card_controller)
+	source_controller = _norm_owner(source_controller)
+	side_mode = str(side_mode).to_upper()
+
+	match side_mode:
+		"SELF", "OWNER":
+			return card_controller == source_controller
+
+		"OPPONENT":
+			return card_controller != "" and source_controller != "" and card_controller != source_controller
+
+		"BOTH", "ALL":
+			return true
+
+		_:
+			return card_controller == source_controller
+
+
+func _card_matches_field_filter(card: Node, params: Dictionary, prefix: String, use_effective_stats := true) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	var filter_id := str(params.get("%s_filter_id" % prefix, "")).strip_edges()
+	var filter_name := str(params.get("%s_filter_name" % prefix, "")).strip_edges().to_lower()
+	var filter_kind := str(params.get("%s_filter_kind" % prefix, "")).strip_edges().to_upper()
+	var filter_attribute := str(params.get("%s_filter_attribute" % prefix, "")).strip_edges().to_upper()
+	var filter_race := str(params.get("%s_filter_race" % prefix, "")).strip_edges().to_upper()
+	var filter_tag := str(params.get("%s_filter_tag" % prefix, "")).strip_edges().to_lower()
+
+	var faceup_only := bool(params.get("%s_faceup_only" % prefix, false))
+	var facedown_only := bool(params.get("%s_facedown_only" % prefix, false))
+
+	if faceup_only:
+		var fd := bool(card.face_down) if ("face_down" in card) else false
+		if fd:
+			return false
+
+	if facedown_only:
+		var fd2 := bool(card.face_down) if ("face_down" in card) else false
+		if not fd2:
+			return false
+
+	if filter_id != "":
+		if not ("id" in card):
+			return false
+
+		if str(card.id) != filter_id:
+			return false
+
+	if filter_name != "":
+		if not ("cardname" in card):
+			return false
+
+		if str(card.cardname).strip_edges().to_lower() != filter_name:
+			return false
+
+	if filter_kind != "" and filter_kind != "ANY":
+		var card_kind := str(card.kind).to_upper() if ("kind" in card) else ""
+
+		if card_kind != filter_kind:
+			return false
+
+	if filter_attribute != "":
+		var card_attribute := ""
+
+		if use_effective_stats and card.has_method("get_effective_attribute"):
+			card_attribute = str(card.get_effective_attribute()).to_upper()
+		else:
+			card_attribute = str(card.attribute).to_upper() if ("attribute" in card) else ""
+
+		if card_attribute != filter_attribute:
+			return false
+
+	if filter_race != "":
+		var card_race := ""
+
+		if use_effective_stats and card.has_method("get_effective_race"):
+			card_race = str(card.get_effective_race()).to_upper()
+		else:
+			card_race = str(card.race).to_upper() if ("race" in card) else ""
+
+		if card_race != filter_race:
+			return false
+
+	if filter_tag != "" and not _card_has_tag(card, filter_tag):
+		return false
+
+	return true
+
+
+func _count_matching_field_cards_for_source(source: Node, source_controller: String, params: Dictionary) -> int:
+	source_controller = _norm_owner(source_controller)
+
+	var count_side := str(params.get("count_side", "SELF")).to_upper()
+	var count_exclude_self := bool(params.get("count_exclude_self", false))
+
+	var total := 0
+
+	for c in field_cards:
+		if not is_instance_valid(c):
+			continue
+
+		if count_exclude_self and c == source:
+			continue
+
+		var c_controller := _norm_owner(_controller_of_card(c))
+
+		if c_controller == "":
+			continue
+
+		if not _field_side_matches(c_controller, source_controller, count_side):
+			continue
+
+		if not _card_matches_field_filter(c, params, "count", true):
+			continue
+
+		total += 1
+
+	return total
 
 func _grave_cards_for_side(bm: Node, side: String) -> Array:
 	side = str(side).to_upper()
@@ -1288,6 +1415,9 @@ func _tpl_equip_spell_to_target(source: Node, ctx: Dictionary, _params: Dictiona
 func _tpl_aura_stat_buff_while_source_faceup(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	_refresh_aura_stat_buffs()
 
+func _tpl_field_count_stat_buff_while_source_faceup(_source: Node, _ctx: Dictionary, _params: Dictionary) -> void:
+	_refresh_aura_stat_buffs()
+
 func _refresh_aura_stat_buffs() -> void:
 	var bm := _get_battle_manager({})
 	if bm == null:
@@ -1414,6 +1544,63 @@ func _refresh_aura_stat_buffs() -> void:
 					"def": total_def
 				})
 
+		elif template == "field_count_stat_buff_while_source_faceup":
+			var target_mode := str(params.get("target_mode", "SOURCE")).to_upper()
+			var target_side3 := str(params.get("target_side", "SELF")).to_upper()
+
+			var per_count_atk := int(params.get("per_count_atk", 0))
+			var per_count_def := int(params.get("per_count_def", 0))
+
+			var field_count := _count_matching_field_cards_for_source(src, src_controller, params)
+
+			if field_count <= 0:
+				continue
+
+			var total_atk3 := field_count * per_count_atk
+			var total_def3 := field_count * per_count_def
+
+			var targets3: Array = []
+
+			if target_mode == "SOURCE":
+				targets3.append(src)
+			else:
+				for t in monsters:
+					if not is_instance_valid(t):
+						continue
+
+					var t_controller3 := _norm_owner(_controller_of_card(t))
+					if t_controller3 == "":
+						continue
+
+					if not _field_side_matches(t_controller3, src_controller, target_side3):
+						continue
+
+					if not _card_matches_field_filter(t, params, "target", true):
+						continue
+
+					targets3.append(t)
+
+			for t in targets3:
+				if not is_instance_valid(t):
+					continue
+
+				var tk := str(t.kind).to_upper() if ("kind" in t) else ""
+				if tk != "MONSTER":
+					continue
+
+				var tid4 := str(t.get_instance_id())
+
+				if not acc.has(tid4):
+					acc[tid4] = {"atk": 0, "def": 0, "mods": []}
+
+				acc[tid4]["atk"] = int(acc[tid4]["atk"]) + total_atk3
+				acc[tid4]["def"] = int(acc[tid4]["def"]) + total_def3
+				acc[tid4]["mods"].append({
+					"instance_id": _aura_instance_id(src, effect_def),
+					"atk": total_atk3,
+					"def": total_def3
+				})
+
 	for t in monsters:
 		if not is_instance_valid(t):
 			continue
@@ -1439,17 +1626,29 @@ func _active_register_protection_profile(card: Node, controller: String, effect_
 	print("REGISTER PROTECTION:", card.cardname, " profiles=", active_protection_profiles.size())
 
 func _aura_instance_id(source: Node, effect_def: Dictionary) -> String:
+	var template := str(effect_def.get("template", ""))
 	var params: Dictionary = effect_def.get("params", {})
-	var aura_id := str(params.get("aura_id", ""))
+
+	var aura_id := str(params.get("aura_id", "")).strip_edges()
+
 	if aura_id == "":
-		var sig := "%s|%s|%s|%s|%s|%s" % [
+		var sig := "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+			template,
+			str(params.get("target_mode", "")),
 			str(params.get("target_side", "")),
-			str(params.get("filter_attribute", "")),
-			str(params.get("filter_race", "")),
-			str(params.get("filter_tag", "")),
-			str(params.get("atk_delta", 0)),
-			str(params.get("def_delta", 0))
+			str(params.get("target_filter_id", "")),
+			str(params.get("target_filter_kind", "")),
+			str(params.get("target_filter_attribute", "")),
+			str(params.get("target_filter_race", "")),
+			str(params.get("target_filter_tag", "")),
+			str(params.get("count_side", "")),
+			str(params.get("count_filter_id", "")),
+			str(params.get("count_filter_kind", "")),
+			str(params.get("count_filter_attribute", "")),
+			str(params.get("count_filter_race", "")),
+			str(params.get("count_filter_tag", ""))
 		]
+
 		aura_id = sig
 
 	return "aura|%s|%s" % [str(source.get_instance_id()), aura_id]

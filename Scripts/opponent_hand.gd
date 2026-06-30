@@ -47,7 +47,7 @@ func add_card_to_hand(card: Node2D, speed: float) -> void:
 	opponent_hand.insert(0, card)
 	update_hand_positions(speed)
 
-func update_hand_positions(speed: float) -> void:
+func update_hand_positions(speed: float = DEFAULT_CARD_MOVE_SPEED) -> void:
 	opponent_hand = opponent_hand.filter(func(c): return is_instance_valid(c))
 	for i in range(opponent_hand.size()):
 		var card: Node2D = opponent_hand[i]

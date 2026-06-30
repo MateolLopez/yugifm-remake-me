@@ -252,3 +252,119 @@ func _send_spell_to_graveyard(spell_card, who: String) -> void:
 		bm.ui_service._refresh_card_usage_overlays()
 
 	spell_card.queue_free()
+
+#IA
+func play_monster_from_hand_for_owner(
+	card,
+	owner: String,
+	position: String = "FACEDOWN_ATK",
+	preferred_slot: Node2D = null
+) -> bool:
+	if bm.duel_finished:
+		return false
+
+	if animation_service.is_duel_animating():
+		return false
+
+	if not is_instance_valid(card):
+		return false
+
+	owner = card_runtime_service._norm_owner(owner)
+
+	if owner == "":
+		return false
+
+	if not ("current_zone" in card) or str(card.current_zone).to_upper() != "HAND":
+		return false
+
+	if str(card_runtime_service._card_kind(card)).to_upper() != "MONSTER":
+		return false
+
+	var free_slot: Node2D = preferred_slot
+
+	if not is_instance_valid(free_slot):
+		free_slot = zone_service._get_free_monster_slot_for(owner)
+
+	if not is_instance_valid(free_slot):
+		return false
+
+	if bool(free_slot.get("card_in_slot")):
+		return false
+
+	animation_service._begin_duel_animation_lock()
+
+	var hand_node: Node = null
+
+	if owner == "Player":
+		hand_node = get_node_or_null("../../PlayerHand")
+	else:
+		hand_node = get_node_or_null("../../OpponentHand")
+
+	var current_global_position = card.global_position
+	var current_rotation = card.rotation
+	var current_scale = card.scale
+
+	if hand_node and hand_node.has_method("remove_card_from_hand"):
+		hand_node.remove_card_from_hand(card, false)
+
+	card.global_position = current_global_position
+	card.rotation = current_rotation
+	card.scale = current_scale
+
+	card_runtime_service._set_card_owner_side(card, owner)
+
+	if card.has_method("apply_owner_collision_layers"):
+		card.apply_owner_collision_layers()
+
+	_apply_monster_play_position(card, position)
+
+	card.set_meta("played_from_hand", true)
+
+	animation_service._play_duel_sfx("summon_set" if bool(card.get("face_down")) else "summon_faceup")
+
+	await animation_service._animate_card_to_slot_visual(card, free_slot, 0.28)
+
+	zone_service._place_card_in_slot(card, free_slot, "PLAY", true)
+
+	if hand_node and hand_node.has_method("update_hand_positions"):
+		hand_node.update_hand_positions()
+
+	animation_service._end_duel_animation_lock()
+
+	return true
+
+func _apply_monster_play_position(card, position: String) -> void:
+	position = str(position).to_upper()
+
+	match position:
+		"FACEDOWN_ATK":
+			card_runtime_service._set_card_face_down(card, true)
+
+			if card.has_method("set_defense_position"):
+				card.set_defense_position(false)
+			elif "in_defense" in card:
+				card.in_defense = false
+
+		"FACEDOWN_DEF":
+			card_runtime_service._set_card_face_down(card, true)
+
+			if card.has_method("set_defense_position"):
+				card.set_defense_position(true)
+			elif "in_defense" in card:
+				card.in_defense = true
+
+		"FACEUP_DEF":
+			card_runtime_service._set_card_face_down(card, false)
+
+			if card.has_method("set_defense_position"):
+				card.set_defense_position(true)
+			elif "in_defense" in card:
+				card.in_defense = true
+
+		_:
+			card_runtime_service._set_card_face_down(card, false)
+
+			if card.has_method("set_defense_position"):
+				card.set_defense_position(false)
+			elif "in_defense" in card:
+				card.in_defense = false

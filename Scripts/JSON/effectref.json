@@ -376,6 +376,31 @@
 		"duration": "INSTANT|PERMANENT_WHILE_FACEUP"
 	  }
 	},
+	"field_count_stat_buff_while_source_faceup": {
+  "desc": "Mientras la fuente esté boca arriba en el campo, gana o da ATK/DEF según la cantidad de cartas en campo que cumplan filtros.",
+  "params_schema": {
+	"aura_id": "string?",
+	"target_mode": "SOURCE|MATCHING_MONSTERS",
+	"target_side": "SELF|OPPONENT|BOTH",
+	"target_filter_id": "string?",
+	"target_filter_name": "string?",
+	"target_filter_kind": "MONSTER|SPELL|TRAP|ANY",
+	"target_filter_attribute": "string?",
+	"target_filter_race": "string?",
+	"target_filter_tag": "string?",
+	"count_side": "SELF|OPPONENT|BOTH",
+	"count_filter_id": "string?",
+	"count_filter_name": "string?",
+	"count_filter_kind": "MONSTER|SPELL|TRAP|ANY",
+	"count_filter_attribute": "string?",
+	"count_filter_race": "string?",
+	"count_filter_tag": "string?",
+	"count_faceup_only": "bool?",
+	"count_exclude_self": "bool?",
+	"per_count_atk": "int",
+	"per_count_def": "int"
+  }
+},
 	"graveyard_count_stat_buff_while_source_faceup": {
   "desc": "Mientras la fuente permanezca boca arriba en el campo, otorga ATK/DEF a monstruos según la cantidad de cartas que cumplan filtros en cementerio.",
   "params_schema": {

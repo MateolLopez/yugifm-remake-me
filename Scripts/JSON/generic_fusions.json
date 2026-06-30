@@ -232,6 +232,21 @@
 	"priority": 1.52
 },
 {
+	"fusion_id": "blackland_fire_dragon",
+	"result_id": "87564352",
+	"required_groups":[
+		{ "any": ["dragon"] },
+		{
+			"any_of_all": [
+				["dark","dragon"],
+				["dark","spellcaster"],
+				["dark","fiend"]
+			]
+		}
+	],
+	"priority": 1.521
+},
+{
 	"fusion_id": "e_hero_sparkman",
 	"result_id": "20721928",
 	"required_groups":[["hero"],["thunder"]],
@@ -306,6 +321,12 @@
 		}
 	],
 	"priority": 1.74
+},
+{
+	"fusion_id": "sword_arm_of_dragon",
+	"result_id": "13069066",
+	"required_groups":[["warrior"],["dragon","dinosaur"]],
+	"priority": 1.75
 },
 {
 	"fusion_id": "gearfried_iron_k",
