@@ -86,9 +86,11 @@ func try_play_monster_from_hand(card, facedown: bool, preferred_slot: Node2D = n
 	if facedown:
 		animation_service._play_duel_sfx("summon_set")
 		card_runtime_service._set_card_face_down(card, true)
+		card_runtime_service.mark_played_facedown_this_turn(card, "Player")
 	else:
 		animation_service._play_duel_sfx("summon_faceup")
 		card_runtime_service._set_card_face_down(card, false)
+		card_runtime_service.clear_played_facedown_lock(card)
 
 	card.set_meta("played_from_hand", true)
 
@@ -317,6 +319,13 @@ func play_monster_from_hand_for_owner(
 		card.apply_owner_collision_layers()
 
 	_apply_monster_play_position(card, position)
+
+	var played_facedown := bool(card.get("face_down")) if "face_down" in card else false
+
+	if played_facedown:
+		card_runtime_service.mark_played_facedown_this_turn(card, owner)
+	else:
+		card_runtime_service.clear_played_facedown_lock(card)
 
 	card.set_meta("played_from_hand", true)
 

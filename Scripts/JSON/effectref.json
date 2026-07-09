@@ -39,7 +39,8 @@
 	"DIRECT_ATTACK": "Puede atacar directamente a LP (cuando aplique).",
 	"NAME_COUNTS_AS_HARPIE_LADY": "Se considera «Harpie Lady» (para sinergias por nombre).",
 	"NO_BATTLE_DAMAGE_TO_CONTROLLER_FROM_BATTLES_WITH_SELF": "El controlador no recibe daño de batalla en batallas que involucren a esta carta.",
-	"NO_EQUIP": "No puede ser equipado con Equi Spells"
+	"NO_EQUIP": "No puede ser equipado con Equip Spells",
+	"LIFESTEAL": "Cuando este monstruo inflige daño de batalla, su controlador recupera LP iguales al daño infligido."
   },
   "templates": {
 	"destroy_target": {
@@ -362,12 +363,6 @@
 	"destroy_at_opponent_turn_end": "bool?"
   }
 },
-	"change_all_other_monsters_battle_positions": {
-	  "desc": "Cambia la posición de todos los demás monstruos (ej. toggle ATK/DEF).",
-	  "params_schema": {
-		"mode": "TOGGLE_ATK_DEF"
-	  }
-	},
 	"modify_self_stats": {
 	  "desc": "Modifica stats de esta carta.",
 	  "params_schema": {
@@ -414,6 +409,32 @@
 	"count_filter_tag": "string?",
 	"per_count_atk": "int",
 	"per_count_def": "int"
+  }
+},
+"tribute_monster_to_inflict_damage": {
+  "desc": "Tributa/envía al cementerio como costo un monstruo seleccionado y luego inflige daño de efecto.",
+  "params_schema": {
+	"tribute_side": "SELF|OPPONENT|BOTH",
+	"allow_self": "bool?",
+	"choose": "PLAYER_SELECT|RANDOM|LOWEST_LEVEL|HIGHEST_LEVEL|LOWEST_ATK|HIGHEST_ATK",
+	"count": "int?",
+
+	"faceup_only": "bool?",
+	"facedown_only": "bool?",
+	"filter_id": "string?",
+	"filter_name": "string?",
+	"filter_attribute": "string?",
+	"filter_race": "string?",
+	"filter_tag": "string?",
+
+	"damage_target": "SELF|OPPONENT",
+	"damage_mode": "FIXED|LEVEL_MULTIPLIER|ATK_MULTIPLIER|DEF_MULTIPLIER|HALF_ATK",
+	"amount": "int?",
+	"damage_per_level": "int?",
+	"atk_multiplier": "float?",
+	"def_multiplier": "float?",
+
+	"once_per_turn": "bool?"
   }
 },
 "inflict_destroyed_monster_atk_as_effect_damage": {
@@ -548,13 +569,6 @@
         "No altera el cálculo de ventaja/desventaja, solo la magnitud."
 	  ]
 	},
-	"schedule_change_battle_position_on_battle_end": {
-  "desc": "Programa cambio de posición de esta carta al final de la batalla si se cumple condición.",
-  "params_schema": {
-	"when": "WHEN_ATTACKED|WHEN_ATTACKS|ALWAYS_THIS_BATTLE",
-	"to": "TOGGLE|ATTACK|DEFENSE"
-  }
-},
 "revive_last_destroyed_monster_from_graveyard": {
   "desc": "Revive el último monstruo destruido y enviado al cementerio desde cualquier cementerio permitido.",
   "params_schema": {
@@ -562,7 +576,26 @@
 	"source_grave": "SELF|OPPONENT|BOTH",
 	"position": "FACEUP_ATK|FACEUP_DEF|FACEDOWN_DEF",
 	"require_destroyed": "bool?"
+  },
+"change_battle_position_by_effect": {
+  "desc": "Cambia la posición de batalla de una o más cartas según filtros.",
+  "params_schema": {
+	"controller": "SELF|OPPONENT",
+	"target_side": "SELF|OPPONENT|BOTH",
+	"to_position": "ATTACK|DEFENSE|TOGGLE",
+	"from_position": "ATTACK|DEFENSE|ANY",
+	"faceup_only": "bool?",
+	"facedown_only": "bool?",
+	"itself": "bool?",
+	"choose": "ALL|RANDOM|HIGHEST_ATK|LOWEST_ATK|HIGHEST_DEF|LOWEST_DEF|HIGHEST_LEVEL|LOWEST_LEVEL",
+	"count": "int?",
+	"filter_id": "string?",
+	"filter_name": "string?",
+	"filter_attribute": "string?",
+	"filter_race": "string?",
+	"filter_tag": "string?"
   }
+}
 },
 	"change_self_position_when_attacked_end_of_battle": {
 	  "desc": "Si esta carta es objetivo de un ataque, cambia su posición al final de esa batalla.",

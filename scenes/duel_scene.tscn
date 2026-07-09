@@ -1,4 +1,4 @@
-[gd_scene load_steps=70 format=3 uid="uid://cv3psty7bf6sh"]
+[gd_scene load_steps=72 format=3 uid="uid://cv3psty7bf6sh"]
 
 [ext_resource type="Script" uid="uid://mgdicx3susd8" path="res://Scripts/duel_state.gd" id="1_oo1qr"]
 [ext_resource type="Script" uid="uid://ddwrxhfr5nnlw" path="res://Scripts/card_manager.gd" id="1_sooux"]
@@ -64,6 +64,8 @@
 [ext_resource type="AudioStream" uid="uid://b52tk25h75gnh" path="res://sfx/fusion_result.mp3" id="36_7gdid"]
 [ext_resource type="AudioStream" uid="uid://3dqvryu4gg18" path="res://sfx/fusion_summon_result.mp3" id="37_e51ji"]
 [ext_resource type="PackedScene" uid="uid://6g7cw24e81c" path="res://vfx/fusion_result_summoned_fx/fusion_result_summoned_fx.tscn" id="38_7gdid"]
+[ext_resource type="PackedScene" uid="uid://h080iwoklwan" path="res://vfx/coin_toss_fx/coin_toss_fx.tscn" id="43_u33ax"]
+[ext_resource type="PackedScene" uid="uid://dd5m4u5cg887m" path="res://vfx/exodia_win_fx/exodia_win_fx.tscn" id="66_gctmn"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_t45xh"]
 load_path = "res://.godot/imported/756652.jpg-ac6c3d5ebd245cf2e8902e5d9ae068ff.ctex"
@@ -494,5 +496,7 @@ fusion_intent_sfx = ExtResource("36_7gdid")
 fusion_result_sfx = ExtResource("37_e51ji")
 monster_reborn_summon_fx_scene = ExtResource("17_flypn")
 fusion_result_summoned_vfx_scene = ExtResource("38_7gdid")
+coin_toss_fx_scene = ExtResource("43_u33ax")
+exodia_win_fx_scene = ExtResource("66_gctmn")
 
 [connection signal="pressed" from="EndTurnButton" to="DuelServices/DuelTurnService" method="_on_end_turn_button_pressed"]

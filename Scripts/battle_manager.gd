@@ -48,6 +48,8 @@ var active_field_spell_controller: String = ""
 var initial_hands_drawn: bool = false
 @onready var _ui_field_spell_name: RichTextLabel = get_node_or_null("../FieldSpellName")
 var duel_finished = false
+var duel_winner: String = ""
+var duel_end_reason: String = ""
 var battle_timer
 var empty_monster_card_slots = []
 var opponent_cards_on_battlefield = []
@@ -172,3 +174,35 @@ special_effect_service]
 	for service in services:
 		if service != null and service.has_method("setup"):
 			service.setup(self)
+
+func finish_duel_by_exodia(winner_side: String) -> void:
+	if duel_finished:
+		return
+
+	winner_side = _normalize_duel_side(winner_side)
+
+	if winner_side == "":
+		return
+
+	duel_finished = true
+	duel_winner = winner_side
+	duel_end_reason = "EXODIA"
+
+	print("DUEL FINISHED BY EXODIA | winner=", winner_side)
+
+	if animation_service != null and animation_service.has_method("play_exodia_win_fx"):
+		await animation_service.play_exodia_win_fx(winner_side)
+
+	var result := "player_victory" if winner_side == "Player" else "player_defeat"
+	emit_signal("duel_over", result)
+
+func _normalize_duel_side(side: String) -> String:
+	var s := str(side).strip_edges().to_upper()
+
+	if s == "PLAYER":
+		return "Player"
+
+	if s == "OPPONENT" or s == "RIVAL":
+		return "Opponent"
+
+	return ""

@@ -91,3 +91,84 @@ func _set_card_face_down(card, value: bool) -> void:
 
 func _is_card_alive(card) -> bool:
 	return is_instance_valid(card) and (card in bm.player_cards_on_battlefield or card in bm.opponent_cards_on_battlefield)
+
+func _current_turn_owner() -> String:
+	if bm == null:
+		return "Player"
+
+	return "Opponent" if bool(bm.is_opponent_turn) else "Player"
+
+
+func _current_turn_index() -> int:
+	if bm == null:
+		return 0
+
+	if "turn_index" in bm:
+		return int(bm.turn_index)
+
+	return 0
+
+
+func mark_played_facedown_this_turn(card: Node, owner: String) -> void:
+	if not is_instance_valid(card):
+		return
+
+	card.set_meta("played_facedown_turn_index", _current_turn_index())
+	card.set_meta("played_facedown_turn_owner", _norm_owner(owner))
+	card.set_meta("played_facedown_lock", true)
+
+
+func clear_played_facedown_lock(card: Node) -> void:
+	if not is_instance_valid(card):
+		return
+
+	if card.has_meta("played_facedown_turn_index"):
+		card.remove_meta("played_facedown_turn_index")
+
+	if card.has_meta("played_facedown_turn_owner"):
+		card.remove_meta("played_facedown_turn_owner")
+
+	if card.has_meta("played_facedown_lock"):
+		card.remove_meta("played_facedown_lock")
+
+
+func was_played_facedown_this_turn(card: Node) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	if not card.has_meta("played_facedown_lock"):
+		return false
+
+	if not bool(card.get_meta("played_facedown_lock")):
+		return false
+
+	var played_turn := int(card.get_meta("played_facedown_turn_index", -999999))
+	var played_owner := _norm_owner(card.get_meta("played_facedown_turn_owner", ""))
+
+	if played_turn != _current_turn_index():
+		return false
+
+	if played_owner != _current_turn_owner():
+		return false
+
+	return true
+
+
+func can_manually_flip_faceup(card: Node) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	if was_played_facedown_this_turn(card):
+		return false
+
+	return true
+
+
+func can_attack_considering_facedown_play_lock(card: Node) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	if was_played_facedown_this_turn(card):
+		return false
+
+	return true

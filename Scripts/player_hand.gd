@@ -46,6 +46,32 @@ func add_card_to_hand(card: Node2D, speed: float) -> void:
 
 	player_hand.insert(0, card)
 	update_hand_positions(speed)
+	_request_exodia_check()
+
+func _request_exodia_check() -> void:
+	call_deferred("_check_exodia_deferred")
+
+
+func _check_exodia_deferred() -> void:
+	var bm := get_tree().get_first_node_in_group("battle_manager")
+
+	if bm == null:
+		print("EXODIA DEBUG | PlayerHand: no encontró BattleManager en grupo battle_manager.")
+		return
+
+	if not ("draw_service" in bm):
+		print("EXODIA DEBUG | PlayerHand: BattleManager no tiene draw_service.")
+		return
+
+	if bm.draw_service == null:
+		print("EXODIA DEBUG | PlayerHand: bm.draw_service es null.")
+		return
+
+	if not bm.draw_service.has_method("check_exodia_after_draw"):
+		print("EXODIA DEBUG | PlayerHand: draw_service no tiene check_exodia_after_draw().")
+		return
+
+	await bm.draw_service.check_exodia_after_draw("Player")
 
 func update_hand_positions(speed: float = DEFAULT_CARD_MOVE_SPEED) -> void:
 	player_hand = player_hand.filter(func(c): return is_instance_valid(c))

@@ -42,6 +42,12 @@
 	"priority": 1.01
 },
 {
+	"fusion_id": "catapult_turtle",
+	"result_id": "95727991",
+	"required_groups": [["turtle"],["canon"]],
+	"priority": 1.02
+},
+{
 	"fusion_id": "charubin_fire_k",
 	"result_id": "37421579",
 	"required_groups": [["fire","pyro"],["warrior","knight","armored"]],
@@ -54,7 +60,7 @@
 		{ "any": ["spellcaster"] },
 		{ "all": ["plant", "dark"] }
 	],
-	"priority": 1.93
+	"priority": 1.193
 },
 {
 	"fusion_id": "witch_of_the_black_forest_witch_plant",
@@ -63,7 +69,7 @@
 		{ "any": ["witch"] },
 		{ "any": ["plant"] }
 	],
-	"priority": 1.931
+	"priority": 1.193
 },
 {
 	"fusion_id": "gigatech-wolf",
@@ -94,6 +100,24 @@
 	"result_id": "28546905",
 	"required_groups": [["puppet"],["spellcaster","illusion"]],
 	"priority": 1.203
+},
+{
+	"fusion_id": "louise",
+	"result_id": "32452818",
+	"required_groups": [["mouse"],["warrior","beast-warrior"]],
+	"priority": 1.204
+},
+{
+	"fusion_id": "zombie_warrior",
+	"result_id": "31339260",
+	"required_groups": [["skull","zombie"],["warrior"]],
+	"priority": 1.205
+},
+{
+	"fusion_id": "goddes_minds_eye",
+	"result_id": "53493204",
+	"required_groups": [["eye"],["fairy"]],
+	"priority": 1.206
 },
 {
 	"fusion_id": "big_eye",
@@ -132,6 +156,12 @@
 	"priority": 1.31
 },
 {
+	"fusion_id": "grappler",
+	"result_id": "02906250",
+	"required_groups":[["snake","reptile"],["warrior","monk"]],
+	"priority": 1.311
+},
+{
 	"fusion_id": "gruesome_goo",
 	"result_id": "65623423",
 	"required_groups":[["aqua","water","slime"],["slime"]],
@@ -144,6 +174,12 @@
 	"priority": 1.35
 },
 {
+	"fusion_id": "clown_zombie",
+	"result_id": "92667214",
+	"required_groups":[["clown"],["zombie"]],
+	"priority": 1.351
+},
+{
 	"fusion_id":"fiend_sword",
 	"result_id":"22855882",
 	"required_groups":[["sword","weapon"],["fiend"]],
@@ -154,6 +190,24 @@
 	"result_id":"84990171",
 	"required_groups":[["plant"],["warrior"]],
 	"priority":1.401
+},
+{
+	"fusion_id":"wicked_worm_beast",
+	"result_id":"06285791",
+	"required_groups":[["worm"],["beast"]],
+	"priority":1.402
+},
+{
+	"fusion_id":"spirit_of_the_books",
+	"result_id":"14037717",
+	"required_groups":[["winged-beast"],["book","spellcaster"]],
+	"priority":1.403
+},
+{
+	"fusion_id":"lord_of_the_lamp",
+	"result_id":"99510761",
+	"required_groups":[["lamp"],["spellcaster"]],
+	"priority":1.404
 },
 {
 	"fusion_id": "judgement_hand",
@@ -190,6 +244,24 @@
 	"result_id": "85359414",
 	"required_groups": [["ice"],["beast"]],
 	"priority": 1.502
+},
+{
+	"fusion_id": "zanki",
+	"result_id": "30090452",
+	"required_groups": [["warrior"],["samurai"]],
+	"priority": 1.503
+},
+{
+	"fusion_id": "armored_zombie",
+	"result_id": "20277860",
+	"required_groups": [["zombie"],["samurai"]],
+	"priority": 1.504
+},
+{
+	"fusion_id": "faith_bird",
+	"result_id": "75582395",
+	"required_groups": [["fairy","light"],["winged-beast"]],
+	"priority": 1.505
 },
 {
 	"fusion_id": "giant_flea",
@@ -232,6 +304,12 @@
 	"priority": 1.52
 },
 {
+	"fusion_id": "koumori_dragon",
+	"result_id": "67724379",
+	"required_groups":[["dragon"],["fiend"]],
+	"priority": 1.521
+},
+{
 	"fusion_id": "blackland_fire_dragon",
 	"result_id": "87564352",
 	"required_groups":[
@@ -239,18 +317,47 @@
 		{
 			"any_of_all": [
 				["dark","dragon"],
-				["dark","spellcaster"],
-				["dark","fiend"]
+				["dark","spellcaster"]
 			]
 		}
 	],
-	"priority": 1.521
+	"priority": 1.522
+},
+{
+	"fusion_id": "snake_hair",
+	"result_id": "29491031",
+	"required_groups":[["reptile"],["zombie"]],
+	"priority": 1.523
 },
 {
 	"fusion_id": "e_hero_sparkman",
 	"result_id": "20721928",
 	"required_groups":[["hero"],["thunder"]],
 	"priority": 1.6
+},
+{
+	"fusion_id": "two-headed-king-rex",
+	"result_id": "94119974",
+	"required_groups":[["dinosaur"],["dinosaur"]],
+	"priority": 1.6001
+},
+{
+	"fusion_id": "corpse_devouring_dragon",
+	"result_id": "38289717",
+	"required_groups":[["dinosaur"],["dragon"]],
+	"priority": 1.6002
+},
+{
+	"fusion_id": "dragon_zombie",
+	"result_id": "66672569",
+	"required_groups":[["zombie"],["dragon"]],
+	"priority": 1.6003
+},
+{
+	"fusion_id": "doma_angel_of_silence",
+	"result_id": "16972957",
+	"required_groups":[["angel"],["dark"]],
+	"priority": 1.6004
 },
 {
 	"fusion_id": "holy_doll",
@@ -290,6 +397,12 @@
 	"result_id":"36904469",
 	"required_groups":[["water","aqua"],["insect","eye"]],
 	"priority": 1.70
+},
+{
+	"fusion_id":"spirit_of_the_winds",
+	"result_id":"54615781",
+	"required_groups":[["wind"],["spirit"]],
+	"priority": 1.701
 },
 {
 	"fusion_id":"asura_priest",
@@ -341,6 +454,30 @@
 	"priority": 1.801
 },
 {
+	"fusion_id": "battle_steer",
+	"result_id": "18246479",
+	"required_groups":[["bull"],["warrior","beast-warrior"]],
+	"priority": 1.802
+},
+{
+	"fusion_id": "flame_swordsman",
+	"result_id": "45231177",
+	"required_groups":[["pyro"],["warrior"]],
+	"priority": 1.803
+},
+{
+	"fusion_id": "kairyu_shin",
+	"result_id": "76634149",
+	"required_groups":[["sea-serpent"],["dragon","aqua","king"]],
+	"priority": 1.804
+},
+{
+	"fusion_id": "pumpking_the_king_of_ghosts",
+	"result_id": "29155212",
+	"required_groups":[["plant"],["zombie"]],
+	"priority": 1.805
+},
+{
 	"fusion_id": "rude_kaiser",
 	"result_id": "26378150",
 	"required_groups":[["reptile","dinosaur"],["armor","armored","axe"]],
@@ -389,6 +526,12 @@
 	"priority": 2.0
 },
 {
+	"fusion_id": "curse_of_dragon",
+	"result_id": "28279543",
+	"required_groups":[["dragon"],["zombie"]],
+	"priority": 2.01
+},
+{
 	"fusion_id": "roaring_ocea_s",
 	"result_id": "19066538",
 	"required_groups":[["snake","sea-serpent"],["aqua","sea-serpent"]],
@@ -399,6 +542,12 @@
 	"result_id": "32751480",
 	"required_groups":[["witch"],["rock"]],
 	"priority": 2.11
+},
+{
+	"fusion_id": "judge_man",
+	"result_id": "30113682",
+	"required_groups":[["judge"],["warrior"]],
+	"priority": 2.2
 },
 {
 	"fusion_id": "crimson_sunbird",
@@ -436,10 +585,42 @@
 	"priority": 2.4
 },
 {
+	"fusion_id": "thousand_dragon",
+	"result_id": "41462083",
+	"required_groups":[["time-wizard"],["dragon"]],
+	"priority": 2.401
+},
+{
 	"fusion_id": "dark_magician",
 	"result_id": "46986414",
 	"required_groups":[["dark-magician"],["dark","robe","spellcaster"]],
 	"priority": 2.5
+},
+{
+	"fusion_id": "summoned_skull",
+	"result_id": "70781052",
+	"required_groups": [
+		{ "any": ["skull"] },
+		{
+			"any_of_all": [
+				["job-change-mirror"]
+			]
+		}
+	],
+	"priority": 2.51
+},
+{
+	"fusion_id": "summoned_skull",
+	"result_id": "70781052",
+	"required_groups": [
+		{ "any": ["time-wizard"] },
+		{
+			"any_of_all": [
+				["embrionic-beast"]
+			]
+		}
+	],
+	"priority": 2.52
 },
 {
 	"fusion_id": "great_moth",

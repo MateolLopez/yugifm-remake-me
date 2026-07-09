@@ -92,6 +92,10 @@ func _can_card_declare_attack_against(card: Node, defending: Node, attacker_owne
 	if not is_instance_valid(card):
 		return false
 
+	if card_runtime_service.has_method("can_attack_considering_facedown_play_lock"):
+		if not bool(card_runtime_service.can_attack_considering_facedown_play_lock(card)):
+			return false
+
 	attacker_owner = card_runtime_service._norm_owner(attacker_owner)
 
 	if _is_card_attack_exhausted(card, attacker_owner):

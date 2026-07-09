@@ -51,6 +51,10 @@ var _background_target: Node = null
 @export var thunder_destroy_fx_scene: PackedScene
 @export var fusion_result_summoned_vfx_scene: PackedScene
 
+@export_group("VFX - Fullscreen")
+@export var coin_toss_fx_scene: PackedScene
+@export var exodia_win_fx_scene: PackedScene
+
 var _bgm_player: AudioStreamPlayer = null
 
 
@@ -326,7 +330,7 @@ func play_vfx_key_on_card(key: String, card: Node2D) -> void:
 	if not is_instance_valid(card):
 		return
 
-	var scene := _get_vfx_scene(key)
+	var scene := get_vfx_scene(key)
 	if scene == null:
 		return
 
@@ -363,7 +367,7 @@ func play_vfx_key_on_card(key: String, card: Node2D) -> void:
 		fx.queue_free()
 
 
-func _get_vfx_scene(key: String) -> PackedScene:
+func get_vfx_scene(key: String) -> PackedScene:
 	match key:
 		"default_activation":
 			return default_activation_fx_scene
@@ -377,6 +381,11 @@ func _get_vfx_scene(key: String) -> PackedScene:
 		"fusion_result_summoned":
 			return fusion_result_summoned_vfx_scene
 
+		"coin_toss":
+			return coin_toss_fx_scene
+
+		"exodia_win":
+			return exodia_win_fx_scene
 		_:
 			return null
 

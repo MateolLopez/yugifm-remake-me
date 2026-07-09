@@ -84,27 +84,25 @@ func opponent_turn():
 	$"../../EndTurnButton".disabled = true
 	$"../../EndTurnButton".visible = false
 
-	print("OPPONENT TURN: refill start")
 	animation_service._begin_duel_animation_lock()
 	await draw_service.yield_to_refill_opponent_hand()
 	animation_service._end_duel_animation_lock()
-	print("OPPONENT TURN: refill end")
+
+	if bm.duel_finished:
+		return
 
 	await animation_service.wait_until_duel_idle()
 	await action_waiter()
 
 	var opponent_ia = $"../../OpponentIA"
 	if opponent_ia:
-		print("OPPONENT TURN: IA start")
 		await animation_service.wait_until_duel_idle()
 		await opponent_ia.make_turn_decisions()
-		print("OPPONENT TURN: IA end")
 		await animation_service.wait_until_duel_idle()
 		await action_waiter()
-
-	print("OPPONENT TURN: calling end_opponent_turn")
+	if bm.duel_finished:
+		return
 	await end_opponent_turn()
-	print("OPPONENT TURN: end_opponent_turn finished")
 
 func end_opponent_turn():
 	event_service._emit_duel_event("TURN_END", {
@@ -136,18 +134,27 @@ func end_opponent_turn():
 	bm.opponent_cards_that_attacked_this_turn = []
 	bm.multi_attack_targets_this_turn.clear()
 	bm.attack_count_this_turn.clear()
-	
+
 	var fusion_manager := get_node_or_null("../../FusionManager")
 	if fusion_manager and fusion_manager.has_method("reset_turn"):
 		fusion_manager.reset_turn("Opponent")
-	
-	while player_deck.player_deck.size() > 0 and player_hand_node.player_hand.size() < rule_service._max_hand_size():
+
+	while not bm.duel_finished \
+	and player_deck.player_deck.size() > 0 \
+	and player_hand_node.player_hand.size() < rule_service._max_hand_size():
+
 		animation_service._play_duel_sfx("draw")
 		player_deck.draw_card()
 		card_manager.reset_played_cards()
 		await draw_service._wait_draw_step()
 
+		if bm.duel_finished:
+			break
+
 	animation_service._end_duel_animation_lock()
+
+	if bm.duel_finished:
+		return
 
 	bm.turn_index += 1
 	bm.is_opponent_turn = false

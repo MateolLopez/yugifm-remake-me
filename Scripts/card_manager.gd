@@ -66,6 +66,9 @@ func card_clicked(card: Card) -> void:
 
 	var bm = _battle_manager()
 
+	if _try_resolve_card_selection_click(card, bm):
+		return
+
 	if bm != null and bm.fusion_replacement_service.has_method("is_waiting_for_fusion_replacement"):
 		if bm.fusion_replacement_service.is_waiting_for_fusion_replacement():
 			if card.is_on_field() and bm.fusion_replacement_service.has_method("receive_fusion_replacement_card"):
@@ -77,6 +80,8 @@ func card_clicked(card: Card) -> void:
 
 	if card.is_on_field():
 		if bm.is_opponent_turn:
+			return
+		if _is_facedown_play_attack_locked(card):
 			return
 
 		if card in bm.player_cards_that_attacked_this_turn and not bm.kw_service._has_kw(card, "MULTI_ATTACK_ALL"):
@@ -114,6 +119,29 @@ func card_clicked(card: Card) -> void:
 
 	else:
 		start_drag(card)
+
+func _try_resolve_card_selection_click(card: Card, bm: Node) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	if bm == null:
+		return false
+
+	var selection_service = bm.get("selection_service")
+
+	if selection_service == null:
+		return false
+
+	if not selection_service.has_method("is_selecting_card"):
+		return false
+
+	if not bool(selection_service.is_selecting_card()):
+		return false
+
+	if selection_service.has_method("try_receive_card_selection"):
+		selection_service.try_receive_card_selection(card)
+
+	return true
 
 func activate_spell(card: Card) -> void:
 	if card == null or not card.is_on_field():
@@ -420,3 +448,18 @@ func cancel_drag_and_restore() -> void:
 		return
 
 	_restore_visual_and_return_to_hand()
+
+func _is_facedown_play_attack_locked(card: Card) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	var bm := _battle_manager()
+	if bm == null:
+		return false
+
+	var runtime_service = bm.get("card_runtime_service")
+
+	if runtime_service != null and runtime_service.has_method("can_attack_considering_facedown_play_lock"):
+		return not bool(runtime_service.can_attack_considering_facedown_play_lock(card))
+
+	return false

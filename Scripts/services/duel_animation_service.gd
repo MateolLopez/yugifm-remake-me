@@ -293,6 +293,16 @@ func _play_duel_vfx_on_card(key: String, card: Node2D) -> void:
 		await fxm.play_vfx_key_on_card(key, card)
 
 
+func _get_duel_vfx_scene(key: String) -> PackedScene:
+	var fxm = _get_duel_fx_manager()
+
+	if fxm != null and fxm.has_method("get_vfx_scene"):
+		var scene = fxm.get_vfx_scene(key)
+		if scene is PackedScene:
+			return scene
+
+	return null
+
 func _activation_sfx_key_for_card(card: Node) -> String:
 	var kind := card_runtime_service._card_kind(card)
 
@@ -339,3 +349,100 @@ func _play_pre_destroy_impact_fx_if_any(card: Node2D) -> void:
 
 	if vfx_key != "":
 		await _play_duel_vfx_on_card(vfx_key, card)
+
+func play_coin_toss_fx(success: bool, face: String = "", on_completed: Callable = Callable()) -> void:
+	if bm == null:
+		return
+
+	var scene := _get_duel_vfx_scene("coin_toss")
+
+	if scene == null:
+		push_warning("DuelAnimationService: no se encontró VFX 'coin_toss'.")
+		return
+
+	var fx = scene.instantiate()
+
+	_begin_duel_animation_lock()
+
+	if not is_instance_valid(fx):
+		_end_duel_animation_lock()
+		return
+
+	var parent_node := get_tree().current_scene
+
+	if parent_node == null:
+		parent_node = bm.get_parent()
+
+	if parent_node == null:
+		parent_node = bm
+
+	parent_node.add_child(fx)
+
+	var cleanup := func() -> void:
+		if on_completed.is_valid():
+			on_completed.call()
+
+		if is_instance_valid(fx):
+			fx.queue_free()
+
+		_end_duel_animation_lock()
+
+	if fx.has_signal("finished"):
+		fx.finished.connect(
+			func(_success: bool, _face: String) -> void:
+				cleanup.call(),
+			CONNECT_ONE_SHOT
+		)
+	else:
+		get_tree().create_timer(2.0).timeout.connect(
+			func() -> void:
+				cleanup.call(),
+			CONNECT_ONE_SHOT
+		)
+
+	if fx.has_method("play"):
+		fx.play(success, face)
+	else:
+		cleanup.call()
+
+func play_exodia_win_fx(winner_side: String) -> void:
+	var scene := _get_duel_vfx_scene("exodia_win")
+
+	if scene == null:
+		push_warning("DuelAnimationService: no se encontró VFX 'exodia_win'.")
+		await get_tree().create_timer(0.35).timeout
+		return
+
+	_begin_duel_animation_lock()
+
+	var fx = scene.instantiate()
+
+	if not is_instance_valid(fx):
+		_end_duel_animation_lock()
+		return
+
+	var parent_node := get_tree().current_scene
+
+	if parent_node == null:
+		parent_node = bm.get_parent()
+
+	if parent_node == null:
+		parent_node = bm
+
+	parent_node.add_child(fx)
+
+	if fx.has_method("setup"):
+		fx.setup(winner_side)
+
+	if fx.has_method("play"):
+		fx.play()
+
+	if fx.has_signal("finished"):
+		await fx.finished
+	else:
+		await get_tree().create_timer(3.0).timeout
+
+	if is_instance_valid(fx):
+		fx.queue_free()
+
+	_end_duel_animation_lock()

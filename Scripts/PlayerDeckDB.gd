@@ -1,9 +1,7 @@
 extends Node
 
 var DEFAULT_PLAYER_DECK := [
-	"40453765",
-	"40453765",
-	"40453765","20394040","20394040","20394040","40619825","40619825","40619825"
+	"15150365"
 ]
 
 func get_deck_by_key(key: String) -> Array:

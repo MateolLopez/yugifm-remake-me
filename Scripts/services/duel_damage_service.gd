@@ -112,8 +112,12 @@ func _apply_battle_damage_to_side(target_owner: String, amount: int, source_card
 		"defender": defender_card,
 		"target_player": target_owner,
 		"amount": amount,
-		"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player")
+		"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player"),
+		"turn_index": bm.turn_index
 	})
+
+	_apply_lifesteal_from_battle_damage_source(source_card, amount)
+
 	_check_end_duel()
 
 func _apply_effect_damage_to_side(target_owner: String, amount: int, ctx: Dictionary = {}) -> void:
@@ -166,3 +170,95 @@ func _check_end_duel() -> bool:
 		bm.duel_finished = true
 		bm.emit_signal("duel_over","player_victory")
 	return bm.duel_finished
+
+func _apply_lifesteal_from_battle_damage_source(source_card, amount: int) -> void:
+	if amount <= 0:
+		return
+
+	if not is_instance_valid(source_card):
+		return
+
+	if not _damage_source_has_lifesteal(source_card):
+		return
+
+	var source_owner := _owner_of_damage_source(source_card)
+
+	if source_owner == "":
+		return
+
+	_recover_lp_from_lifesteal(source_owner, amount, source_card)
+
+func _damage_source_has_lifesteal(card: Node) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	if bm != null and bm.kw_service != null and bm.kw_service.has_method("_has_kw"):
+		return bool(bm.kw_service._has_kw(card, "LIFESTEAL"))
+
+	if card.has_method("equip_has_keyword"):
+		if bool(card.call("equip_has_keyword", "LIFESTEAL")):
+			return true
+
+	if card.has_method("has_keyword"):
+		if bool(card.call("has_keyword", "LIFESTEAL")):
+			return true
+
+	if "keywords" in card and typeof(card.keywords) == TYPE_ARRAY:
+		for k in card.keywords:
+			if str(k).to_upper() == "LIFESTEAL":
+				return true
+
+	if card.has_meta("runtime_keywords"):
+		var runtime_keywords: Array = card.get_meta("runtime_keywords")
+		for k in runtime_keywords:
+			if str(k).to_upper() == "LIFESTEAL":
+				return true
+
+	return false
+
+
+func _owner_of_damage_source(card: Node) -> String:
+	if not is_instance_valid(card):
+		return ""
+
+	if bm != null and bm.zone_service != null and bm.zone_service.has_method("_owner_of"):
+		var zone_owner := card_runtime_service._norm_owner(bm.zone_service._owner_of(card))
+
+		if zone_owner != "":
+			return zone_owner
+
+	if "owner_side" in card:
+		return card_runtime_service._norm_owner(card.owner_side)
+
+	if card.has_meta("owner_side"):
+		return card_runtime_service._norm_owner(card.get_meta("owner_side"))
+
+	if card.has_meta("controller"):
+		return card_runtime_service._norm_owner(card.get_meta("controller"))
+
+	return ""
+
+
+func _recover_lp_from_lifesteal(owner: String, amount: int, source_card: Node) -> void:
+	owner = card_runtime_service._norm_owner(owner)
+
+	if owner == "":
+		return
+
+	if has_method("recover_lp_to_side"):
+		recover_lp_to_side(owner, amount, {
+			"source": source_card,
+			"controller": owner,
+			"reason": "LIFESTEAL",
+			"amount": amount,
+			"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player"),
+			"turn_index": bm.turn_index
+		})
+		return
+
+	if owner == "Player":
+		bm.player_hp += amount
+		$"../../PlayerHP".text = str(bm.player_hp)
+	elif owner == "Opponent":
+		bm.opponent_hp += amount
+		$"../../OpponentHP".text = str(bm.opponent_hp)

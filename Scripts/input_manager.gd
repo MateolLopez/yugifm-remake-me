@@ -30,6 +30,10 @@ func _input(event: InputEvent) -> void:
 		return
 
 	var bm_main = _battle_manager()
+	
+	if _handle_card_selection_input(event, bm_main):
+		return
+
 	var opponent_turn := bm_main != null and bool(bm_main.get("is_opponent_turn"))
 
 	# -------------------------
@@ -353,6 +357,59 @@ func _get_card_under_mouse_any_side():
 			best_z = c.z_index
 	return best
 
+func _handle_card_selection_input(event: InputEvent, bm_main: Node) -> bool:
+	if bm_main == null:
+		return false
+
+	var selection_service = bm_main.get("selection_service")
+
+	if selection_service == null:
+		return false
+
+	if not selection_service.has_method("is_selecting_card"):
+		return false
+
+	if not bool(selection_service.is_selecting_card()):
+		return false
+
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			var selected_card = _get_card_under_mouse_any_side()
+
+			if is_instance_valid(selected_card):
+				if selection_service.has_method("try_receive_card_selection"):
+					selection_service.try_receive_card_selection(selected_card)
+
+			get_viewport().set_input_as_handled()
+			return true
+
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+			if _selection_can_be_canceled(selection_service):
+				if selection_service.has_method("cancel_card_selection"):
+					selection_service.cancel_card_selection()
+
+			get_viewport().set_input_as_handled()
+			return true
+
+	if event.is_action_pressed("cancel"):
+		if _selection_can_be_canceled(selection_service):
+			if selection_service.has_method("cancel_card_selection"):
+				selection_service.cancel_card_selection()
+
+		get_viewport().set_input_as_handled()
+		return true
+
+	get_viewport().set_input_as_handled()
+	return true
+
+func _selection_can_be_canceled(selection_service: Node) -> bool:
+	if selection_service == null:
+		return false
+
+	if selection_service.has_method("is_current_selection_cancelable"):
+		return bool(selection_service.is_current_selection_cancelable())
+
+	return true
 
 func _get_context_menu() -> PopupMenu:
 	return get_node_or_null("../UILayer/CardContextMenu") as PopupMenu
@@ -403,7 +460,9 @@ func _show_context_menu_for_card(card, mouse_pos: Vector2) -> void:
 			var facedown := bool(card.face_down) if ("face_down" in card) else false
 
 			if facedown:
-				menu.add_item("Voltear", ACT_FLIP_FACEUP)
+				if _can_manual_flip_faceup(card):
+					menu.add_item("Voltear", ACT_FLIP_FACEUP)
+
 				menu.add_item("Cambiar posición", ACT_TOGGLE_POSITION)
 				menu.add_item("Cambiar Guardian Star", ACT_CHANGE_GUARDIAN_STAR)
 			else:
@@ -428,6 +487,21 @@ func _show_context_menu_for_card(card, mouse_pos: Vector2) -> void:
 	pos.y -= size.y + 8
 	menu.position = pos
 	menu.popup()
+
+func _can_manual_flip_faceup(card) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	var bm = _battle_manager()
+	if bm == null:
+		return true
+
+	var runtime_service = bm.get("card_runtime_service")
+
+	if runtime_service != null and runtime_service.has_method("can_manually_flip_faceup"):
+		return bool(runtime_service.can_manually_flip_faceup(card))
+
+	return true
 
 func _on_context_menu_id_pressed(id: int) -> void:
 	var menu := _get_context_menu()
@@ -497,6 +571,9 @@ func _on_context_menu_id_pressed(id: int) -> void:
 
 		ACT_FLIP_FACEUP:
 			if not _can_change_battle_state(card):
+				return
+
+			if not _can_manual_flip_faceup(card):
 				return
 
 			if reveal_service != null and reveal_service.has_method("reveal_card"):

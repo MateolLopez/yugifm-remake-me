@@ -48,40 +48,47 @@ func send_monster_to_graveyard_as_cost(card: Node, owner: String, ctx: Dictionar
 	grave_entry["cause"] = "SEND_TO_GRAVE_AS_COST"
 	grave_entry["was_destroyed"] = false
 
-	if event_service.has_method("_unregister_card_with_effect_engine"):
-		event_service._unregister_card_with_effect_engine(card)
+	var effect_source = ctx.get("cost_source", ctx.get("effect_source", ctx.get("source", null)))
 
 	var send_ctx := {
 		"battle_manager": bm,
 		"source": card,
+		"sent_card": card,
+		"cost_source": effect_source,
+		"effect_source": effect_source,
 		"controller": owner,
 		"cause": "SEND_TO_GRAVE_AS_COST",
-		"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player")
+		"was_destroyed": false,
+		"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player"),
+		"turn_index": bm.turn_index
 	}
 
 	for k in ctx.keys():
 		if not send_ctx.has(k):
 			send_ctx[k] = ctx[k]
 
-	if event_service.has_method("_emit_duel_event"):
-		event_service._emit_duel_event("ON_LEAVE_FIELD", send_ctx)
-		event_service._emit_duel_event("ON_SEND_TO_GRAVE", send_ctx)
-		event_service._emit_duel_event("ON_SEND_TO_GRAVE_AS_COST", send_ctx)
+	if event_service.has_method("_unregister_card_with_effect_engine"):
+		event_service._unregister_card_with_effect_engine(card)
 
 	if owner == "Player":
-		bm.player_graveyard.append(grave_entry)
-
 		if card in bm.player_cards_on_battlefield:
 			bm.player_cards_on_battlefield.erase(card)
-	else:
-		bm.opponent_graveyard.append(grave_entry)
 
+		bm.player_graveyard.append(grave_entry)
+	else:
 		if card in bm.opponent_cards_on_battlefield:
 			bm.opponent_cards_on_battlefield.erase(card)
 
+		bm.opponent_graveyard.append(grave_entry)
+
 	if is_instance_valid(slot):
 		slot.set("card_in_slot", false)
-		slot.set_meta("card_ref", null)
+
+		if "card_ref" in slot:
+			slot.set("card_ref", null)
+
+		if slot.has_meta("card_ref"):
+			slot.remove_meta("card_ref")
 
 		var slot_shape = slot.get_node_or_null("Area2D/CollisionShape2D")
 		if slot_shape:
@@ -106,6 +113,11 @@ func send_monster_to_graveyard_as_cost(card: Node, owner: String, ctx: Dictionar
 
 	if zone_service.has_method("_clean_battlefield_lists"):
 		zone_service._clean_battlefield_lists()
+
+	if event_service.has_method("_emit_duel_event"):
+		event_service._emit_duel_event("ON_LEAVE_FIELD", send_ctx)
+		event_service._emit_duel_event("ON_SEND_TO_GRAVE", send_ctx)
+		event_service._emit_duel_event("ON_SEND_TO_GRAVE_AS_COST", send_ctx)
 
 	if event_service.has_method("_refresh_effect_engine_continuous_buffs"):
 		event_service._refresh_effect_engine_continuous_buffs()

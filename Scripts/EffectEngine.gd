@@ -12,7 +12,10 @@ var field_controller_by_id: Dictionary = {}
 var once_per_instance_used: Dictionary = {}
 var once_per_turn_used: Dictionary = {}
 
+var rng := RandomNumberGenerator.new()
+
 func _ready() -> void:
+	rng.randomize()
 	_load_effectref()
 	templates = effectref.get("templates", {})
 	keywords = effectref.get("keywords", {})
@@ -304,6 +307,9 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 			_tpl_apply_keyword_to_new_summons_while_source_faceup(source, ctx, params)
 			result = true
 
+		"change_battle_position_by_effect":
+			result = _tpl_change_battle_position_by_effect(source, ctx, params)
+
 		"summon_token_copy_source_stats_on_send_to_grave_by_effect":
 			_tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source, ctx, params)
 			result = true
@@ -376,6 +382,9 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 			_tpl_graveyard_count_stat_buff_while_source_faceup(source, ctx, params)
 			result = true
 
+		"tribute_monster_to_inflict_damage":
+			result = _tpl_tribute_monster_to_inflict_damage(source, ctx, params)
+
 		"inflict_destroyed_monster_atk_as_effect_damage":
 			result = _tpl_inflict_destroyed_monster_atk_as_effect_damage(source, ctx, params)
 
@@ -384,6 +393,9 @@ func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> b
 
 		"activate_elegant_egotist":
 			result = _tpl_activate_elegant_egotist(source, ctx, params)
+
+		"coin_flip_eff":
+			result = _tpl_coin_flip_eff(source, ctx, params)
 
 		_:
 			push_warning("EffectEngine: Template no implementado: %s" % template)
@@ -629,7 +641,7 @@ func _count_matching_cards_in_graveyard(bm: Node, source_controller: String, par
 	var filter_race := str(params.get("count_filter_race", "")).to_upper()
 	var filter_tag := str(params.get("count_filter_tag", "")).to_lower()
 
-	var sides: Array[String] = []
+	var sides: Array = []
 
 	if count_side == "SELF":
 		sides = ["PLAYER" if source_controller == "Player" else "OPPONENT"]
@@ -1139,7 +1151,7 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 	var kinds: Array = params.get("kinds", ["MONSTER"])
 
 	var candidates: Array = []
-	var sides: Array[String] = []
+	var sides: Array = []
 
 	if target_side == "SELF":
 		if controller == "Player":
@@ -1859,7 +1871,7 @@ func _tpl_grant_keyword_to_selected_target(source: Node, ctx: Dictionary, params
 		return
 
 	var candidates: Array = []
-	var sides: Array[String] = []
+	var sides: Array = []
 
 	if target_side == "SELF":
 		sides = ["PLAYER" if controller == "Player" else "OPPONENT"]
@@ -1936,6 +1948,342 @@ func _tpl_grant_keyword_to_selected_target(source: Node, ctx: Dictionary, params
 
 		bm.kw_service.apply_keyword_to_target(target, keyword, duration, controller)
 
+func _tpl_change_battle_position_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	var controller := _resolve_effect_controller(source, ctx, params)
+
+	if controller == "":
+		return false
+
+	var to_position := str(params.get("to_position", "TOGGLE")).strip_edges().to_upper()
+
+	if to_position == "DEF":
+		to_position = "DEFENSE"
+	elif to_position == "ATK":
+		to_position = "ATTACK"
+
+	if to_position != "ATTACK" and to_position != "DEFENSE" and to_position != "TOGGLE":
+		to_position = "TOGGLE"
+
+	var targets := _select_battle_position_targets(source, bm, controller, params)
+
+	if targets.is_empty():
+		return false
+
+	var activation_type := "MONSTER_EFFECT"
+
+	if is_instance_valid(source) and ("kind" in source):
+		var sk := str(source.kind).to_upper()
+
+		if sk == "SPELL":
+			activation_type = "SPELL"
+		elif sk == "TRAP":
+			activation_type = "TRAP"
+
+	var effect_ctx := {
+		"source": source,
+		"controller": controller,
+		"activation_type": activation_type
+	}
+
+	var presentation := _presentation_from_ctx(ctx)
+
+	if not presentation.is_empty():
+		effect_ctx["presentation"] = presentation
+
+	var eng = null
+
+	if bm.event_service != null and bm.event_service.has_method("_get_effect_engine"):
+		eng = bm.event_service._get_effect_engine()
+
+	var applied := false
+
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+
+		if eng != null and eng.has_method("is_effect_application_blocked"):
+			if eng.is_effect_application_blocked(target, effect_ctx, "POSITION_CHANGE"):
+				continue
+
+		if _apply_battle_position_change_to_card(target, to_position):
+			applied = true
+
+	return applied
+
+func _select_battle_position_targets(source: Node, bm: Node, controller: String, params: Dictionary) -> Array:
+	var itself := bool(params.get("itself", false))
+	var candidates: Array = []
+
+	if itself:
+		if _card_matches_battle_position_params(source, params):
+			candidates.append(source)
+
+		return _pick_battle_position_targets(candidates, params)
+
+	var target_side := str(params.get("target_side", "SELF")).strip_edges().to_upper()
+	var sides: Array = []
+
+	match target_side:
+		"SELF", "OWNER":
+			sides = ["PLAYER"] if controller == "Player" else ["OPPONENT"]
+
+		"OPPONENT":
+			sides = ["OPPONENT"] if controller == "Player" else ["PLAYER"]
+
+		"BOTH", "ALL":
+			sides = ["PLAYER", "OPPONENT"]
+
+		_:
+			sides = ["PLAYER"] if controller == "Player" else ["OPPONENT"]
+
+	for side in sides:
+		var arr: Array = bm.player_cards_on_battlefield if side == "PLAYER" else bm.opponent_cards_on_battlefield
+
+		for card in arr:
+			if not is_instance_valid(card):
+				continue
+
+			if not _card_matches_battle_position_params(card, params):
+				continue
+
+			candidates.append(card)
+
+	return _pick_battle_position_targets(candidates, params)
+
+
+func _card_matches_battle_position_params(card: Node, params: Dictionary) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	var kind := str(card.kind).to_upper() if ("kind" in card) else ""
+
+	if kind != "MONSTER":
+		return false
+
+	var faceup_only := bool(params.get("faceup_only", false))
+	var facedown_only := bool(params.get("facedown_only", false))
+
+	var is_facedown := false
+
+	if "face_down" in card:
+		is_facedown = bool(card.face_down)
+
+	if faceup_only and is_facedown:
+		return false
+
+	if facedown_only and not is_facedown:
+		return false
+
+	var from_position := str(params.get("from_position", "ANY")).strip_edges().to_upper()
+
+	if from_position == "DEF":
+		from_position = "DEFENSE"
+	elif from_position == "ATK":
+		from_position = "ATTACK"
+
+	var is_defense := bool(card.in_defense) if ("in_defense" in card) else false
+
+	if from_position == "ATTACK" and is_defense:
+		return false
+
+	if from_position == "DEFENSE" and not is_defense:
+		return false
+
+	var filter_id := str(params.get("filter_id", "")).strip_edges()
+	var filter_name := str(params.get("filter_name", "")).strip_edges().to_lower()
+	var filter_attribute := str(params.get("filter_attribute", "")).strip_edges().to_upper()
+	var filter_race := str(params.get("filter_race", "")).strip_edges().to_upper()
+	var filter_tag := str(params.get("filter_tag", "")).strip_edges().to_lower()
+
+	if filter_id != "":
+		if not ("id" in card):
+			return false
+
+		if str(card.id).strip_edges() != filter_id:
+			return false
+
+	if filter_name != "":
+		if not ("cardname" in card):
+			return false
+
+		if str(card.cardname).strip_edges().to_lower() != filter_name:
+			return false
+
+	if filter_attribute != "":
+		var card_attribute := ""
+
+		if card.has_method("get_effective_attribute"):
+			card_attribute = str(card.get_effective_attribute()).to_upper()
+		else:
+			card_attribute = str(card.attribute).to_upper() if ("attribute" in card) else ""
+
+		if card_attribute != filter_attribute:
+			return false
+
+	if filter_race != "":
+		var card_race := ""
+
+		if card.has_method("get_effective_race"):
+			card_race = str(card.get_effective_race()).to_upper()
+		else:
+			card_race = str(card.race).to_upper() if ("race" in card) else ""
+
+		if card_race != filter_race:
+			return false
+
+	if filter_tag != "":
+		if not _card_has_tag(card, filter_tag):
+			return false
+
+	return true
+
+func _pick_battle_position_targets(candidates: Array, params: Dictionary) -> Array:
+	if candidates.is_empty():
+		return []
+
+	var choose := str(params.get("choose", "ALL")).strip_edges().to_upper()
+	var count := int(params.get("count", 0))
+
+	if choose == "ALL" or count == 0:
+		return candidates
+
+	match choose:
+		"RANDOM":
+			candidates.shuffle()
+
+		"HIGHEST_ATK":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_atk(a) > _safe_card_atk(b)
+			)
+
+		"LOWEST_ATK":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_atk(a) < _safe_card_atk(b)
+			)
+
+		"HIGHEST_DEF":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_def(a) > _safe_card_def(b)
+			)
+
+		"LOWEST_DEF":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_def(a) < _safe_card_def(b)
+			)
+
+		"HIGHEST_LEVEL":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_level(a) > _safe_card_level(b)
+			)
+
+		"LOWEST_LEVEL":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_level(a) < _safe_card_level(b)
+			)
+
+		_:
+			candidates.shuffle()
+
+	var result: Array = []
+	var n = max(1, count)
+
+	for i in range(min(n, candidates.size())):
+		result.append(candidates[i])
+
+	return result
+
+
+func _safe_card_atk(card: Node) -> int:
+	if not is_instance_valid(card):
+		return 0
+
+	if card.has_method("get_effective_atk"):
+		return int(card.get_effective_atk())
+
+	if "atk" in card:
+		return int(card.atk)
+
+	return 0
+
+
+func _safe_card_def(card: Node) -> int:
+	if not is_instance_valid(card):
+		return 0
+
+	if card.has_method("get_effective_def"):
+		return int(card.get_effective_def())
+
+	if "def" in card:
+		return int(card.def)
+
+	return 0
+
+
+func _safe_card_level(card: Node) -> int:
+	if not is_instance_valid(card):
+		return 0
+
+	if "level" in card:
+		return int(card.level)
+
+	return 0
+
+func _apply_battle_position_change_to_card(card: Node, to_position: String) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	var current_defense := bool(card.in_defense) if ("in_defense" in card) else false
+	var next_defense := current_defense
+
+	match to_position:
+		"ATTACK":
+			next_defense = false
+
+		"DEFENSE":
+			next_defense = true
+
+		"TOGGLE":
+			next_defense = not current_defense
+
+		_:
+			return false
+
+	if next_defense == current_defense:
+		return false
+
+	if card.has_method("set_battle_position_by_effect"):
+		card.set_battle_position_by_effect("DEFENSE" if next_defense else "ATTACK")
+		return true
+
+	if card.has_method("set_battle_position"):
+		card.set_battle_position("DEFENSE" if next_defense else "ATTACK")
+		return true
+
+	if card.has_method("change_battle_position"):
+		card.change_battle_position("DEFENSE" if next_defense else "ATTACK")
+		return true
+
+	if "in_defense" in card:
+		card.in_defense = next_defense
+
+	if card is Node2D:
+		var card2d := card as Node2D
+
+		if next_defense:
+			card2d.rotation_degrees = 90.0
+		else:
+			card2d.rotation_degrees = 0.0
+
+	if card.has_method("_update_visuals"):
+		card._update_visuals()
+
+	return true
+
 func _tpl_reveal_hidden_cards(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	print("TPL REVEAL HIDDEN source=", source.cardname if is_instance_valid(source) and ("cardname" in source) else "<null>", " params=", params)
 	var bm := _get_battle_manager(ctx)
@@ -1988,6 +2336,351 @@ func _tpl_inflict_destroyed_monster_atk_as_effect_damage(source: Node, ctx: Dict
 	target_player = _norm_owner(target_player)
 	bm.damage_service._apply_effect_damage_to_side(target_player, destroyed_atk, {"source": source})
 	return true
+
+func _tpl_tribute_monster_to_inflict_damage(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	var controller := _resolve_effect_controller(source, ctx, params)
+
+	if controller == "":
+		return false
+
+	var candidates := _select_tribute_monster_candidates(source, bm, controller, params)
+
+	if candidates.is_empty():
+		return false
+
+	var choose := str(params.get("choose", "PLAYER_SELECT")).strip_edges().to_upper()
+
+	if choose == "PLAYER_SELECT" and controller == "Player":
+		return _start_tribute_monster_selection(source, ctx, params, controller, candidates)
+
+	var chosen := _pick_tribute_monster_for_auto_choice(candidates, params)
+
+	if not is_instance_valid(chosen):
+		return false
+
+	return _resolve_tribute_monster_to_inflict_damage(source, ctx, params, controller, chosen)
+
+func _select_tribute_monster_candidates(source: Node, bm: Node, controller: String, params: Dictionary) -> Array:
+	var tribute_side := str(params.get("tribute_side", "SELF")).strip_edges().to_upper()
+	var allow_self := bool(params.get("allow_self", true))
+
+	var sides: Array = []
+
+	match tribute_side:
+		"SELF", "OWNER":
+			sides = ["PLAYER"] if controller == "Player" else ["OPPONENT"]
+
+		"OPPONENT":
+			sides = ["OPPONENT"] if controller == "Player" else ["PLAYER"]
+
+		"BOTH", "ALL":
+			sides = ["PLAYER", "OPPONENT"]
+
+		_:
+			sides = ["PLAYER"] if controller == "Player" else ["OPPONENT"]
+
+	var candidates: Array = []
+
+	for side in sides:
+		var arr: Array = bm.player_cards_on_battlefield if side == "PLAYER" else bm.opponent_cards_on_battlefield
+
+		for card in arr:
+			if not is_instance_valid(card):
+				continue
+
+			if not allow_self and card == source:
+				continue
+
+			if not _card_matches_tribute_cost_params(card, params):
+				continue
+
+			candidates.append(card)
+
+	return candidates
+
+func _card_matches_tribute_cost_params(card: Node, params: Dictionary) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	var kind := str(card.kind).to_upper() if ("kind" in card) else ""
+
+	if kind != "MONSTER":
+		return false
+
+	var faceup_only := bool(params.get("faceup_only", false))
+	var facedown_only := bool(params.get("facedown_only", false))
+
+	var is_facedown := false
+
+	if "face_down" in card:
+		is_facedown = bool(card.face_down)
+
+	if faceup_only and is_facedown:
+		return false
+
+	if facedown_only and not is_facedown:
+		return false
+
+	var filter_id := str(params.get("filter_id", "")).strip_edges()
+	var filter_name := str(params.get("filter_name", "")).strip_edges().to_lower()
+	var filter_attribute := str(params.get("filter_attribute", "")).strip_edges().to_upper()
+	var filter_race := str(params.get("filter_race", "")).strip_edges().to_upper()
+	var filter_tag := str(params.get("filter_tag", "")).strip_edges().to_lower()
+
+	if filter_id != "":
+		if not ("id" in card):
+			return false
+
+		if str(card.id).strip_edges() != filter_id:
+			return false
+
+	if filter_name != "":
+		if not ("cardname" in card):
+			return false
+
+		if str(card.cardname).strip_edges().to_lower() != filter_name:
+			return false
+
+	if filter_attribute != "":
+		var card_attribute := ""
+
+		if card.has_method("get_effective_attribute"):
+			card_attribute = str(card.get_effective_attribute()).to_upper()
+		else:
+			card_attribute = str(card.attribute).to_upper() if ("attribute" in card) else ""
+
+		if card_attribute != filter_attribute:
+			return false
+
+	if filter_race != "":
+		var card_race := ""
+
+		if card.has_method("get_effective_race"):
+			card_race = str(card.get_effective_race()).to_upper()
+		else:
+			card_race = str(card.race).to_upper() if ("race" in card) else ""
+
+		if card_race != filter_race:
+			return false
+
+	if filter_tag != "":
+		if not _card_has_tag(card, filter_tag):
+			return false
+
+	return true
+
+func _pick_tribute_monster_for_auto_choice(candidates: Array, params: Dictionary) -> Node:
+	if candidates.is_empty():
+		return null
+
+	var choose := str(params.get("choose", "RANDOM")).strip_edges().to_upper()
+
+	match choose:
+		"HIGHEST_LEVEL":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_level(a) > _safe_card_level(b)
+			)
+
+		"LOWEST_LEVEL":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_level(a) < _safe_card_level(b)
+			)
+
+		"HIGHEST_ATK":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_atk(a) > _safe_card_atk(b)
+			)
+
+		"LOWEST_ATK":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_atk(a) < _safe_card_atk(b)
+			)
+
+		"HIGHEST_DEF":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_def(a) > _safe_card_def(b)
+			)
+
+		"LOWEST_DEF":
+			candidates.sort_custom(func(a, b):
+				return _safe_card_def(a) < _safe_card_def(b)
+			)
+
+		_:
+			candidates.shuffle()
+
+	return candidates[0]
+
+func _start_tribute_monster_selection(
+	source: Node,
+	ctx: Dictionary,
+	params: Dictionary,
+	controller: String,
+	candidates: Array
+) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	if bm.selection_service == null:
+		push_warning("EffectEngine: no hay selection_service para seleccionar tributo.")
+		return false
+
+	if not bm.selection_service.has_method("start_card_selection"):
+		push_warning("EffectEngine: selection_service no tiene start_card_selection().")
+		return false
+
+	var stored_ctx := ctx.duplicate(true)
+	var stored_params := params.duplicate(true)
+
+	var on_selected := func(selected_card: Node) -> void:
+		_resolve_tribute_monster_to_inflict_damage(
+			source,
+			stored_ctx,
+			stored_params,
+			controller,
+			selected_card
+		)
+
+	var options := {
+		"reason": "TRIBUTE_COST",
+		"prompt": "Selecciona un monstruo para tributar.",
+		"source": source,
+		"controller": controller,
+		"highlight": true,
+		"cancelable": true
+	}
+
+	bm.selection_service.start_card_selection(candidates, on_selected, options)
+
+	return true
+
+func _resolve_tribute_monster_to_inflict_damage(
+	source: Node,
+	ctx: Dictionary,
+	params: Dictionary,
+	controller: String,
+	tribute_card: Node
+) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	if not is_instance_valid(tribute_card):
+		return false
+
+	if not _card_matches_tribute_cost_params(tribute_card, params):
+		return false
+
+	var amount := _calculate_tribute_damage_amount(tribute_card, params)
+
+	if amount <= 0:
+		return false
+
+	var tribute_owner := _norm_owner(bm.zone_service._owner_of(tribute_card))
+
+	if tribute_owner == "":
+		tribute_owner = controller
+
+	var sent := _send_tribute_monster_to_graveyard_as_cost(tribute_card, tribute_owner, source, ctx)
+
+	if not sent:
+		return false
+
+	var target_player := _resolve_damage_target_player(controller, params)
+
+	if target_player == "":
+		return false
+
+	bm.damage_service._apply_effect_damage_to_side(target_player, amount, {
+		"source": source,
+		"controller": controller,
+		"activation_type": "MONSTER_EFFECT",
+		"tribute_card": tribute_card,
+		"damage_reason": "TRIBUTE_EFFECT"
+	})
+
+	return true
+
+func _calculate_tribute_damage_amount(tribute_card: Node, params: Dictionary) -> int:
+	if not is_instance_valid(tribute_card):
+		return 0
+
+	var mode := str(params.get("damage_mode", "FIXED")).strip_edges().to_upper()
+
+	match mode:
+		"FIXED":
+			return int(params.get("amount", 0))
+
+		"LEVEL_MULTIPLIER":
+			var per_level := int(params.get("damage_per_level", 0))
+			return max(0, _safe_card_level(tribute_card) * per_level)
+
+		"ATK_MULTIPLIER":
+			var atk_mult := float(params.get("atk_multiplier", 1.0))
+			return max(0, int(floor(float(_safe_card_atk(tribute_card)) * atk_mult)))
+
+		"DEF_MULTIPLIER":
+			var def_mult := float(params.get("def_multiplier", 1.0))
+			return max(0, int(floor(float(_safe_card_def(tribute_card)) * def_mult)))
+
+		"HALF_ATK":
+			return max(0, int(floor(float(_safe_card_atk(tribute_card)) * 0.5)))
+
+		_:
+			return int(params.get("amount", 0))
+
+func _resolve_damage_target_player(controller: String, params: Dictionary) -> String:
+	controller = _norm_owner(controller)
+
+	var target := str(params.get("damage_target", "OPPONENT")).strip_edges().to_upper()
+
+	match target:
+		"SELF":
+			return controller
+
+		"OPPONENT":
+			return _opponent_of(controller)
+
+		_:
+			return _opponent_of(controller)
+
+func _send_tribute_monster_to_graveyard_as_cost(
+	card: Node,
+	owner: String,
+	source: Node,
+	ctx: Dictionary
+) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	owner = _norm_owner(owner)
+
+	var cost_ctx := ctx.duplicate(true)
+	cost_ctx["source"] = source
+	cost_ctx["cost_source"] = source
+	cost_ctx["sent_card"] = card
+	cost_ctx["controller"] = owner
+	cost_ctx["send_cause"] = "TRIBUTE_COST"
+
+	if bm.graveyard_service != null:
+		if bm.graveyard_service.has_method("send_monster_to_graveyard_as_cost"):
+			return bool(bm.graveyard_service.send_monster_to_graveyard_as_cost(card, owner, cost_ctx))
+
+		if bm.graveyard_service.has_method("send_card_to_graveyard_as_cost"):
+			return bool(bm.graveyard_service.send_card_to_graveyard_as_cost(card, owner, cost_ctx))
+
+	push_warning("EffectEngine: falta método de graveyard_service para enviar tributo como costo.")
+	return false
 
 func _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
 	var bm := _get_battle_manager(ctx)
@@ -2144,3 +2837,82 @@ func _resolve_effect_controller(source: Node, ctx: Dictionary, params: Dictionar
 		controller = _opponent_of(controller)
 
 	return controller
+
+func _tpl_coin_flip_eff(source: Node, ctx: Dictionary, params: Dictionary) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	var success_chance := float(params.get("success_chance", 0.5))
+	success_chance = clampf(success_chance, 0.0, 1.0)
+
+	var success_face := str(params.get("success_face", "HEADS")).strip_edges().to_upper()
+
+	if success_face != "HEADS" and success_face != "TAILS":
+		success_face = "HEADS"
+
+	var roll := rng.randf()
+	var success := roll < success_chance
+
+	var result_face := success_face
+
+	if not success:
+		result_face = "TAILS" if success_face == "HEADS" else "HEADS"
+
+	var chosen_result = params.get("success_result", {}) if success else params.get("fail_result", {})
+
+	var coin_ctx := ctx.duplicate(true)
+	coin_ctx["coin_toss_success"] = success
+	coin_ctx["coin_toss_face"] = result_face
+	coin_ctx["coin_toss_roll"] = roll
+	coin_ctx["coin_toss_success_chance"] = success_chance
+
+	print(
+		"COIN TOSS | roll=", roll,
+		" chance=", success_chance,
+		" success=", success,
+		" face=", result_face
+	)
+
+	var run_result := func() -> void:
+		_execute_coin_flip_result(source, coin_ctx, chosen_result)
+
+	if bm.animation_service != null and bm.animation_service.has_method("play_coin_toss_fx"):
+		bm.animation_service.play_coin_toss_fx(success, result_face, run_result)
+	else:
+		run_result.call()
+
+	return true
+
+
+func _execute_coin_flip_result(source: Node, ctx: Dictionary, result_def) -> bool:
+	if typeof(result_def) != TYPE_DICTIONARY:
+		return false
+
+	var result_dict: Dictionary = result_def
+
+	if result_dict.is_empty():
+		return false
+
+	var template := str(result_dict.get("template", "")).strip_edges()
+
+	if template == "":
+		push_warning("EffectEngine: coin_flip_eff recibió un result sin template.")
+		return false
+
+	var depth := int(ctx.get("nested_effect_depth", 0))
+
+	if depth > 8:
+		push_warning("EffectEngine: nested_effect_depth excedido en coin_flip_eff.")
+		return false
+
+	var nested_ctx := ctx.duplicate(true)
+	nested_ctx["nested_effect_depth"] = depth + 1
+
+	var nested_effect := result_dict.duplicate(true)
+
+	if not nested_effect.has("trigger"):
+		nested_effect["trigger"] = "COIN_TOSS_RESULT"
+
+	return _execute_effect(source, nested_ctx, nested_effect)

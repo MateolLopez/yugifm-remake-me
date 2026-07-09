@@ -26,15 +26,34 @@ func _on_duel_over(result: String):
 			_show_draw_menu()
 
 func _show_victory_panel_then_continue():
-	if get_node_or_null("ResultPanel"): return
-	var panel = _build_simple_panel("¡Victoria!", ["Continuar"])
+	if get_node_or_null("ResultPanel"):
+		return
+
+	var title := "¡Victoria!"
+
+	var bm = get_node_or_null("../BattleManager")
+	if bm != null and "duel_end_reason" in bm:
+		if str(bm.duel_end_reason).to_upper() == "EXODIA":
+			title = "Considerate Obliterado perrito."
+
+	var panel = _build_simple_panel(title, ["Continuar"])
 	add_child(panel)
 	panel.show()
 
 func _show_defeat_menu():
-	if get_node_or_null("ResultPanel"): return
-	var panel = _build_simple_panel("Derrota", ["Reintentar", "Título"])
-	add_child(panel); panel.show()
+	if get_node_or_null("ResultPanel"):
+		return
+
+	var title := "Derrota"
+
+	var bm = get_node_or_null("../BattleManager")
+	if bm != null and "duel_end_reason" in bm:
+		if str(bm.duel_end_reason).to_upper() == "EXODIA":
+			title = "Derrota por Exodia"
+
+	var panel = _build_simple_panel(title, ["Reintentar", "Título"])
+	add_child(panel)
+	panel.show()
 
 func _show_draw_menu():
 	if get_node_or_null("ResultPanel"): return

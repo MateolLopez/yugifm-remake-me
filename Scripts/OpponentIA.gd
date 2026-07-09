@@ -42,6 +42,7 @@ var max_fusion_materials: int = 3
 var played_monster_card_this_turn: bool = false
 var played_spellortrap_card_this_turn: bool = false
 var ai_used_cards_this_turn: Array = []
+var ai_attacks_done_this_turn: bool = false
 
 @onready var _slots_root_opponent: Node = get_node_or_null("../CardSlotsRival")
 @onready var _slots_root_player: Node = get_node_or_null("../CardSlots")
@@ -110,27 +111,55 @@ func make_turn_decisions() -> void:
 
 	reset_played_cards()
 
-	# Compatibilidad con el flujo viejo, por si aún queda alguna fusión pendiente.
 	if _has_pending_fusion():
 		await place_pending_fusion()
+		await _wait_after_ai_action()
+		adjust_all_battle_positions()
 
-	var plan := _build_turn_plan()
-	await _execute_turn_plan(plan)
+	var safety := 0
 
+	while safety < 8:
+		safety += 1
+
+		var action := _choose_next_ai_action()
+		var action_type := str(action.get("type", "END"))
+
+		if action_type == "END":
+			adjust_all_battle_positions()
+			break
+
+		var executed := await _execute_ai_action(action)
+
+		await _wait_after_ai_action()
+
+		if action_type == "MONSTER_ACTION" or action_type == "ACTIVATE_SPELL_FROM_HAND":
+			adjust_all_battle_positions()
+
+		if not executed:
+			break
+
+func _wait_after_ai_action() -> void:
+	if animation_service != null:
+		if animation_service.has_method("wait_until_duel_idle"):
+			await animation_service.wait_until_duel_idle()
+			return
+
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 func reset_played_cards() -> void:
 	played_monster_card_this_turn = false
 	played_spellortrap_card_this_turn = false
+	ai_attacks_done_this_turn = false
 	ai_used_cards_this_turn.clear()
-
 
 # -----------------------------------------------------------------------------
 # Plan builder
 # -----------------------------------------------------------------------------
 
-func _build_turn_plan() -> Dictionary:
+func _build_turn_plan(allow_monster_action: bool = true, allow_attacks: bool = true) -> Dictionary:
 	var base_state := _build_ai_state()
-	var monster_action := _get_best_monster_action()
+	var monster_action := _get_best_monster_action() if allow_monster_action else {"type": "NONE"}
 	var spell_actions := _get_ai_hand_action_spells()
 
 	var best_plan := {
@@ -143,7 +172,8 @@ func _build_turn_plan() -> Dictionary:
 
 	# Plan 0: no gastar spell activable.
 	var state_no_spell := _simulate_monster_action(base_state, monster_action)
-	state_no_spell = _simulate_best_attacks(state_no_spell)
+	if allow_attacks:
+		state_no_spell = _simulate_best_attacks(state_no_spell)
 	var score_no_spell := _score_ai_state(state_no_spell)
 
 	best_plan["score"] = score_no_spell
@@ -155,7 +185,8 @@ func _build_turn_plan() -> Dictionary:
 		# Plan A: usar spell antes de invocar/atacar.
 		var state_pre := _simulate_effect_card(base_state, spell, "Opponent")
 		state_pre = _simulate_monster_action(state_pre, monster_action)
-		state_pre = _simulate_best_attacks(state_pre)
+		if allow_attacks:
+			state_pre = _simulate_best_attacks(state_pre)
 		var score_pre := _score_ai_state(state_pre)
 
 		if score_pre > int(best_plan.get("score", AI_NEG_INF)):
@@ -169,7 +200,8 @@ func _build_turn_plan() -> Dictionary:
 
 		# Plan B: invocar/atacar primero, usar spell después.
 		var state_post := _simulate_monster_action(base_state, monster_action)
-		state_post = _simulate_best_attacks(state_post)
+		if allow_attacks:
+			state_post = _simulate_best_attacks(state_post)
 		state_post = _simulate_effect_card(state_post, spell, "Opponent")
 		var score_post := _score_ai_state(state_post)
 
@@ -183,6 +215,84 @@ func _build_turn_plan() -> Dictionary:
 			}
 
 	return best_plan
+
+func _choose_next_ai_action() -> Dictionary:
+	# 1) Si todavía puede usar Spell/Trap, preguntamos si conviene usar spell AHORA.
+	if not played_spellortrap_card_this_turn:
+		var plan_now := _build_turn_plan(not played_monster_card_this_turn, not ai_attacks_done_this_turn)
+		var pre_spell = plan_now.get("pre_summon_spell", null)
+
+		if is_instance_valid(pre_spell):
+			return {
+				"type": "ACTIVATE_SPELL_FROM_HAND",
+				"card": pre_spell
+			}
+
+	# 2) Si todavía no jugó monstruo, jugar/fusionar el mejor monstruo posible.
+	if not played_monster_card_this_turn:
+		var monster_action := _get_best_monster_action()
+
+		if str(monster_action.get("type", "NONE")) != "NONE":
+			return {
+				"type": "MONSTER_ACTION",
+				"action": monster_action
+			}
+
+	# 3) Si todavía no atacó, atacar.
+	if not ai_attacks_done_this_turn and _has_available_attackers():
+		return {
+			"type": "ATTACK"
+		}
+
+	# 4) Después de atacar, volver a evaluar si ahora conviene usar una spell.
+	# Ejemplo: primero matar el 1300 por batalla, luego Fissure mata el 2500.
+	if not played_spellortrap_card_this_turn:
+		var plan_after_battle := _build_turn_plan(false, false)
+		var post_battle_spell = plan_after_battle.get("pre_summon_spell", null)
+
+		if is_instance_valid(post_battle_spell):
+			return {
+				"type": "ACTIVATE_SPELL_FROM_HAND",
+				"card": post_battle_spell
+			}
+
+	# 5) Si no usó soporte, setear una Spell/Trap útil.
+	if not played_spellortrap_card_this_turn and _has_settable_spelltrap():
+		return {
+			"type": "SET_SPELLTRAP"
+		}
+
+	return {
+		"type": "END"
+	}
+
+func _execute_ai_action(action: Dictionary) -> bool:
+	match str(action.get("type", "END")):
+		"ACTIVATE_SPELL_FROM_HAND":
+			var spell = action.get("card", null)
+
+			if not is_instance_valid(spell):
+				return false
+
+			return await _ai_activate_spell_from_hand(spell)
+
+		"MONSTER_ACTION":
+			var monster_action: Dictionary = action.get("action", {"type": "NONE"})
+			return await _execute_monster_action(monster_action)
+
+		"ATTACK":
+			await execute_intelligent_attacks()
+			ai_attacks_done_this_turn = true
+			return true
+
+		"SET_SPELLTRAP":
+			var before := played_spellortrap_card_this_turn
+			await play_one_spelltrap_set()
+			return played_spellortrap_card_this_turn != before
+
+		_:
+			return false
+
 
 
 func _execute_turn_plan(plan: Dictionary) -> void:
@@ -202,10 +312,9 @@ func _execute_turn_plan(plan: Dictionary) -> void:
 
 	await play_one_spelltrap_set()
 
-
-func _execute_monster_action(action: Dictionary) -> void:
+func _execute_monster_action(action: Dictionary) -> bool:
 	if played_monster_card_this_turn:
-		return
+		return false
 
 	match str(action.get("type", "NONE")):
 		"FUSION_GENERIC":
@@ -225,15 +334,58 @@ func _execute_monster_action(action: Dictionary) -> void:
 
 					if typeof(fusion_result) == TYPE_DICTIONARY and bool(fusion_result.get("success", false)):
 						played_monster_card_this_turn = true
+						return true
+
+			return false
 
 		"NORMAL":
 			var card = action.get("card", null)
-			if is_instance_valid(card):
-				await play_monster_to_field(card)
+
+			if not is_instance_valid(card):
+				return false
+
+			var before := played_monster_card_this_turn
+			await play_monster_to_field(card)
+
+			return played_monster_card_this_turn != before
 
 		_:
-			return
+			return false
 
+func _has_available_attackers() -> bool:
+	if battle_manager == null:
+		return false
+
+	var player_has_monsters = battle_manager.player_cards_on_battlefield.size() > 0
+
+	for card in battle_manager.opponent_cards_on_battlefield:
+		if not is_instance_valid(card):
+			continue
+
+		if bool(card.get("in_defense")):
+			continue
+
+		if _has_keyword(card, "PARALYZED"):
+			continue
+
+		if not player_has_monsters:
+			return true
+
+		if find_optimal_target(card) != null:
+			return true
+
+	return false
+
+func _has_settable_spelltrap() -> bool:
+	if _pick_free_spelltrap_slot_opponent() == null:
+		return false
+
+	var spelltraps := _get_opponent_hand_spelltraps()
+	spelltraps = spelltraps.filter(func(c):
+		return is_instance_valid(c) and not ai_used_cards_this_turn.has(c)
+	)
+
+	return not spelltraps.is_empty()
 
 # -----------------------------------------------------------------------------
 # Hand helpers
@@ -1095,7 +1247,6 @@ func try_generic_fusion() -> bool:
 func play_optimal_monsters() -> void:
 	var action := _get_best_monster_action()
 	await _execute_monster_action(action)
-
 
 func play_monster_to_field(monster) -> void:
 	if not is_instance_valid(monster):

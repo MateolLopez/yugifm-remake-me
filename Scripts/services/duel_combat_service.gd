@@ -54,12 +54,13 @@ func attack(atk_card, defending, attacker):
 			ui_service.enable_end_turn_button(true)
 		return
 
-	if card_runtime_service._is_card_face_down(atk_card):
-		reveal_service.reveal_card(atk_card)
-
 	if not atk_state_service._can_card_declare_attack_against(atk_card, defending, attacker):
 		_release_player_input_if_needed(attacker)
 		return
+
+	if card_runtime_service._is_card_face_down(atk_card):
+		reveal_service.reveal_card(atk_card)
+
 
 	var battle_ctx := {
 		"battle_manager": bm,
@@ -281,7 +282,7 @@ func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power)
 				"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player")
 			})
 	else:
-		damage_service._apply_battle_damage_to_side(attacker_owner, damage, atk_card, defending)
+		damage_service._apply_battle_damage_to_side(attacker_owner, damage, defending, atk_card)
 		destruction_service.destroy_card(atk_card, attacker_owner, "DESTROY_BATTLE")
 
 	if not card_runtime_service._is_card_alive(atk_card):

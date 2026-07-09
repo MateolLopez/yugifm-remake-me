@@ -64,5 +64,29 @@
 	"result_id":"83121692",
 	"required_ids":["79979666","20721928","21844576"],
 	"exact_count": true
+},
+{
+	"fusion_id":"gaia_the_dragon_champion",
+	"result_id":"66889139",
+	"required_ids":["06368038","28279543"],
+	"exact_count": true
+},
+{
+	"fusion_id":"thousand_dragon",
+	"result_id":"41462083",
+	"required_ids":["71625222","88819587"],
+	"exact_count": true
+},
+{
+	"fusion_id":"rabid_horseman",
+	"result_id":"94905343",
+	"required_ids":["68516705","05053103"],
+	"exact_count": true
+},
+{
+	"fusion_id":"kamion_wizard",
+	"result_id":"41544074",
+	"required_ids":["15025844","22026707"],
+	"exact_count": true
 }
 ]
