@@ -587,8 +587,9 @@ func _on_context_menu_id_pressed(id: int) -> void:
 				card.toggle_guardian_star()
 
 		ACT_ATTACK:
-			if cm and ("selected_monster" in cm):
-				cm.selected_monster = card
+			if cm != null \
+			and cm.has_method("select_card_for_battle"):
+				cm.select_card_for_battle(card)
 
 		ACT_FUSION_GENERIC:
 			if not _can_fuse_now():

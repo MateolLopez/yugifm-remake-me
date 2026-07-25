@@ -48,6 +48,18 @@
 	"priority": 1.02
 },
 {
+	"fusion_id": "flame_ghost",
+	"result_id": "58528964",
+	"required_groups": [["zombie"],["pyro"]],
+	"priority": 1.03
+},
+{
+	"fusion_id": "wood_remains",
+	"result_id": "17733394",
+	"required_groups": [["zombie"],["plant"]],
+	"priority": 1.003
+},
+{
 	"fusion_id": "charubin_fire_k",
 	"result_id": "37421579",
 	"required_groups": [["fire","pyro"],["warrior","knight","armored"]],
@@ -118,6 +130,12 @@
 	"result_id": "53493204",
 	"required_groups": [["eye"],["fairy"]],
 	"priority": 1.206
+},
+{
+	"fusion_id": "aqua_madoor",
+	"result_id": "85639257",
+	"required_groups": [["aqua"],["spellcaster"]],
+	"priority": 1.207
 },
 {
 	"fusion_id": "big_eye",
@@ -264,6 +282,18 @@
 	"priority": 1.505
 },
 {
+	"fusion_id": "darkfire_dragon",
+	"result_id": "17881964",
+	"required_groups": [["pyro"],["dragon"]],
+	"priority": 1.506
+},
+{
+	"fusion_id": "rare_fish",
+	"result_id": "80516007",
+	"required_groups": [["beast"],["fish"]],
+	"priority": 1.507
+},
+{
 	"fusion_id": "giant_flea",
 	"result_id": "41762634",
 	"required_groups": [["giant"],["insect"]],
@@ -403,6 +433,12 @@
 	"result_id":"54615781",
 	"required_groups":[["wind"],["spirit"]],
 	"priority": 1.701
+},
+{
+	"fusion_id":"devil_cannon",
+	"result_id":"98795934",
+	"required_groups":[["fiend"],["cannon"]],
+	"priority": 1.702
 },
 {
 	"fusion_id":"asura_priest",
@@ -616,7 +652,7 @@
 		{ "any": ["time-wizard"] },
 		{
 			"any_of_all": [
-				["embrionic-beast"]
+				["immature-demon"]
 			]
 		}
 	],

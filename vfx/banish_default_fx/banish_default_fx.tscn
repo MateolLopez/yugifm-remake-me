@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3 uid="uid://yql4ddwsnj4i"]
+
+[ext_resource type="Texture2D" uid="uid://cupbftnef3sfh" path="res://vfx/banish_default_fx/banish_hole_test.png" id="1_tvnch"]
+[ext_resource type="Script" uid="uid://cx44ccu5ygid6" path="res://vfx/banish_default_fx/banish_default_fx.gd" id="1_v3ppp"]
+[ext_resource type="AudioStream" uid="uid://3rs7dn5qey0c" path="res://vfx/banish_default_fx/banish-card.mp3" id="3_gs620"]
+
+[node name="BanishDefaultFx" type="CanvasLayer"]
+script = ExtResource("1_v3ppp")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Darker" type="ColorRect" parent="Root"]
+layout_mode = 0
+offset_right = 90.0
+offset_bottom = 90.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.70000005)
+
+[node name="AbsorbLayer" type="Node2D" parent="Root"]
+
+[node name="HoleRoot" type="Node2D" parent="Root"]
+
+[node name="HoleGlow" type="Sprite2D" parent="Root/HoleRoot"]
+
+[node name="HolePivot" type="Node2D" parent="Root/HoleRoot"]
+
+[node name="HoleSprite" type="Sprite2D" parent="Root/HoleRoot/HolePivot"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_tvnch")
+
+[node name="AudioOpen" type="AudioStreamPlayer" parent="Root"]
+
+[node name="AudioAbsorb" type="AudioStreamPlayer" parent="Root"]
+stream = ExtResource("3_gs620")
+
+[node name="AudioClose" type="AudioStreamPlayer" parent="Root"]

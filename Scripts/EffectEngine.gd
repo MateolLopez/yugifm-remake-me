@@ -146,14 +146,31 @@ func _resolve_triggered_effects(event_name: String, payload: Dictionary) -> void
 	var ev := str(event_name).to_upper()
 
 	var candidates: Array = []
-	if _is_self_only_trigger(ev):
+
+	if ev == "AFTER_BATTLE_WITH_MONSTER":
+		candidates = field_cards.duplicate()
+
+		var attacker = payload.get("attacker", null)
+		var defender = payload.get("defender", null)
+
+		if is_instance_valid(attacker) and not candidates.has(attacker):
+			candidates.append(attacker)
+
+		if is_instance_valid(defender) and not candidates.has(defender):
+			candidates.append(defender)
+
+	elif _is_self_only_trigger(ev):
 		var source = payload.get("source", null)
-		if source != null:
+
+		if is_instance_valid(source):
 			candidates = [source]
+
 	else:
 		candidates = field_cards.duplicate()
+
 		var source2 = payload.get("source", null)
-		if source2 != null and not candidates.has(source2):
+
+		if is_instance_valid(source2) and not candidates.has(source2):
 			candidates.append(source2)
 
 	var non_trap_candidates: Array = []
@@ -263,147 +280,94 @@ func _resolve_aura_reactions(event_name: String, payload: Dictionary) -> void:
 			if event_name in ["ON_PLAY", "ON_SUMMON_BY_EFFECT"]:
 				_execute_effect(card, payload, e)
 
-func _execute_effect(source: Node, ctx: Dictionary, effect_def: Dictionary) -> bool:
-	var template := str(effect_def.get("template", ""))
-	var params: Dictionary = effect_def.get("params", {})
-	var trigger := str(effect_def.get("trigger", ""))
+func _execute_effect(
+	source: Node,
+	ctx: Dictionary,
+	effect_def: Dictionary
+) -> bool:
+	var template := str(
+		effect_def.get(
+			"template",
+			""
+		)
+	)
 
-	var limit := _get_limit_per_instance(params)
+	var params: Dictionary = effect_def.get(
+		"params",
+		{}
+	)
+
+	var trigger := str(
+		effect_def.get(
+			"trigger",
+			""
+		)
+	)
+
+	var limit := _get_limit_per_instance(
+		params
+	)
+
 	if limit == 1:
-		var k := "%s|INSTANCE|%s|%s" % [str(source.get_instance_id()), trigger, template]
-		if once_per_instance_used.get(k, false):
+		if not is_instance_valid(source):
 			return false
-		once_per_instance_used[k] = true
+
+		var instance_key := "%s|INSTANCE|%s|%s" % [
+			str(source.get_instance_id()),
+			trigger,
+			template
+		]
+
+		if once_per_instance_used.get(
+			instance_key,
+			false
+		):
+			return false
+
+		once_per_instance_used[
+			instance_key
+		] = true
 
 	if _is_once_per_turn(params):
-		var turn_stamp := _get_turn_stamp(ctx)
+		var turn_stamp := _get_turn_stamp(
+			ctx
+		)
+
 		if turn_stamp >= 0:
-			var turn_key := "%s|TURN|%s|%s" % [str(source.get_instance_id()), trigger, template]
-			if once_per_turn_used.get(turn_key, -999999) == turn_stamp:
+			if not is_instance_valid(source):
 				return false
-			once_per_turn_used[turn_key] = turn_stamp
 
-	var presentation_state := _push_effect_presentation(ctx, effect_def)
-	var result := false
+			var turn_key := "%s|TURN|%s|%s" % [
+				str(source.get_instance_id()),
+				trigger,
+				template
+			]
 
-	match template:
-		"destroy_target":
-			_tpl_destroy_target(source, ctx, params)
-			result = true
+			if once_per_turn_used.get(
+				turn_key,
+				-999999
+			) == turn_stamp:
+				return false
 
-		"reveal_set_cards":
-			_tpl_reveal_set_cards(source, ctx, params)
-			result = true
+			once_per_turn_used[
+				turn_key
+			] = turn_stamp
 
-		"guardian_star_bonus_multiplier":
-			_tpl_guardian_star_bonus_multiplier(source, ctx, params)
-			result = true
+	if _should_defer_effect_resolution(
+		ctx,
+		effect_def
+	):
+		return _queue_effect_until_battle_ends(
+			source,
+			ctx,
+			effect_def
+		)
 
-		"change_self_position_when_attacked_end_of_battle":
-			_tpl_change_self_position_when_attacked_end_of_battle(source, ctx, params)
-			result = true
-
-		"apply_keyword_to_new_summons_while_source_faceup":
-			_tpl_apply_keyword_to_new_summons_while_source_faceup(source, ctx, params)
-			result = true
-
-		"change_battle_position_by_effect":
-			result = _tpl_change_battle_position_by_effect(source, ctx, params)
-
-		"summon_token_copy_source_stats_on_send_to_grave_by_effect":
-			_tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(source, ctx, params)
-			result = true
-
-		"summon_random_from_db":
-			result = _tpl_summon_random_from_db(source, ctx, params)
-
-		"activate_field_spell_from_db":
-			result = _tpl_activate_field_spell_from_db(source, ctx, params)
-
-		"revive_self_at_turn_end_if_destroyed":
-			result = _tpl_revive_self_at_turn_end_if_destroyed(source, ctx, params)
-
-		"revive_last_destroyed_monster_from_graveyard":
-			result = _tpl_revive_last_destroyed_monster_from_graveyard(source, ctx, params)
-
-		"set_random_spelltrap_from_db":
-			result = _tpl_set_random_spelltrap_from_db(source, ctx, params)
-
-		"inflict_effect_damage":
-			_tpl_inflict_effect_damage(source, ctx, params)
-			result = true
-
-		"recover_lp":
-			_tpl_recover_lp(source, ctx, params)
-			result = true
-
-		"summon_token_from_source_basestats":
-			_tpl_summon_token_from_source_basestats(source, ctx, params)
-			result = true
-
-		"activate_sacrifice_self_to_summon_temporary_token_copies":
-			result = _tpl_activate_sacrifice_self_to_summon_temporary_token_copies(source, ctx, params)
-
-		"negate_attack_and_destroy":
-			result = _tpl_negate_attack_and_destroy(source, ctx, params)
-
-		"destroy_by_effect":
-			_tpl_destroy_by_effect(source, ctx, params)
-			result = true
-
-		"equip_spell_to_target":
-			_tpl_equip_spell_to_target(source, ctx, params)
-			result = true
-
-		"aura_stat_buff_while_source_faceup":
-			_tpl_aura_stat_buff_while_source_faceup(source, ctx, params)
-			result = true
-
-		"field_count_stat_buff_while_source_faceup":
-			_tpl_field_count_stat_buff_while_source_faceup(source, ctx, params)
-			result = true
-
-		"debuff_opponent_monsters_conditional_field":
-			result = _tpl_debuff_opponent_monsters_conditional_field(source, ctx, params)
-
-		"grant_protection_profile_while_faceup":
-			_tpl_grant_protection_profile_while_faceup(source, ctx, params)
-			result = true
-
-		"grant_keyword_to_selected_target":
-			_tpl_grant_keyword_to_selected_target(source, ctx, params)
-			result = true
-
-		"reveal_hidden_cards":
-			_tpl_reveal_hidden_cards(source, ctx, params)
-			result = true
-
-		"graveyard_count_stat_buff_while_source_faceup":
-			_tpl_graveyard_count_stat_buff_while_source_faceup(source, ctx, params)
-			result = true
-
-		"tribute_monster_to_inflict_damage":
-			result = _tpl_tribute_monster_to_inflict_damage(source, ctx, params)
-
-		"inflict_destroyed_monster_atk_as_effect_damage":
-			result = _tpl_inflict_destroyed_monster_atk_as_effect_damage(source, ctx, params)
-
-		"recover_lp_equal_to_destroyed_monster_original_atk":
-			result = _tpl_recover_lp_equal_to_destroyed_monster_original_atk(source, ctx, params)
-
-		"activate_elegant_egotist":
-			result = _tpl_activate_elegant_egotist(source, ctx, params)
-
-		"coin_flip_eff":
-			result = _tpl_coin_flip_eff(source, ctx, params)
-
-		_:
-			push_warning("EffectEngine: Template no implementado: %s" % template)
-			result = false
-
-	_pop_effect_presentation(ctx, presentation_state)
-
-	return result
+	return _execute_effect_now(
+		source,
+		ctx,
+		effect_def
+	)
 
 func _get_limit_per_instance(params: Dictionary) -> int:
 	if params.has("limit_per_instance"):
@@ -932,59 +896,124 @@ func _tpl_activate_sacrifice_self_to_summon_temporary_token_copies(source: Node,
 
 	return bool(bm.summon_service.activate_sacrifice_self_to_summon_temporary_token_copies(source, ctx, params))
 
-func _tpl_inflict_effect_damage(source: Node, ctx: Dictionary, params: Dictionary) -> void:
+func _tpl_inflict_effect_damage(
+	source: Node,
+	ctx: Dictionary,
+	params: Dictionary
+) -> bool:
 	var bm := _get_battle_manager(ctx)
+
 	if bm == null:
-		return
+		return false
 
 	var amount := int(params.get("amount", 0))
-	if amount <= 0:
-		return
 
-	var target := str(params.get("target", "OPPONENT")).to_upper()
-	var only_on_controller_turn := bool(params.get("only_on_controller_turn", false))
-	var once_per_turn := bool(params.get("once_per_turn", false))
+	if amount <= 0:
+		return false
+
+	var target := str(
+		params.get("target", "OPPONENT")
+	).to_upper()
+
+	var only_on_controller_turn := bool(
+		params.get("only_on_controller_turn", false)
+	)
+
+	var once_per_turn := bool(
+		params.get("once_per_turn", false)
+	)
 
 	var source_controller := ""
-	if source != null:
-		if "owner_side" in source:
-			source_controller = ("Player" if str(source.owner_side).to_upper() == "PLAYER" else "Opponent")
+
+	if source != null and "owner_side" in source:
+		source_controller = (
+			"Player"
+			if str(source.owner_side).to_upper() == "PLAYER"
+			else "Opponent"
+		)
+
 	source_controller = _norm_owner(source_controller)
 
-	var turn_owner := _norm_owner(ctx.get("turn_owner", ctx.get("controller", "")))
+	if source_controller == "":
+		source_controller = _norm_owner(
+			ctx.get("controller", "")
+		)
 
-	if only_on_controller_turn and source_controller != "" and turn_owner != source_controller:
-		return
+	if source_controller == "":
+		return false
+
+	var turn_owner := _norm_owner(
+		ctx.get(
+			"turn_owner",
+			ctx.get("controller", "")
+		)
+	)
+
+	if only_on_controller_turn \
+	and turn_owner != source_controller:
+		return false
 
 	if once_per_turn:
 		var key := "once_per_turn_inflict_effect_damage"
-
 		var stamp := int(ctx.get("turn_index", -1))
 
-		if stamp < 0 and bm != null and ("turn_index" in bm):
+		if stamp < 0 and "turn_index" in bm:
 			stamp = int(bm.turn_index)
 
 		if stamp < 0:
 			stamp = int(Time.get_ticks_msec() / 1000)
 
-		var prev := -999999
+		var previous_stamp := -999999
+
 		if source != null and source.has_meta(key):
-			prev = int(source.get_meta(key))
-		if prev == stamp:
-			return
+			previous_stamp = int(source.get_meta(key))
+
+		if previous_stamp == stamp:
+			return false
+
 		if source != null:
 			source.set_meta(key, stamp)
 
-	# target
 	var target_player := source_controller
-	if target == "OPPONENT":
-		target_player = ("Opponent" if source_controller == "Player" else "Player")
-	elif target == "SELF":
-		target_player = source_controller
+
+	match target:
+		"OPPONENT":
+			target_player = _opponent_of(source_controller)
+
+		"SELF":
+			target_player = source_controller
+
+		_:
+			target_player = _opponent_of(source_controller)
 
 	target_player = _norm_owner(target_player)
 
-	bm.damage_service._apply_effect_damage_to_side(target_player, amount, {"source": source})
+	if target_player == "":
+		return false
+
+	_queue_effect_presentation(
+		source,
+		ctx,
+		[],
+		{
+			"target_player": target_player,
+			"amount": amount,
+			"damage_type": "EFFECT_DAMAGE"
+		}
+	)
+
+	bm.damage_service._apply_effect_damage_to_side(
+		target_player,
+		amount,
+		{
+			"source": source,
+			"controller": source_controller,
+			"target_player": target_player,
+			"amount": amount
+		}
+	)
+
+	return true
 
 func _tpl_recover_lp(source: Node, ctx: Dictionary, params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
@@ -1049,7 +1078,7 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 
 	if eng and eng.has_method("is_effect_application_blocked"):
 		if eng.is_effect_application_blocked(attacker_card, effect_ctx, "AFFECT"):
-			var source_owner0 := _norm_owner(bm._owner_of(source))
+			var source_owner0 := _norm_owner(bm.zone_service._owner_of(source))
 			if bm.card_play_service.has_method("_send_spell_to_graveyard"):
 				bm.card_play_service._send_spell_to_graveyard(source, source_owner0)
 			elif bm.card_play_service.has_method("send_spell_to_graveyard"):
@@ -1098,7 +1127,7 @@ func _tpl_negate_attack_and_destroy(source: Node, ctx: Dictionary, params: Dicti
 		var owner3 := _norm_owner(bm.zone_service._owner_of(attacker_card))
 		bm.destruction_service.destroy_card(attacker_card, owner3, "DESTROY_EFFECT", effect_ctx)
 
-	var source_owner := _norm_owner(bm._owner_of(source))
+	var source_owner := _norm_owner(bm.zone_service._owner_of(source))
 	if bm.card_play_service.has_method("_send_spell_to_graveyard"):
 		bm.card_play_service._send_spell_to_graveyard(source, source_owner)
 	elif bm.card_play_service.has_method("send_spell_to_graveyard"):
@@ -1137,6 +1166,7 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 	var self_only := bool(params.get("self_only", false))
 
 	var filter_attribute := str(params.get("filter_attribute", "")).to_upper()
+	var exclude_attribute := str(params.get("exclude_attribute", "")).strip_edges().to_upper()
 	var filter_race := str(params.get("filter_race", "")).to_upper()
 	var filter_tag := str(params.get("filter_tag", "")).to_lower()
 
@@ -1196,13 +1226,25 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 				if facedown_only and not is_facedown:
 					continue
 
-				var c_attribute := str(c.attribute).to_upper() if ("attribute" in c) else ""
+				var c_attribute := ""
+
+				if c.has_method("get_effective_attribute"):
+					c_attribute = str(
+						c.get_effective_attribute()
+					).strip_edges().to_upper()
+				elif "attribute" in c:
+					c_attribute = str(
+						c.attribute
+					).strip_edges().to_upper()
 				var c_race := str(c.race).to_upper() if ("race" in c) else ""
 				var c_level := int(c.level) if ("level" in c and c.level != null) else 0
 				var c_atk := int(c.get_effective_atk() if c.has_method("get_effective_atk") else (c.atk if ("atk" in c and c.atk != null) else 0))
 				var c_def := int(c.get_effective_def() if c.has_method("get_effective_def") else (c.def if ("def" in c and c.def != null) else 0))
 
 				if filter_attribute != "" and c_attribute != filter_attribute:
+					continue
+				if exclude_attribute != "" \
+				and c_attribute == exclude_attribute:
 					continue
 				if filter_race != "" and c_race != filter_race:
 					continue
@@ -1409,8 +1451,269 @@ func _tpl_destroy_by_effect(source: Node, ctx: Dictionary, params: Dictionary) -
 				if eng2.is_effect_application_blocked(c, effect_ctx, "DESTROY"):
 					continue
 
-			var owner2 := _norm_owner(bm._owner_of(c))
+			var owner2 := _norm_owner(bm.zone_service._owner_of(c))
 			bm.card_play_service._send_spell_to_graveyard(c, owner2)
+
+func _tpl_banish_battle_pair_after_damage(
+	source: Node,
+	ctx: Dictionary,
+	params: Dictionary
+) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	if not is_instance_valid(source):
+		return false
+
+	var attacker = ctx.get("attacker", null)
+	var defender = ctx.get("defender", null)
+
+	if not is_instance_valid(attacker):
+		return false
+
+	if not is_instance_valid(defender):
+		return false
+
+	if source != attacker and source != defender:
+		return false
+
+	if bool(ctx.get("battle_pair_banished_after_damage", false)):
+		return false
+
+	var only_if_source_destroyed := bool(
+		params.get(
+			"only_if_source_destroyed_by_battle",
+			false
+		)
+	)
+
+	if only_if_source_destroyed:
+		var source_destroyed := false
+
+		if source == attacker:
+			source_destroyed = bool(
+				ctx.get(
+					"attacker_destroyed_by_battle",
+					false
+				)
+			)
+		elif source == defender:
+			source_destroyed = bool(
+				ctx.get(
+					"defender_destroyed_by_battle",
+					false
+				)
+			)
+
+		if not source_destroyed:
+			return false
+
+	if bool(params.get("only_if_opponent_monster", true)):
+		var source_owner := _norm_owner(
+			ctx.get(
+				"source_owner",
+				_controller_of_card(source)
+			)
+		)
+
+		var other = defender if source == attacker else attacker
+
+		var other_owner := _norm_owner(
+			ctx.get(
+				"defender_owner",
+				""
+			)
+			if other == defender
+			else ctx.get(
+				"attacker_owner",
+				""
+			)
+		)
+
+		if source_owner == "":
+			source_owner = _norm_owner(
+				_controller_of_card(source)
+			)
+
+		if other_owner == "":
+			other_owner = _norm_owner(
+				_controller_of_card(other)
+			)
+
+		if source_owner != "" \
+		and other_owner != "" \
+		and source_owner == other_owner:
+			return false
+
+	if bool(params.get("optional", false)):
+		return false
+
+	var attacker_owner := _norm_owner(
+		ctx.get("attacker_owner", "")
+	)
+
+	var defender_owner := _norm_owner(
+		ctx.get("defender_owner", "")
+	)
+
+	if attacker_owner == "":
+		attacker_owner = _norm_owner(
+			bm.zone_service._owner_of(attacker)
+		)
+
+	if defender_owner == "":
+		defender_owner = _norm_owner(
+			bm.zone_service._owner_of(defender)
+		)
+
+	var banish_ctx := ctx.duplicate(true)
+
+	banish_ctx["banish_reason"] = \
+		"AFTER_BATTLE_WITH_MONSTER"
+
+	banish_ctx["effect_source"] = source
+	banish_ctx["_banish_started"] = false
+	banish_ctx["_banish_succeeded"] = false
+
+	var perform_banish := func() -> void:
+		if bool(
+			banish_ctx.get(
+				"_banish_started",
+				false
+			)
+		):
+			return
+
+		banish_ctx["_banish_started"] = true
+
+		var ok_attacker := false
+		var ok_defender := false
+
+		if is_instance_valid(attacker):
+			ok_attacker = \
+				_banish_monster_from_battle_pair(
+					attacker,
+					attacker_owner,
+					source,
+					banish_ctx
+				)
+
+		if is_instance_valid(defender):
+			ok_defender = \
+				_banish_monster_from_battle_pair(
+					defender,
+					defender_owner,
+					source,
+					banish_ctx
+				)
+
+		banish_ctx["_banish_succeeded"] = \
+			ok_attacker or ok_defender
+
+		if not ok_attacker and not ok_defender:
+			push_warning(
+				"EffectEngine: comenzó el FX de banish, " +
+				"pero no se pudo banishear ninguna carta."
+			)
+
+	var fx_queued := _queue_effect_fx_phase(
+		source,
+		banish_ctx,
+		"resolution",
+		[
+			attacker,
+			defender
+		],
+		{
+			"banish_reason":
+				"AFTER_BATTLE_WITH_MONSTER",
+			"attacker_owner":
+				attacker_owner,
+			"defender_owner":
+				defender_owner
+		},
+		perform_banish
+	)
+
+	# Evita que DuelCombatService destruya las cartas
+	# antes de que comience el FX de resolución.
+	ctx["battle_pair_banished_after_damage"] = true
+	ctx["battle_pair_removed_after_damage"] = true
+	ctx["skip_battle_destruction"] = true
+
+	if fx_queued:
+		return true
+
+	push_warning(
+		"EffectEngine: no se pudo encolar el FX " +
+		"'banish_default'. Se ejecutará el banish " +
+		"sin animación."
+	)
+
+	perform_banish.call()
+
+	return bool(
+		banish_ctx.get(
+			"_banish_succeeded",
+			false
+		)
+	)
+
+func _banish_monster_from_battle_pair(
+	card: Node,
+	owner: String,
+	effect_source: Node,
+	ctx: Dictionary
+) -> bool:
+	if not is_instance_valid(card):
+		return false
+
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	owner = _norm_owner(owner)
+
+	if owner == "":
+		owner = _norm_owner(
+			bm.zone_service._owner_of(card)
+		)
+
+	if owner == "":
+		return false
+
+	if bm.banish_service == null:
+		push_warning(
+			"EffectEngine: banish_service es null."
+		)
+		return false
+
+	if not bm.banish_service.has_method(
+		"banish_card_from_field_by_effect"
+	):
+		push_warning(
+			"EffectEngine: DuelBanishService no tiene " +
+			"banish_card_from_field_by_effect()."
+		)
+		return false
+
+	var banish_ctx := ctx.duplicate(true)
+	banish_ctx["source"] = card
+	banish_ctx["banished_card"] = card
+	banish_ctx["effect_source"] = effect_source
+	banish_ctx["controller"] = owner
+	banish_ctx["cause"] = "BANISH_BY_EFFECT_AFTER_DAMAGE"
+
+	return bool(
+		bm.banish_service.banish_card_from_field_by_effect(
+			card,
+			owner,
+			banish_ctx
+		)
+	)
 
 func _tpl_equip_spell_to_target(source: Node, ctx: Dictionary, _params: Dictionary) -> void:
 	var bm := _get_battle_manager(ctx)
@@ -2756,51 +3059,89 @@ func _presentation_from_ctx(ctx: Dictionary) -> Dictionary:
 		return p
 	return {}
 
-
 func _effect_presentation(effect_def: Dictionary) -> Dictionary:
-	var p = effect_def.get("presentation", {})
-	if typeof(p) == TYPE_DICTIONARY:
-		return p
-	return {}
+	var merged: Dictionary = {}
 
-func _play_trap_reactive_sfx(card: Node, ctx: Dictionary, effect_def: Dictionary) -> void:
+	var template_name := str(
+		effect_def.get("template", "")
+	).strip_edges()
+
+	var template_def = templates.get(
+		template_name,
+		{}
+	)
+
+	if typeof(template_def) == TYPE_DICTIONARY:
+		var default_presentation = template_def.get(
+			"default_presentation",
+			{}
+		)
+
+		if typeof(default_presentation) == TYPE_DICTIONARY:
+			for key in default_presentation.keys():
+				merged[key] = default_presentation[key]
+
+	var override_presentation = effect_def.get(
+		"presentation",
+		{}
+	)
+
+	if typeof(override_presentation) == TYPE_DICTIONARY:
+		for key in override_presentation.keys():
+			merged[key] = override_presentation[key]
+
+	return merged
+
+func _play_trap_reactive_sfx(
+	card: Node,
+	ctx: Dictionary,
+	effect_def: Dictionary
+) -> void:
 	var bm := _get_battle_manager(ctx)
+
 	if bm == null:
 		return
 
-	var key := "trap_reactive"
-
 	var presentation := _effect_presentation(effect_def)
-	if presentation.has("activation_sfx_key"):
-		key = str(presentation.get("activation_sfx_key", key))
+
+	var activation_fx_key := str(
+		presentation.get("activation_fx_key", "")
+	).strip_edges()
+
+	if activation_fx_key != "":
+		return
+
+	var key := str(
+		presentation.get(
+			"activation_sfx_key",
+			"trap_reactive"
+		)
+	).strip_edges()
+
+	if key == "":
+		key = "trap_reactive"
 
 	if bm.animation_service.has_method("_play_duel_sfx"):
 		bm.animation_service._play_duel_sfx(key)
 
-func _push_effect_presentation(ctx: Dictionary, effect_def: Dictionary) -> Dictionary:
+func _push_effect_presentation(
+	ctx: Dictionary,
+	effect_def: Dictionary
+) -> Dictionary:
 	var state := {
-		"changed": false,
+		"changed": true,
 		"had_presentation": ctx.has("presentation"),
-		"previous_presentation": ctx.get("presentation", null)
+		"previous_presentation": ctx.get(
+			"presentation",
+			null
+		)
 	}
 
-	var presentation := _effect_presentation(effect_def)
-	if presentation.is_empty():
-		return state
-
-	var merged := {}
-
-	if ctx.has("presentation") and typeof(ctx["presentation"]) == TYPE_DICTIONARY:
-		merged = (ctx["presentation"] as Dictionary).duplicate(true)
-
-	for k in presentation.keys():
-		merged[k] = presentation[k]
-
-	ctx["presentation"] = merged
-	state["changed"] = true
+	ctx["presentation"] = _effect_presentation(
+		effect_def
+	)
 
 	return state
-
 
 func _pop_effect_presentation(ctx: Dictionary, state: Dictionary) -> void:
 	if not bool(state.get("changed", false)):
@@ -2916,3 +3257,580 @@ func _execute_coin_flip_result(source: Node, ctx: Dictionary, result_def) -> boo
 		nested_effect["trigger"] = "COIN_TOSS_RESULT"
 
 	return _execute_effect(source, nested_ctx, nested_effect)
+
+func _presentation_fx_key(
+	ctx: Dictionary,
+	phase: String
+) -> String:
+	var presentation := _presentation_from_ctx(ctx)
+
+	var property_name := "%s_fx_key" % str(
+		phase
+	).strip_edges().to_lower()
+
+	return str(
+		presentation.get(property_name, "")
+	).strip_edges()
+
+func _queue_effect_fx_phase(
+	source: Node,
+	ctx: Dictionary,
+	phase: String,
+	targets: Array = [],
+	extra_ctx: Dictionary = {},
+	on_started: Callable = Callable()
+) -> bool:
+	var presentation := _presentation_from_ctx(ctx)
+	var property_name := "%s_fx_key" % phase.strip_edges().to_lower()
+	var key := str(
+		presentation.get(property_name, "")
+	).strip_edges()
+
+	print(
+		"EFFECT FX PHASE phase=",
+		phase,
+		" property=",
+		property_name,
+		" presentation=",
+		presentation,
+		" key=",
+		key
+	)
+
+	if key == "":
+		push_warning(
+			"EffectEngine: falta '%s' en presentation=%s"
+			% [property_name, str(presentation)]
+		)
+		return false
+
+	var battle_manager := _get_battle_manager(ctx)
+
+	if battle_manager == null:
+		push_warning("EffectEngine: BattleManager no encontrado para FX.")
+		return false
+
+	var animation_service = battle_manager.animation_service
+
+	if animation_service == null:
+		push_warning("EffectEngine: animation_service es null.")
+		return false
+
+	if not animation_service.has_method("queue_effect_fx"):
+		push_warning(
+			"EffectEngine: animation_service no tiene queue_effect_fx()."
+		)
+		return false
+
+	var fx_ctx := ctx.duplicate(true)
+	fx_ctx["effect_source"] = source
+	fx_ctx["effect_template"] = str(
+		ctx.get("effect_template", "")
+	)
+
+	for extra_key in extra_ctx.keys():
+		fx_ctx[extra_key] = extra_ctx[extra_key]
+
+	return bool(
+		animation_service.queue_effect_fx(
+			key,
+			fx_ctx,
+			source,
+			targets,
+			phase,
+			on_started
+		)
+	)
+
+func _queue_effect_presentation(
+	source: Node,
+	ctx: Dictionary,
+	resolution_targets: Array = [],
+	extra_ctx: Dictionary = {}
+) -> void:
+	var activation_targets: Array = []
+
+	if is_instance_valid(source):
+		activation_targets.append(source)
+
+	_queue_effect_fx_phase(
+		source,
+		ctx,
+		"activation",
+		activation_targets,
+		extra_ctx
+	)
+
+	_queue_effect_fx_phase(
+		source,
+		ctx,
+		"resolution",
+		resolution_targets,
+		extra_ctx
+	)
+
+func _should_defer_effect_resolution(
+	ctx: Dictionary,
+	effect_def: Dictionary
+) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return false
+
+	var animation_service = bm.animation_service
+
+	if animation_service == null:
+		return false
+
+	if not animation_service.has_method(
+		"is_battle_presentation_active"
+	):
+		return false
+
+	if not bool(
+		animation_service
+		.is_battle_presentation_active()
+	):
+		return false
+
+	if bool(
+		effect_def.get(
+			"resolve_during_battle_presentation",
+			false
+		)
+	):
+		return false
+
+	var template := str(
+		effect_def.get(
+			"template",
+			""
+		)
+	)
+
+	if template == \
+	"banish_battle_pair_after_damage":
+		return false
+
+	return true
+
+func _execute_effect_template_now(
+	source: Node,
+	ctx: Dictionary,
+	effect_def: Dictionary
+) -> bool:
+	var template := str(
+		effect_def.get(
+			"template",
+			""
+		)
+	)
+
+	var params: Dictionary = effect_def.get(
+		"params",
+		{}
+	)
+
+	var result := false
+
+	match template:
+		"destroy_target":
+			_tpl_destroy_target(source, ctx, params)
+			result = true
+
+		"reveal_set_cards":
+			_tpl_reveal_set_cards(source, ctx, params)
+			result = true
+
+		"guardian_star_bonus_multiplier":
+			_tpl_guardian_star_bonus_multiplier(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"change_self_position_when_attacked_end_of_battle":
+			_tpl_change_self_position_when_attacked_end_of_battle(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"apply_keyword_to_new_summons_while_source_faceup":
+			_tpl_apply_keyword_to_new_summons_while_source_faceup(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"change_battle_position_by_effect":
+			result = _tpl_change_battle_position_by_effect(
+				source,
+				ctx,
+				params
+			)
+
+		"summon_token_copy_source_stats_on_send_to_grave_by_effect":
+			_tpl_summon_token_copy_source_stats_on_send_to_grave_by_effect(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"summon_random_from_db":
+			result = _tpl_summon_random_from_db(
+				source,
+				ctx,
+				params
+			)
+
+		"activate_field_spell_from_db":
+			result = _tpl_activate_field_spell_from_db(
+				source,
+				ctx,
+				params
+			)
+
+		"revive_self_at_turn_end_if_destroyed":
+			result = _tpl_revive_self_at_turn_end_if_destroyed(
+				source,
+				ctx,
+				params
+			)
+
+		"revive_last_destroyed_monster_from_graveyard":
+			result = _tpl_revive_last_destroyed_monster_from_graveyard(
+				source,
+				ctx,
+				params
+			)
+
+		"set_random_spelltrap_from_db":
+			result = _tpl_set_random_spelltrap_from_db(
+				source,
+				ctx,
+				params
+			)
+
+		"inflict_effect_damage":
+			result = _tpl_inflict_effect_damage(
+				source,
+				ctx,
+				params
+			)
+
+		"recover_lp":
+			_tpl_recover_lp(source, ctx, params)
+			result = true
+
+		"summon_token_from_source_basestats":
+			_tpl_summon_token_from_source_basestats(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"activate_sacrifice_self_to_summon_temporary_token_copies":
+			result = _tpl_activate_sacrifice_self_to_summon_temporary_token_copies(
+				source,
+				ctx,
+				params
+			)
+
+		"negate_attack_and_destroy":
+			result = _tpl_negate_attack_and_destroy(
+				source,
+				ctx,
+				params
+			)
+
+		"destroy_by_effect":
+			_tpl_destroy_by_effect(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"banish_battle_pair_after_damage":
+			result = _tpl_banish_battle_pair_after_damage(
+				source,
+				ctx,
+				params
+			)
+
+		"equip_spell_to_target":
+			_tpl_equip_spell_to_target(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"aura_stat_buff_while_source_faceup":
+			_tpl_aura_stat_buff_while_source_faceup(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"field_count_stat_buff_while_source_faceup":
+			_tpl_field_count_stat_buff_while_source_faceup(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"debuff_opponent_monsters_conditional_field":
+			result = _tpl_debuff_opponent_monsters_conditional_field(
+				source,
+				ctx,
+				params
+			)
+
+		"grant_protection_profile_while_faceup":
+			_tpl_grant_protection_profile_while_faceup(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"grant_keyword_to_selected_target":
+			_tpl_grant_keyword_to_selected_target(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"reveal_hidden_cards":
+			_tpl_reveal_hidden_cards(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"graveyard_count_stat_buff_while_source_faceup":
+			_tpl_graveyard_count_stat_buff_while_source_faceup(
+				source,
+				ctx,
+				params
+			)
+			result = true
+
+		"tribute_monster_to_inflict_damage":
+			result = _tpl_tribute_monster_to_inflict_damage(
+				source,
+				ctx,
+				params
+			)
+
+		"inflict_destroyed_monster_atk_as_effect_damage":
+			result = _tpl_inflict_destroyed_monster_atk_as_effect_damage(
+				source,
+				ctx,
+				params
+			)
+
+		"recover_lp_equal_to_destroyed_monster_original_atk":
+			result = _tpl_recover_lp_equal_to_destroyed_monster_original_atk(
+				source,
+				ctx,
+				params
+			)
+
+		"activate_elegant_egotist":
+			result = _tpl_activate_elegant_egotist(
+				source,
+				ctx,
+				params
+			)
+
+		"coin_flip_eff":
+			result = _tpl_coin_flip_eff(
+				source,
+				ctx,
+				params
+			)
+
+		_:
+			push_warning(
+				"EffectEngine: Template no implementado: %s"
+				% template
+			)
+
+	return result
+
+func _execute_effect_now(
+	source: Node,
+	ctx: Dictionary,
+	effect_def: Dictionary
+) -> bool:
+	var template := str(
+		effect_def.get(
+			"template",
+			""
+		)
+	)
+
+	var presentation_state := \
+		_push_effect_presentation(
+			ctx,
+			effect_def
+		)
+
+	var had_effect_template := ctx.has(
+		"effect_template"
+	)
+
+	var previous_effect_template = ctx.get(
+		"effect_template",
+		null
+	)
+
+	ctx["effect_template"] = template
+
+	var activation_key := _presentation_fx_key(
+		ctx,
+		"activation"
+	)
+
+	if activation_key != "":
+		_queue_effect_fx_phase(
+			source,
+			ctx,
+			"activation",
+			[],
+			{
+				"effect_trigger": str(
+					effect_def.get(
+						"trigger",
+						""
+					)
+				)
+			}
+		)
+
+	var result := _execute_effect_template_now(
+		source,
+		ctx,
+		effect_def
+	)
+
+	if had_effect_template:
+		ctx["effect_template"] = \
+			previous_effect_template
+	else:
+		ctx.erase(
+			"effect_template"
+		)
+
+	_pop_effect_presentation(
+		ctx,
+		presentation_state
+	)
+
+	return result
+
+func _queue_effect_until_battle_ends(
+	source: Node,
+	ctx: Dictionary,
+	effect_def: Dictionary
+) -> bool:
+	var bm := _get_battle_manager(ctx)
+
+	if bm == null:
+		return _execute_effect_now(
+			source,
+			ctx,
+			effect_def
+		)
+
+	var animation_service = bm.animation_service
+
+	if animation_service == null \
+	or not animation_service.has_method(
+		"queue_effect_resolution"
+	):
+		return _execute_effect_now(
+			source,
+			ctx,
+			effect_def
+		)
+
+	var deferred_ctx := ctx.duplicate(true)
+	var deferred_effect := effect_def.duplicate(true)
+
+	var template := str(
+		deferred_effect.get(
+			"template",
+			""
+		)
+	)
+
+	deferred_ctx["presentation"] = \
+		_effect_presentation(
+			deferred_effect
+		)
+
+	deferred_ctx["effect_template"] = template
+
+	var activation_key := _presentation_fx_key(
+		deferred_ctx,
+		"activation"
+	)
+
+	if activation_key != "":
+		_queue_effect_fx_phase(
+			source,
+			deferred_ctx,
+			"activation",
+			[],
+			{
+				"effect_trigger": str(
+					deferred_effect.get(
+						"trigger",
+						""
+					)
+				)
+			}
+		)
+
+	var resolve_callback := func() -> void:
+		var live_source: Node = (
+			source
+			if is_instance_valid(source)
+			else null
+		)
+
+		_execute_effect_template_now(
+			live_source,
+			deferred_ctx,
+			deferred_effect
+		)
+
+	return bool(
+		animation_service.queue_effect_resolution(
+			resolve_callback,
+			"%s:%s" % [
+				str(
+					deferred_effect.get(
+						"trigger",
+						""
+					)
+				),
+				template
+			],
+			source
+		)
+	)

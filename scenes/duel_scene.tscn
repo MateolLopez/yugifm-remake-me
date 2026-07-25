@@ -1,4 +1,4 @@
-[gd_scene load_steps=72 format=3 uid="uid://cv3psty7bf6sh"]
+[gd_scene load_steps=77 format=3 uid="uid://cv3psty7bf6sh"]
 
 [ext_resource type="Script" uid="uid://mgdicx3susd8" path="res://Scripts/duel_state.gd" id="1_oo1qr"]
 [ext_resource type="Script" uid="uid://ddwrxhfr5nnlw" path="res://Scripts/card_manager.gd" id="1_sooux"]
@@ -54,9 +54,10 @@
 [ext_resource type="Script" uid="uid://b6klm7piusmvi" path="res://Scripts/services/duel_fusion_replacement_service.gd" id="25_iumx2"]
 [ext_resource type="Script" uid="uid://diexjgnfsthit" path="res://Scripts/DuelFxManager.gd" id="27_jmg8l"]
 [ext_resource type="AudioStream" uid="uid://v7k3q0w3ykh" path="res://sfx/monster_summon.mp3" id="28_g6765"]
-[ext_resource type="AudioStream" uid="uid://t3gspug0ts40" path="res://sfx/effect_activation.mp3" id="28_h1aux"]
+[ext_resource type="AudioStream" uid="uid://t3gspug0ts40" path="res://vfx/generic_effect_activation/effect_activation.mp3" id="28_h1aux"]
 [ext_resource type="AudioStream" uid="uid://bubv7fap8a8rs" path="res://vfx/monster_reborn_fx/MonsterRebornSFX.mp3" id="28_q21jv"]
 [ext_resource type="AudioStream" uid="uid://dxo5f8e04x8do" path="res://sfx/draw_card.mp3" id="28_qj6dy"]
+[ext_resource type="Script" uid="uid://bqwuyee80yu2d" path="res://Scripts/services/duel_banish_service.gd" id="28_vnvlf"]
 [ext_resource type="AudioStream" uid="uid://286nwvbnlqnp" path="res://sfx/trap_activated.mp3" id="29_tcgqt"]
 [ext_resource type="AudioStream" uid="uid://6medvkiuhyrj" path="res://sfx/set_card.mp3" id="30_5pmm0"]
 [ext_resource type="AudioStream" uid="uid://borymsw5xy7gp" path="res://sfx/monster_destroyed.mp3" id="34_c2vfe"]
@@ -65,7 +66,11 @@
 [ext_resource type="AudioStream" uid="uid://3dqvryu4gg18" path="res://sfx/fusion_summon_result.mp3" id="37_e51ji"]
 [ext_resource type="PackedScene" uid="uid://6g7cw24e81c" path="res://vfx/fusion_result_summoned_fx/fusion_result_summoned_fx.tscn" id="38_7gdid"]
 [ext_resource type="PackedScene" uid="uid://h080iwoklwan" path="res://vfx/coin_toss_fx/coin_toss_fx.tscn" id="43_u33ax"]
+[ext_resource type="PackedScene" uid="uid://cno6wg87u6qdb" path="res://vfx/generic_effect_activation/generic_effect_activation_fx.tscn" id="63_yolcs"]
 [ext_resource type="PackedScene" uid="uid://dd5m4u5cg887m" path="res://vfx/exodia_win_fx/exodia_win_fx.tscn" id="66_gctmn"]
+[ext_resource type="PackedScene" uid="uid://fduyhnudnnyq" path="res://fx/battle_presentation_fx/BattlePresentationFx.tscn" id="67_w0vm0"]
+[ext_resource type="PackedScene" uid="uid://yql4ddwsnj4i" path="res://vfx/banish_default_fx/banish_default_fx.tscn" id="68_ktyx2"]
+[ext_resource type="Script" uid="uid://db3noh8jqpyyt" path="res://fx/duel_effect_fx_base.gd" id="68_lyhxc"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_t45xh"]
 load_path = "res://.godot/imported/756652.jpg-ac6c3d5ebd245cf2e8902e5d9ae068ff.ctex"
@@ -197,6 +202,9 @@ script = ExtResource("25_iumx2")
 
 [node name="DuelSpecialEffectService" type="Node" parent="DuelServices"]
 script = ExtResource("6_6rmsw")
+
+[node name="DuelBanishService" type="Node" parent="DuelServices"]
+script = ExtResource("28_vnvlf")
 
 [node name="DuelFlow" type="Node" parent="."]
 script = ExtResource("16_qattd")
@@ -351,8 +359,6 @@ script = ExtResource("10_sjiiy")
 
 [node name="BattleManager" type="Node" parent="."]
 script = ExtResource("11_flypn")
-destroy_explosion_scene = ExtResource("16_sjiiy")
-monster_reborn_fx_scene = ExtResource("17_flypn")
 
 [node name="BattleTimer" type="Timer" parent="."]
 
@@ -494,9 +500,19 @@ destroy_explosion_sfx = ExtResource("34_c2vfe")
 material_absorb_sfx = ExtResource("35_xrdeg")
 fusion_intent_sfx = ExtResource("36_7gdid")
 fusion_result_sfx = ExtResource("37_e51ji")
+default_activation_fx_scene = ExtResource("63_yolcs")
 monster_reborn_summon_fx_scene = ExtResource("17_flypn")
+destroy_explosion_fx_scene = ExtResource("16_sjiiy")
 fusion_result_summoned_vfx_scene = ExtResource("38_7gdid")
+battle_presentation_fx_scene = ExtResource("67_w0vm0")
 coin_toss_fx_scene = ExtResource("43_u33ax")
 exodia_win_fx_scene = ExtResource("66_gctmn")
+effect_fx_scenes = Dictionary[StringName, PackedScene]({
+&"banish_default": ExtResource("68_ktyx2"),
+&"default_activation": ExtResource("63_yolcs")
+})
+
+[node name="DuelEffectFxBase" type="Node" parent="."]
+script = ExtResource("68_lyhxc")
 
 [connection signal="pressed" from="EndTurnButton" to="DuelServices/DuelTurnService" method="_on_end_turn_button_pressed"]

@@ -6,10 +6,6 @@ const DEFAULT_MAX_HAND_SIZE = 5
 const DEFAULT_STARTING_HP = 8000
 const DRAW_STEP_DURATION := 0.34
 
-#----- VFX Destrucción
-@export var destroy_explosion_scene: PackedScene
-@export var monster_reborn_fx_scene: PackedScene
-
 var duel_animation_lock_count: int = 0
 #----- DUEL SERVICES ----
 @onready var duel_services: Node = get_node_or_null("../DuelServices")
@@ -39,6 +35,7 @@ var duel_animation_lock_count: int = 0
 @onready var ui_service: DuelUiService = _get_duel_service("DuelUiService") as DuelUiService
 @onready var fusion_replacement_service: DuelFusionReplacementService = _get_duel_service("DuelFusionReplacementService") as DuelFusionReplacementService
 @onready var special_effect_service: DuelSpecialEffectService = _get_duel_service("DuelSpecialEffectService") as DuelSpecialEffectService
+@onready var banish_service: DuelBanishService = _get_duel_service("DuelBanishService") as DuelBanishService
 
 #----- ---------
 signal duel_over(result: String)
@@ -87,6 +84,9 @@ var fusion_replacement_mode: bool = false
 var fusion_replacement_owner: String = ""
 var fusion_replacement_card: Node = null
 var fusion_replacement_chosen_slot: Node = null
+
+var player_banished: Array = []
+var opponent_banished: Array = []
 
 #Card Reveal vars
 var reveal_overlay_active := false
@@ -169,7 +169,8 @@ reveal_service,
 animation_service,
 ui_service,
 fusion_replacement_service,
-special_effect_service]
+special_effect_service,
+banish_service]
 
 	for service in services:
 		if service != null and service.has_method("setup"):

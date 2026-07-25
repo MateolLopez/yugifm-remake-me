@@ -22,6 +22,7 @@
 	"ON_LEVEL_LOSS": "Cuando esta carta pierde niveles como parte de un efecto.",
 	"TURN_START": "Inicio del turno (después de robar hasta 5).",
 	"TURN_END": "Final del turno.",
+	"AFTER_BATTLE_WITH_MONSTER": "Después del cálculo de daño, si esta carta batalló con otro monstruo.",
 	"ON_SEND_TO_GRAVE": "Cuando esta carta es enviada al cementerio (incluye destrucción, tributo, envío por efecto, descarte, etc).",
 	"ON_SEND_TO_GRAVE_BY_EFFECT": "Cuando esta carta es enviada al cementerio por el efecto de otra carta (no incluye batalla/tributo como costo).",
 	"ON_SEND_TO_GRAVE_AS_COST": "Cuando esta carta es enviada al cementerio específicamente como costo (ej. tributo/costo de activación).",
@@ -112,20 +113,24 @@
 		"target": "SELF|OPPONENT"
 	  }
 	},
-	"inflict_effect_damage_scaled_by_race_on_field": {
-	  "desc": "Daño de efecto escalado por cantidad de monstruos de una raza en el campo.",
-	  "params_schema": {
-		"base": "int",
-		"race": "string",
-		"target": "SELF|OPPONENT"
-	  }
-	},
 	"burn_scaled_by_opponent_field_card_count": {
 	  "desc": "Daño escalado por cantidad de cartas en el campo del oponente.",
 	  "params_schema": {
 		"amount_per": "int"
 	  }
 	},
+	"banish_battle_pair_after_damage": {
+	"desc": "Después del cálculo de daño, banishea esta carta y el monstruo con el que batalló.",
+	"default_presentation": {
+	"activation_fx_key": "default_activation",
+	"resolution_fx_key": "banish_default"
+	},
+	"params_schema": {
+	"only_if_source_destroyed_by_battle": "bool?",
+	"only_if_opponent_monster": "bool?",
+	"optional": "bool?"
+	}
+},
 	"banish_destroyer": {
 	  "desc": "Banish al monstruo que destruyó a esta carta (si existe).",
 	  "params_schema": {}
@@ -201,13 +206,6 @@
 		"require_ack": "bool"
 	}
 },
-	"destroy_random_opponent_spelltrap": {
-	  "desc": "Destruye una Spell/Trap aleatoria del oponente, con preferencia por face-up si se pide.",
-	  "params_schema": {
-		"kind": "SPELL|TRAP|ANY",
-		"prefer_faceup": "bool"
-	  }
-	},
 	"summon_random_from_db": {
   "desc": "Invoca un monstruo aleatorio desde DB con filtros opcionales. No interactúa con Deck.",
   "params_schema": {
@@ -276,14 +274,6 @@
 		"cannot_summon_self": "bool"
 	  }
 	},
-	"activate_burn_per_tag_you_control_once_per_turn": {
-	  "desc": "Efecto activable 1 vez por turno: daño = cantidad de aliados con tag * amount_per.",
-	  "params_schema": {
-		"tag": "string",
-		"amount_per": "int",
-		"target": "OPPONENT|SELF"
-	  }
-	},
 	"activate_elegant_egotist": {
   "desc": "Si el controlador tiene una Harpie Lady de nivel bajo, la tributa e invoca Harpie Lady Sisters desde DB. Si no, puede tributar Harpie Lady Sisters para invocar hasta 3 Harpie Lady de nivel bajo desde DB.",
   "params_schema": {
@@ -315,7 +305,9 @@
 	  "desc": "Otorga un keyword mientras controles al menos 1 monstruo de cierta raza.",
 	  "params_schema": {
 		"race": "string",
-		"keyword": "string"
+		"keyword": "string",
+		"self": "bool",
+		"target": "?",
 	  }
 	},
 	"burn_opponent_when_spell_activated": {
@@ -452,14 +444,6 @@
 	  "desc": "Reemplazo global: cualquier carta que fuera a cementerio se va a banish.",
 	  "params_schema": {}
 	},
-	"activate_coin_toss_destroy_opponent_highest_level_if_at_least_heads": {
-	  "desc": "Efecto activable: lanza monedas; si >= min_heads, destruye objetivo por selector.",
-	  "params_schema": {
-		"coins": "int",
-		"min_heads": "int",
-		"target": "string"
-	  }
-	},
 	"banish_from_top_of_own_grave_to_gain_atk": {
 	  "desc": "Banish hasta N cartas del tope del cementerio propio para ganar ATK por cada una.",
 	  "params_schema": {
@@ -482,29 +466,15 @@
 		"keyword": "string"
 	  }
 	},
-	"self_atk_bonus_per_tag_on_field": {
-	  "desc": "ATK bonus para esta carta por cantidad de monstruos con un tag en el campo.",
-	  "params_schema": {
-		"tag": "string",
-		"atk_per": "int",
-		"controller": "SELF|OPPONENT|BOTH"
-	  }
-	},
-	"self_stats_bonus_per_card_name_on_field": {
-	  "desc": "ATK/DEF bonus por cantidad de copias de un nombre en el campo.",
-	  "params_schema": {
-		"name": "string",
-		"atk_per": "int",
-		"def_per": "int"
-	  }
-	},
 	"redirect_battle_damage_from_self_to_opponent": {
 	  "desc": "El daño de batalla que recibirías en batallas con esta carta lo recibe el oponente.",
 	  "params_schema": {}
 	},
-	"prevent_battle_destruction_once": {
+	"prevent_battle_destruction": {
 	  "desc": "Previene la primera destrucción por batalla mientras permanezca en campo.",
-	  "params_schema": {}
+	  "params_schema": {
+		"params a definir" : "cantidad de veces, si es por turno o general, si es por siempre, etc"
+	}
 	},
 	"summon_token_copy_source_stats_on_send_to_grave_by_effect": {
 	  "desc": "Al ser enviada al cementerio por efecto, invoca un Token copiando las estadísticas conocidas de la fuente antes de salir del campo.",
@@ -565,8 +535,7 @@
 	"def_multiplier": "float"
   },
 	  "notes": [
-		"Si el bonus base es 500, multiplier=2 produce 1000.",
-        "No altera el cálculo de ventaja/desventaja, solo la magnitud."
+		"Si el bonus base es 500, multiplier=2 produce 1000."
 	  ]
 	},
 "revive_last_destroyed_monster_from_graveyard": {
@@ -698,7 +667,7 @@
 		"UNTIL_TURN_END",
 		"UNTIL_BATTLE_END",
 		"WHILE_SOURCE_FACE_UP",
-        "PERMANENT"
+		"PERMANENT"
 	  ]
 	},
 	"ProtectionSource": {
@@ -706,7 +675,8 @@
 			"BATTLE",
 			"SPELL",
 			"TRAP",
-			"MONSTER_EFFECT"
+			"MONSTER_EFFECT",
+			"ALL_EFFECT"
 		]
 	},
 	"ProtectionOutcome": {

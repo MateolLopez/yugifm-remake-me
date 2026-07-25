@@ -41,274 +41,611 @@ func can_attack_directly(attacker_card):
 	var defenders = _live_defenders_for("Player" if zone_service._owner_of(attacker_card) == "Opponent" else "Opponent")
 	return defenders.size() == 0
 
-func attack(atk_card, defending, attacker):
-	if card_runtime_service._card_kind(atk_card) != "MONSTER":
-		return
-	if bm.duel_finished:
-		return
+func attack(atk_card, defending, attacker) -> void:
 	if not is_instance_valid(atk_card):
 		return
-	if kw_service._has_kw(atk_card, "PARALYZED"):
-		if attacker == "Player":
-			$"../../InputManager".inputs_disabled = false
-			ui_service.enable_end_turn_button(true)
+
+	if card_runtime_service._card_kind(atk_card) != "MONSTER":
 		return
 
-	if not atk_state_service._can_card_declare_attack_against(atk_card, defending, attacker):
-		_release_player_input_if_needed(attacker)
+	if bm.duel_finished:
+		return
+
+	var attacker_owner := card_runtime_service._norm_owner(attacker)
+
+	if kw_service._has_kw(atk_card, "PARALYZED"):
+		_release_player_input_if_needed(attacker_owner)
+		return
+
+	if not atk_state_service._can_card_declare_attack_against(
+		atk_card,
+		defending,
+		attacker_owner
+	):
+		_release_player_input_if_needed(attacker_owner)
 		return
 
 	if card_runtime_service._is_card_face_down(atk_card):
 		reveal_service.reveal_card(atk_card)
-
 
 	var battle_ctx := {
 		"battle_manager": bm,
 		"source": atk_card,
 		"attacker": atk_card,
 		"defender": defending,
-		"attacker_owner": attacker,
-		"controller": attacker,
-		"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player"),
+		"attacker_owner": attacker_owner,
+		"controller": attacker_owner,
+		"turn_owner": (
+			"Opponent"
+			if bm.is_opponent_turn
+			else "Player"
+		),
 		"prevent_attack": false,
 		"attack_negated": false,
-		"suppress_trap_reactions": atk_state_service._attacker_suppresses_traps(atk_card)
+		"suppress_trap_reactions": (
+			atk_state_service
+			._attacker_suppresses_traps(atk_card)
+		)
 	}
-	bm.emit_signal("attack_declared", atk_card, defending, attacker)
-	event_service._emit_duel_event("ON_ATTACK_DECLARATION", battle_ctx)
 
-	if bool(battle_ctx.get("prevent_attack", false)) or bool(battle_ctx.get("attack_negated", false)):
-		_release_player_input_if_needed(attacker)
+	bm.emit_signal(
+		"attack_declared",
+		atk_card,
+		defending,
+		attacker_owner
+	)
+
+	event_service._emit_duel_event(
+		"ON_ATTACK_DECLARATION",
+		battle_ctx
+	)
+
+	if bool(battle_ctx.get("prevent_attack", false)) \
+	or bool(battle_ctx.get("attack_negated", false)):
+		_release_player_input_if_needed(attacker_owner)
 		return
 
-	if atk_card.has_meta("only_direct_attack") and atk_card.get_meta("only_direct_attack"):
+	# Monstruos que sólo pueden atacar directamente.
+	if bool(atk_card.get_meta("only_direct_attack", false)):
 		if is_instance_valid(defending):
-			_release_player_input_if_needed(attacker)
-			return
-		else:
-			await damage_service.direct_attack(atk_card, attacker)
-			_release_player_input_if_needed(attacker)
+			_release_player_input_if_needed(attacker_owner)
 			return
 
-	if not is_instance_valid(defending):
-		if attacker == "Opponent":
-			var defenders = bm.player_cards_on_battlefield.filter(func(c):
-				return is_instance_valid(c) and card_runtime_service._card_kind(c) == "MONSTER"
-			)
-			if defenders.is_empty():
-				await damage_service.direct_attack(atk_card, "Opponent")
-		else:
-			_release_player_input_if_needed(attacker)
+		await damage_service.direct_attack(
+			atk_card,
+			attacker_owner
+		)
+
+		_release_player_input_if_needed(attacker_owner)
 		return
 
+	# Ataque directo normal.
+	if not is_instance_valid(defending):
+		if attacker_owner == "Opponent":
+			var defenders = bm.player_cards_on_battlefield.filter(
+				func(card):
+					return (
+						is_instance_valid(card)
+						and card_runtime_service._card_kind(card)
+							== "MONSTER"
+					)
+			)
+
+			if defenders.is_empty():
+				await damage_service.direct_attack(
+					atk_card,
+					"Opponent"
+				)
+		else:
+			await damage_service.direct_attack(
+				atk_card,
+				"Player"
+			)
+
+		_release_player_input_if_needed(attacker_owner)
+		return
+
+	# A partir de acá necesariamente hay una batalla
+	# entre dos monstruos.
 	reveal_service.reveal_card(defending)
 
-	if attacker == "Player":
-		$"../../CardManager".selected_monster = null
-
-	await event_service._trigger_on_attack_effects(atk_card, attacker, battle_ctx)
+	await event_service._trigger_on_attack_effects(
+		atk_card,
+		attacker_owner,
+		battle_ctx
+	)
 
 	if not is_instance_valid(atk_card):
-		_release_player_input_if_needed(attacker)
+		_release_player_input_if_needed(attacker_owner)
 		return
+
+	# Alguna reacción eliminó al objetivo antes del cálculo.
 	if not is_instance_valid(defending):
-		if attacker == "Opponent":
-			var live_defenders2 = _live_defenders_for("Player")
-			if live_defenders2.size() == 0:
-				await damage_service.direct_attack(atk_card, "Opponent")
-		else:
-			$"../../InputManager".inputs_disabled = false
-			ui_service.enable_end_turn_button(true)
+		if attacker_owner == "Opponent":
+			var remaining_defenders = _live_defenders_for(
+				"Player"
+			)
+
+			if remaining_defenders.is_empty():
+				await damage_service.direct_attack(
+					atk_card,
+					"Opponent"
+				)
+
+		_release_player_input_if_needed(attacker_owner)
 		return
+
 	if bm.duel_finished:
 		return
 
-	var gsm = $"../../GuardianStarManager"
-	var atk_star = (atk_card.current_guardian_star() if atk_card.has_method("current_guardian_star") else "")
-	var def_star = (defending.current_guardian_star() if defending.has_method("current_guardian_star") else "")
-	var gs_bonus = (gsm.compute_bonuses(atk_star, def_star) if gsm else {
-		"attacker_atk":0, "attacker_def":0, "defender_atk":0, "defender_def":0
-	})
+	var guardian_star_manager = $"../../GuardianStarManager"
 
-	if gs_bonus.attacker_atk > 0 or gs_bonus.attacker_def > 0:
-		if is_instance_valid(atk_card) and atk_card.has_method("play_guardian_star_bonus_animation"):
-			await atk_card.play_guardian_star_bonus_animation(atk_star)
+	var attacker_star = (
+		atk_card.current_guardian_star()
+		if atk_card.has_method("current_guardian_star")
+		else ""
+	)
 
-	if gs_bonus.defender_atk > 0 or gs_bonus.defender_def > 0:
-		if is_instance_valid(defending) and defending.has_method("play_guardian_star_bonus_animation"):
-			await defending.play_guardian_star_bonus_animation(def_star)
+	var defender_star = (
+		defending.current_guardian_star()
+		if defending.has_method("current_guardian_star")
+		else ""
+	)
+
+	var guardian_bonuses = (
+		guardian_star_manager.compute_bonuses(
+			attacker_star,
+			defender_star
+		)
+		if guardian_star_manager
+		else {
+			"attacker_atk": 0,
+			"attacker_def": 0,
+			"defender_atk": 0,
+			"defender_def": 0
+		}
+	)
+
+	if int(guardian_bonuses.attacker_atk) > 0 \
+	or int(guardian_bonuses.attacker_def) > 0:
+		if atk_card.has_method(
+			"play_guardian_star_bonus_animation"
+		):
+			await atk_card.play_guardian_star_bonus_animation(
+				attacker_star
+			)
+
+	if int(guardian_bonuses.defender_atk) > 0 \
+	or int(guardian_bonuses.defender_def) > 0:
+		if defending.has_method(
+			"play_guardian_star_bonus_animation"
+		):
+			await defending.play_guardian_star_bonus_animation(
+				defender_star
+			)
 
 	await turn_service.action_waiter()
 
-	var base_atk = (atk_card.get_effective_atk() if atk_card.has_method("get_effective_atk") else atk_card.atk)
-	var base_def_atk = (defending.get_effective_atk() if defending.has_method("get_effective_atk") else defending.atk)
-	var base_def_def = (defending.get_effective_def() if defending.has_method("get_effective_def") else defending.def)
+	if not is_instance_valid(atk_card) \
+	or not is_instance_valid(defending):
+		_release_player_input_if_needed(attacker_owner)
+		return
 
-	var temp_atk_atk = base_atk + int(gs_bonus.attacker_atk)
-	var temp_def_atk = base_def_atk + int(gs_bonus.defender_atk)
-	var temp_def_def = base_def_def + int(gs_bonus.defender_def)
+	var base_attacker_atk := int(
+		atk_card.get_effective_atk()
+		if atk_card.has_method("get_effective_atk")
+		else atk_card.atk
+	)
 
-	atk_card.z_index = 5
-	var target_pos: Vector2 = animation_service._anchored_target_position(atk_card, defending, bm.BATTLE_POSS_OFFSET)
-	var t := get_tree().create_tween()
-	t.tween_property(atk_card, "global_position", target_pos, bm.CARD_MOVE_SPEED)
-	await turn_service.action_waiter()
+	var base_defender_atk := int(
+		defending.get_effective_atk()
+		if defending.has_method("get_effective_atk")
+		else defending.atk
+	)
+
+	var base_defender_def := int(
+		defending.get_effective_def()
+		if defending.has_method("get_effective_def")
+		else defending.def
+	)
+
+	var final_attacker_atk := (
+		base_attacker_atk
+		+ int(guardian_bonuses.attacker_atk)
+	)
+
+	var final_defender_atk := (
+		base_defender_atk
+		+ int(guardian_bonuses.defender_atk)
+	)
+
+	var final_defender_def := (
+		base_defender_def
+		+ int(guardian_bonuses.defender_def)
+	)
+
+	await _resolve_monster_battle(
+		atk_card,
+		defending,
+		attacker_owner,
+		final_attacker_atk,
+		final_defender_atk,
+		final_defender_def
+	)
+
+func _resolve_monster_battle(
+	atk_card: Node,
+	defending: Node,
+	attacker: String,
+	atk_power: int,
+	def_atk_power: int,
+	def_def_power: int
+) -> void:
+	var attacker_owner := card_runtime_service._norm_owner(
+		attacker
+	)
+
+	var result := _calculate_monster_battle_result(
+		atk_card,
+		defending,
+		attacker_owner,
+		atk_power,
+		def_atk_power,
+		def_def_power
+	)
+
+	var player_hp_before = bm.player_hp
+	var opponent_hp_before = bm.opponent_hp
+
+	var attacker_is_player := attacker_owner == "Player"
+
+	var player_destroyed := (
+		bool(
+			result.get(
+				"attacker_destroyed_by_battle",
+				false
+			)
+		)
+		if attacker_is_player
+		else bool(
+			result.get(
+				"defender_destroyed_by_battle",
+				false
+			)
+		)
+	)
+
+	var opponent_destroyed := (
+		bool(
+			result.get(
+				"defender_destroyed_by_battle",
+				false
+			)
+		)
+		if attacker_is_player
+		else bool(
+			result.get(
+				"attacker_destroyed_by_battle",
+				false
+			)
+		)
+	)
+
+	var presentation_request := result.duplicate(true)
+
+	presentation_request["attacker"] = atk_card
+	presentation_request["defender"] = defending
+	presentation_request["player_hp_before"] = player_hp_before
+	presentation_request["opponent_hp_before"] = opponent_hp_before
+	presentation_request["player_destroyed_by_battle"] = \
+		player_destroyed
+	presentation_request["opponent_destroyed_by_battle"] = \
+		opponent_destroyed
+
+	var damage_state := {
+		"applied": false
+	}
+
+	var apply_damage := func() -> void:
+		if bool(damage_state.get("applied", false)):
+			return
+
+		# Se marca antes de aplicar el daño para impedir
+		# cualquier segunda ejecución del callback que sino rompe los webos en el battle presentation.
+		damage_state["applied"] = true
+
+		var damage := int(
+			result.get(
+				"battle_damage",
+				0
+			)
+		)
+
+		var target_owner := str(
+			result.get(
+				"damage_target_owner",
+				""
+			)
+		)
+
+		if damage <= 0 or target_owner == "":
+			return
+
+		damage_service._apply_battle_damage_to_side(
+			target_owner,
+			damage,
+			result.get("damage_source", null),
+			result.get("damage_other_card", null)
+		)
+
+	var presentation = await \
+		animation_service.begin_battle_presentation(
+			presentation_request,
+			apply_damage
+		)
+
+	# Fallback para el caso en que la escena no exista,
+	# falle al instanciarse o no emita damage_cue.
+	if not bool(damage_state.get("applied", false)):
+		apply_damage.call()
+
+	var after_ctx := _emit_after_battle_with_monster(
+		atk_card,
+		defending,
+		attacker_owner,
+		str(result["defender_owner"]),
+		str(result["result"]),
+		str(result["battle_position"]),
+		int(result["battle_damage"]),
+		bool(
+			result["attacker_destroyed_by_battle"]
+		),
+		bool(
+			result["defender_destroyed_by_battle"]
+		)
+	)
+
+	if not _battle_pair_removed_after_damage(after_ctx):
+		_apply_battle_destructions_without_field_animation(
+			atk_card,
+			defending,
+			result
+		)
+
+	await animation_service.finish_battle_presentation(
+		presentation
+	)
+
+	var attacker_ref: Node = (
+		atk_card
+		if is_instance_valid(atk_card)
+		else null
+	)
+
+	var defender_ref: Node = (
+		defending
+		if is_instance_valid(defending)
+		else null
+	)
+
+	_finish_resolved_battle(
+		attacker_ref,
+		defender_ref,
+		attacker_owner,
+		str(result["result"])
+	)
+
+func _calculate_monster_battle_result(
+	atk_card: Node,
+	defending: Node,
+	attacker_owner: String,
+	attacker_atk: int,
+	defender_atk: int,
+	defender_def: int
+) -> Dictionary:
+	attacker_owner = card_runtime_service._norm_owner(
+		attacker_owner
+	)
+
+	var defender_owner := card_runtime_service._norm_owner(
+		zone_service._owner_of(defending)
+	)
+
+	if defender_owner == "":
+		defender_owner = (
+			"Opponent"
+			if attacker_owner == "Player"
+			else "Player"
+		)
+
+	var result := {
+		"result": "tie",
+		"battle_position": (
+			"DEFENSE"
+			if defending.in_defense
+			else "ATTACK"
+		),
+		"battle_damage": 0,
+		"damage_target_owner": "",
+		"damage_source": null,
+		"damage_other_card": null,
+		"attacker_destroyed_by_battle": false,
+		"defender_destroyed_by_battle": false,
+		"attacker_owner": attacker_owner,
+		"defender_owner": defender_owner
+	}
 
 	if defending.in_defense:
-		await _handle_defense_attack(atk_card, defending, attacker, temp_atk_atk, temp_def_def)
+		if attacker_atk > defender_def:
+			result["result"] = "win"
+			result["defender_destroyed_by_battle"] = true
+
+			var has_piercing := (
+				kw_service._has_kw(
+					atk_card,
+					"PIERCING"
+				)
+				or bool(
+					atk_card.get_meta(
+						"piercing_damage",
+						false
+					)
+				)
+			)
+
+			if has_piercing:
+				result["battle_damage"] = (
+					attacker_atk - defender_def
+				)
+
+				result["damage_target_owner"] = (
+					defender_owner
+				)
+
+				result["damage_source"] = atk_card
+				result["damage_other_card"] = defending
+
+		elif attacker_atk < defender_def:
+			result["result"] = "lose"
+
+			result["battle_damage"] = (
+				defender_def - attacker_atk
+			)
+
+			result["damage_target_owner"] = (
+				attacker_owner
+			)
+
+			result["damage_source"] = defending
+			result["damage_other_card"] = atk_card
+
+		# Si ATK == DEF:
+		# no hay daño ni destrucción.
+
+		return result
+
+	# Ataque contra monstruo en posición de ataque.
+	if attacker_atk == defender_atk:
+		result["result"] = "tie"
+		result["attacker_destroyed_by_battle"] = true
+		result["defender_destroyed_by_battle"] = true
+
+	elif attacker_atk > defender_atk:
+		result["result"] = "win"
+		result["defender_destroyed_by_battle"] = true
+
+		result["battle_damage"] = (
+			attacker_atk - defender_atk
+		)
+
+		result["damage_target_owner"] = defender_owner
+		result["damage_source"] = atk_card
+		result["damage_other_card"] = defending
+
 	else:
-		await _handle_attack_attack(atk_card, defending, attacker, temp_atk_atk, temp_def_atk)
+		result["result"] = "lose"
+		result["attacker_destroyed_by_battle"] = true
 
-func _handle_defense_attack(atk_card, defending, attacker, atk_power, def_power):
-	var defender_owner := ("Opponent" if attacker == "Player" else "Player")
-	var result_str = "lose"
+		result["battle_damage"] = (
+			defender_atk - attacker_atk
+		)
 
-	var has_piercing := kw_service._has_kw(atk_card, "PIERCING") or bool(atk_card.get_meta("piercing_damage", false))
+		result["damage_target_owner"] = attacker_owner
+		result["damage_source"] = defending
+		result["damage_other_card"] = atk_card
 
-	if atk_power > def_power:
-		var destroyed_atk := int(defending.get_effective_atk() if defending.has_method("get_effective_atk") else defending.atk)
-		var destroyed_original_atk := int(defending.atk if ("atk" in defending) else 0)
-		var destroyed_ref = defending
-		var destroyed_ok := destruction_service.destroy_card(defending, defender_owner, "DESTROY_BATTLE")
+	return result
 
-		if destroyed_ok:
-			event_service._emit_duel_event("ON_DESTROY_MONSTER_BY_BATTLE", {
-				"battle_manager": bm,
-				"source": atk_card,
-				"attacker": atk_card,
-				"destroyed": destroyed_ref,
-				"destroyed_atk": destroyed_atk,
-				"destroyed_original_atk": destroyed_original_atk,
-				"controller": card_runtime_service._norm_owner(attacker),
-				"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player")
-			})
+func _apply_battle_destructions_without_field_animation(
+	atk_card: Node,
+	defending: Node,
+	result: Dictionary
+) -> void:
+	var attacker_owner := str(
+		result.get("attacker_owner", "")
+	)
 
-		result_str = "win"
+	var defender_owner := str(
+		result.get("defender_owner", "")
+	)
 
-	elif atk_power == def_power:
-		result_str = "tie"
+	if bool(
+		result.get(
+			"attacker_destroyed_by_battle",
+			false
+		)
+	):
+		destruction_service.destroy_card(
+			atk_card,
+			attacker_owner,
+			"DESTROY_BATTLE",
+			{
+				"skip_destroy_animation": true
+			}
+		)
 
-	else:
-		var diff = def_power - atk_power
+	if bool(
+		result.get(
+			"defender_destroyed_by_battle",
+			false
+		)
+	):
+		destruction_service.destroy_card(
+			defending,
+			defender_owner,
+			"DESTROY_BATTLE",
+			{
+				"skip_destroy_animation": true
+			}
+		)
 
-		if attacker == "Opponent":
-			damage_service._apply_battle_damage_to_side("Opponent", diff, defending, atk_card)
-		else:
-			damage_service._apply_battle_damage_to_side("Player", diff, defending, atk_card)
+func _finish_resolved_battle(
+	atk_card: Node,
+	defending: Node,
+	attacker_owner: String,
+	result: String
+) -> void:
+	var valid_attacker: Node = (
+		atk_card
+		if is_instance_valid(atk_card)
+		else null
+	)
 
-	if has_piercing and atk_power > def_power:
-		var piercing_damage = atk_power - def_power
+	var valid_defender: Node = (
+		defending
+		if is_instance_valid(defending)
+		else null
+	)
 
-		if attacker == "Opponent":
-			damage_service._apply_battle_damage_to_side("Player", piercing_damage, atk_card, defending)
-		else:
-			damage_service._apply_battle_damage_to_side("Opponent", piercing_damage, atk_card, defending)
+	if is_instance_valid(valid_attacker):
+		event_service._trigger_on_attack(
+			valid_attacker,
+			attacker_owner,
+			{
+				"phase": "after_damage",
+				"attacker": valid_attacker,
+				"defender": valid_defender,
+				"result": result
+			}
+		)
 
-	if not card_runtime_service._is_card_alive(atk_card):
-		stat_service._clear_bonuses([atk_card, defending])
+	var cards_to_clear: Array = []
 
-		if attacker == "Player":
-			ui_service._enable_player_input()
+	if is_instance_valid(valid_attacker):
+		cards_to_clear.append(valid_attacker)
 
-		return
+	if is_instance_valid(valid_defender):
+		cards_to_clear.append(valid_defender)
 
-	var return_pos: Vector2 = animation_service._anchored_slot_position(atk_card)
-	var t2 := get_tree().create_tween()
-	t2.tween_property(atk_card, "global_position", return_pos, bm.CARD_MOVE_SPEED)
-	await t2.finished
+	if not cards_to_clear.is_empty():
+		stat_service._clear_bonuses(cards_to_clear)
 
-	if card_runtime_service._is_card_alive(atk_card):
-		atk_card.z_index = 0
-
-	var defender_ref = defending if is_instance_valid(defending) else null
-
-	await event_service._trigger_on_attack(atk_card, attacker, {
-		"phase": "after_damage",
-		"attacker": atk_card,
-		"defender": defender_ref,
-		"result": result_str
-	})
-
-	stat_service._clear_bonuses([atk_card, defending])
-
-	atk_state_service._register_attack_spent(atk_card, attacker, defending)
-
-	if attacker == "Player":
-		ui_service._enable_player_input()
-
-func _handle_attack_attack(atk_card, defending, _attacker, atk_power, def_power) -> void:
-	var attacker_owner: String = card_runtime_service._norm_owner(_attacker)
-	var defender_owner: String = card_runtime_service._norm_owner(zone_service._owner_of(defending))
-	if defender_owner == "":
-		defender_owner = ("Opponent" if attacker_owner == "Player" else "Player")
-
-	var atk_i: int = int(atk_power)
-	var def_i: int = int(def_power)
-
-	if atk_i == def_i:
-		destruction_service.destroy_card_tie(atk_card, defending)
-		await event_service._trigger_on_attack(atk_card, attacker_owner, {
-			"phase": "after_damage",
-			"attacker": atk_card,
-			"defender": defending,
-			"result": "tie"
-		})
-		stat_service._clear_bonuses([atk_card, defending])
-
-		atk_state_service._register_attack_spent(atk_card, attacker_owner, defending)
-
-		if attacker_owner == "Player":
-			ui_service._enable_player_input()
-		return
-
-	var attacker_won: bool = atk_i > def_i
-	var damage: int = atk_i - def_i if attacker_won else def_i - atk_i
-
-	if attacker_won:
-		damage_service._apply_battle_damage_to_side(defender_owner, damage, atk_card, defending)
-		var destroyed_atk := int(defending.get_effective_atk() if defending.has_method("get_effective_atk") else defending.atk)
-		var destroyed_original_atk := int(defending.atk if ("atk" in defending) else 0)
-		var destroyed_ref = defending
-		var destroyed_ok := destruction_service.destroy_card(defending, defender_owner, "DESTROY_BATTLE")
-		if destroyed_ok:
-			event_service._emit_duel_event("ON_DESTROY_MONSTER_BY_BATTLE", {
-				"battle_manager": bm,
-				"source": atk_card,
-				"attacker": atk_card,
-				"destroyed": destroyed_ref,
-				"destroyed_atk": destroyed_atk,
-				"destroyed_original_atk": destroyed_original_atk,
-				"controller": attacker_owner,
-				"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player")
-			})
-	else:
-		damage_service._apply_battle_damage_to_side(attacker_owner, damage, defending, atk_card)
-		destruction_service.destroy_card(atk_card, attacker_owner, "DESTROY_BATTLE")
-
-	if not card_runtime_service._is_card_alive(atk_card):
-		stat_service._clear_bonuses([atk_card, defending])
-		if attacker_owner == "Player":
-			ui_service._enable_player_input()
-		return
-
-	var return_pos2: Vector2 = animation_service._anchored_slot_position(atk_card)
-	var t2b := get_tree().create_tween()
-	t2b.tween_property(atk_card, "global_position", return_pos2, bm.CARD_MOVE_SPEED)
-	await t2b.finished
-
-	if card_runtime_service._is_card_alive(atk_card):
-		atk_card.z_index = 0
-
-	var defender_ref2: Node = defending if is_instance_valid(defending) else null
-	await event_service._trigger_on_attack(atk_card, attacker_owner, {
-		"phase": "after_damage",
-		"attacker": atk_card,
-		"defender": defender_ref2,
-		"result": ("win" if attacker_won else "lose")
-	})
-
-	stat_service._clear_bonuses([atk_card, defending])
-	atk_state_service._register_attack_spent(atk_card, attacker_owner, defending)
+	if is_instance_valid(valid_attacker):
+		atk_state_service._register_attack_spent(
+			valid_attacker,
+			attacker_owner,
+			valid_defender
+		)
 
 	if attacker_owner == "Player":
 		ui_service._enable_player_input()
@@ -351,7 +688,12 @@ func enemy_card_selected(defending_card) -> void:
 
 	$"../../InputManager".inputs_disabled = true
 	ui_service.enable_end_turn_button(false)
-	$"../../CardManager".selected_monster = null
+
+	var card_manager := get_node_or_null("../../CardManager")
+
+	if card_manager != null \
+	and card_manager.has_method("unselect_selected_monster"):
+		card_manager.unselect_selected_monster()
 
 	await attack(attacker, defending_card, "Player")
 
@@ -395,3 +737,52 @@ func _release_player_input_if_needed(attacker: String) -> void:
 	if im != null and bool(im.get("inputs_disabled")):
 		im.inputs_disabled = false
 	ui_service.enable_end_turn_button(true)
+
+func _emit_after_battle_with_monster(
+	atk_card: Node,
+	defending: Node,
+	attacker_owner: String,
+	defender_owner: String,
+	result: String,
+	battle_position: String,
+	battle_damage: int,
+	attacker_destroyed_by_battle: bool,
+	defender_destroyed_by_battle: bool
+) -> Dictionary:
+	var ctx := {
+		"battle_manager": bm,
+		"source": atk_card,
+		"attacker": atk_card,
+		"defender": defending,
+		"attacker_owner": card_runtime_service._norm_owner(attacker_owner),
+		"defender_owner": card_runtime_service._norm_owner(defender_owner),
+		"controller": card_runtime_service._norm_owner(attacker_owner),
+		"source_owner": card_runtime_service._norm_owner(attacker_owner),
+		"result": result,
+		"battle_position": battle_position,
+		"battle_damage": battle_damage,
+		"attacker_destroyed_by_battle": attacker_destroyed_by_battle,
+		"defender_destroyed_by_battle": defender_destroyed_by_battle,
+		"turn_owner": ("Opponent" if bm.is_opponent_turn else "Player"),
+		"turn_index": bm.turn_index,
+		"battle_pair_banished_after_damage": false,
+		"battle_pair_removed_after_damage": false,
+		"skip_battle_destruction": false
+	}
+
+	event_service._emit_duel_event("AFTER_BATTLE_WITH_MONSTER", ctx)
+
+	return ctx
+
+func _battle_pair_removed_after_damage(ctx: Dictionary) -> bool:
+	return bool(ctx.get("battle_pair_removed_after_damage", false)) \
+		or bool(ctx.get("battle_pair_banished_after_damage", false))
+
+func _finish_battle_after_pair_removed(atk_card: Node, defending: Node, attacker_owner: String, result: String) -> void:
+	stat_service._clear_bonuses([atk_card, defending])
+
+	if is_instance_valid(atk_card):
+		atk_state_service._register_attack_spent(atk_card, attacker_owner, defending)
+
+	if attacker_owner == "Player":
+		ui_service._enable_player_input()

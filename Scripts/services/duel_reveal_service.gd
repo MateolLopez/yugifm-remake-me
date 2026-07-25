@@ -21,6 +21,10 @@ func reveal_card(card: Node):
 	card_runtime_service._set_card_face_down(card, false)
 
 	var controller := card_runtime_service._norm_owner(zone_service._owner_of(card))
+
+	if event_service.has_method("_register_card_with_effect_engine"):
+		event_service._register_card_with_effect_engine(card,controller)
+
 	event_service._emit_duel_event("ON_FLIP", {
 		"battle_manager": bm,
 		"source": card,

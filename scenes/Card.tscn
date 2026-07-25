@@ -194,7 +194,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Jupiter",
+"name": &"JUPITER",
 "speed": 60.0
 }, {
 "frames": [{
@@ -274,7 +274,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Mars",
+"name": &"MARS",
 "speed": 60.0
 }, {
 "frames": [{
@@ -354,7 +354,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Mercury",
+"name": &"MERCURY",
 "speed": 60.0
 }, {
 "frames": [{
@@ -434,7 +434,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Moon",
+"name": &"MOON",
 "speed": 60.0
 }, {
 "frames": [{
@@ -514,7 +514,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Neptune",
+"name": &"NEPTUNE",
 "speed": 60.0
 }, {
 "frames": [{
@@ -594,7 +594,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Pluto",
+"name": &"PLUTO",
 "speed": 60.0
 }, {
 "frames": [{
@@ -674,7 +674,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Saturn",
+"name": &"SATURN",
 "speed": 60.0
 }, {
 "frames": [{
@@ -754,7 +754,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Sun",
+"name": &"SUN",
 "speed": 60.0
 }, {
 "frames": [{
@@ -834,7 +834,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Uranus",
+"name": &"URANUS",
 "speed": 60.0
 }, {
 "frames": [{
@@ -914,7 +914,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_h64ct")
 }],
 "loop": false,
-"name": &"guardian_star_Venus",
+"name": &"VENUS",
 "speed": 60.0
 }]
 
@@ -1177,12 +1177,11 @@ offset_right = 328.0
 offset_bottom = -3.0
 
 [node name="guardian_star_bonus" type="AnimatedSprite2D" parent="."]
+visible = false
 position = Vector2(166, 225)
 scale = Vector2(2.7, 2.7)
 sprite_frames = SubResource("SpriteFrames_ftgo6")
-animation = &"guardian_star_Jupiter"
-frame = 24
-frame_progress = 1.0
+animation = &"VENUS"
 
 [node name="fusionSpiral" type="Sprite2D" parent="."]
 visible = false

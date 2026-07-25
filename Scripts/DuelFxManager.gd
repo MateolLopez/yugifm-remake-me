@@ -48,12 +48,17 @@ var _background_target: Node = null
 @export_group("VFX")
 @export var default_activation_fx_scene: PackedScene
 @export var monster_reborn_summon_fx_scene: PackedScene
+@export var destroy_explosion_fx_scene: PackedScene
 @export var thunder_destroy_fx_scene: PackedScene
 @export var fusion_result_summoned_vfx_scene: PackedScene
+@export var battle_presentation_fx_scene: PackedScene
 
 @export_group("VFX - Fullscreen")
 @export var coin_toss_fx_scene: PackedScene
 @export var exodia_win_fx_scene: PackedScene
+
+@export_group("Effect FX Registry")
+@export var effect_fx_scenes: Dictionary[StringName, PackedScene] = {}
 
 var _bgm_player: AudioStreamPlayer = null
 
@@ -366,14 +371,37 @@ func play_vfx_key_on_card(key: String, card: Node2D) -> void:
 	if is_instance_valid(fx):
 		fx.queue_free()
 
-
 func get_vfx_scene(key: String) -> PackedScene:
-	match key:
+	var normalized_key := StringName(
+		str(key).strip_edges()
+	)
+
+	if normalized_key == &"":
+		return null
+
+	var registered_scene = effect_fx_scenes.get(
+		normalized_key,
+		null
+	)
+
+	if registered_scene == null:
+		registered_scene = effect_fx_scenes.get(
+			String(normalized_key),
+			null
+		)
+
+	if registered_scene is PackedScene:
+		return registered_scene as PackedScene
+
+	match String(normalized_key):
 		"default_activation":
 			return default_activation_fx_scene
 
 		"monster_reborn_summon":
 			return monster_reborn_summon_fx_scene
+
+		"destroy_explosion":
+			return destroy_explosion_fx_scene
 
 		"thunder_destroy":
 			return thunder_destroy_fx_scene
@@ -386,9 +414,11 @@ func get_vfx_scene(key: String) -> PackedScene:
 
 		"exodia_win":
 			return exodia_win_fx_scene
+
+		"battle_presentation":
+			return battle_presentation_fx_scene
 		_:
 			return null
-
 
 func _get_card_visual_center_global(card: Node2D) -> Vector2:
 	if not is_instance_valid(card):

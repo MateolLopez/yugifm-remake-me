@@ -8,7 +8,8 @@
 	  },
 	  "max_fusion_materials": 4,
 	  "deck": [
-		"12146024"
+		"99426834",
+		"99426834"
 	  ],
 	  "background": "res://assets/placeholders/bgduel.jpg",
 	  "music": "res://_resources/_OST/FMOSTPreliminaries.mp3"
@@ -21,7 +22,7 @@
 	  },
 	  "max_fusion_materials": 4,
 	  "deck": [
-		"12146024"
+		"99426834"
 	  ],
 	  "background": "res://assets/placeholders/bgduel.jpg",
 	  "music": "res://_resources/_OST/FMOSTPreliminaries.mp3"

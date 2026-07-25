@@ -16,6 +16,9 @@ var player_hand_reference: Node = null
 var played_monster_card_this_turn: bool = false
 var played_spellortrap_card_this_turn: bool = false
 var selected_monster: Card = null
+var selected_monster_original_position: Vector2 = Vector2.ZERO
+
+@export var attack_selection_offset_y: float = -20.0
 
 func _ready() -> void:
 	screen_size = get_viewport_rect().size
@@ -149,17 +152,25 @@ func activate_spell(card: Card) -> void:
 	_battle_manager().card_activation_service.start_spell_activation(card, "Player")
 
 func select_card_for_battle(card: Card) -> void:
-	if selected_monster:
+	if not is_instance_valid(card):
+		return
+
+	if is_instance_valid(selected_monster):
 		if selected_monster == card:
-			card.position.y += 20
-			selected_monster = null
-		else:
-			selected_monster.position.y += 20
-			selected_monster = card
-			card.position.y -= 20
-	else:
-		selected_monster = card
-		card.position.y -= 20
+			unselect_selected_monster()
+			return
+
+		_restore_selected_monster_position()
+
+	selected_monster = card
+	selected_monster_original_position = card.position
+
+	card.position = (
+		selected_monster_original_position
+		+ Vector2(0.0, attack_selection_offset_y)
+	)
+
+
 
 func start_drag(card: Card) -> void:
 	if _player_interaction_locked():
@@ -359,9 +370,16 @@ func get_card_with_highest_z_index(cards):
 	return highest_z_card
 
 func unselect_selected_monster() -> void:
-	if selected_monster:
-		selected_monster.position.y += 20
-		selected_monster = null
+	_restore_selected_monster_position()
+
+	selected_monster = null
+	selected_monster_original_position = Vector2.ZERO
+
+func _restore_selected_monster_position() -> void:
+	if not is_instance_valid(selected_monster):
+		return
+
+	selected_monster.position = selected_monster_original_position
 
 func connect_card_signals(card: Card) -> void:
 	if card == null:

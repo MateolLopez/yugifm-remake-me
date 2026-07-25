@@ -88,5 +88,17 @@
 	"result_id":"41544074",
 	"required_ids":["15025844","22026707"],
 	"exact_count": true
+},
+{
+	"fusion_id":"black_skull_dragon",
+	"result_id":"11901678",
+	"required_ids":["70781052","74677422"],
+	"exact_count": true
+},
+{
+	"fusion_id":"rare_fish",
+	"result_id":"80516007",
+	"required_ids":["75376965","01641882"],
+	"exact_count": true
 }
 ]

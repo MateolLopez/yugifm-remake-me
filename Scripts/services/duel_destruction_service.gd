@@ -60,16 +60,33 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 	grave_entry["sent_order"] = graveyard_service._next_graveyard_order()
 	grave_entry["cause"] = cause
 	grave_entry["was_destroyed"] = str(cause).begins_with("DESTROY")
-	var presentation = effect_ctx.get("presentation", {})
-	if typeof(presentation) == TYPE_DICTIONARY:
-		var pre_destroy_vfx_key := str(presentation.get("pre_destroy_vfx_key", ""))
-		var pre_destroy_sfx_key := str(presentation.get("pre_destroy_sfx_key", ""))
+	var skip_destroy_animation := bool(
+		effect_ctx.get("skip_destroy_animation", false)
+	)
 
-		if pre_destroy_vfx_key != "":
-			card.set_meta("pre_destroy_vfx_key", pre_destroy_vfx_key)
+	if not skip_destroy_animation:
+		var presentation = effect_ctx.get("presentation", {})
 
-		if pre_destroy_sfx_key != "":
-			card.set_meta("pre_destroy_sfx_key", pre_destroy_sfx_key)
+		if typeof(presentation) == TYPE_DICTIONARY:
+			var pre_destroy_vfx_key := str(
+				presentation.get("pre_destroy_vfx_key", "")
+			)
+
+			var pre_destroy_sfx_key := str(
+				presentation.get("pre_destroy_sfx_key", "")
+			)
+
+			if pre_destroy_vfx_key != "":
+				card.set_meta(
+					"pre_destroy_vfx_key",
+					pre_destroy_vfx_key
+				)
+
+			if pre_destroy_sfx_key != "":
+				card.set_meta(
+					"pre_destroy_sfx_key",
+					pre_destroy_sfx_key
+				)
 
 	if card_owner == "Player":
 		card.defeated = true
@@ -115,22 +132,49 @@ func destroy_card(card, card_owner, cause := "DESTROY_EFFECT", effect_ctx: Dicti
 	event_service._refresh_effect_engine_continuous_buffs()
 	ui_service._refresh_card_usage_overlays()
 
-	if card is Node2D:
-		animation_service._play_card_destroy_animation_and_free(card)
+	if skip_destroy_animation:
+		if card is CanvasItem:
+			(card as CanvasItem).visible = false
+
+		animation_service.request_free_after_effect_resolutions(card)
+
+	elif card is Node2D:
+		animation_service._play_card_destroy_animation_and_free(
+			card
+		)
+
 	else:
 		card.queue_free()
 
 	return true
 
-func destroy_card_tie(card_a, card_b):
+func destroy_card_tie(
+	card_a,
+	card_b,
+	effect_ctx: Dictionary = {}
+) -> void:
 	if is_instance_valid(card_a):
 		var cardowner_a := zone_service._owner_of(card_a)
+
 		if cardowner_a != "":
-			destroy_card(card_a, cardowner_a, "DESTROY_BATTLE")
+			destroy_card(
+				card_a,
+				cardowner_a,
+				"DESTROY_BATTLE",
+				effect_ctx
+			)
+
 	if is_instance_valid(card_b):
 		var cardowner_b := zone_service._owner_of(card_b)
+
 		if cardowner_b != "":
-			destroy_card(card_b, cardowner_b, "DESTROY_BATTLE")
+			destroy_card(
+				card_b,
+				cardowner_b,
+				"DESTROY_BATTLE",
+				effect_ctx
+			)
+
 	atk_state_service._clear_multi_for(card_a)
 	atk_state_service._clear_multi_for(card_b)
 

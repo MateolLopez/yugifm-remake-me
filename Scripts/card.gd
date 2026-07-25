@@ -22,9 +22,25 @@ signal clicked(card)
 @onready var def_label: Label = get_node_or_null("monster_features/atk_def/def")
 @onready var spelltrap_type_label: Label = get_node_or_null("spelltrap_features/type_of_spelltrap")
 @onready var guardian_star_label: Label = get_node_or_null("guardian_star")
+@onready var guardian_star_bonus: AnimatedSprite2D = get_node_or_null("guardian_star_bonus")
 
 @onready var card_text_box: Label = get_node_or_null("TextBox")
 
+# -------------------------
+# FX visual clone
+# -------------------------
+@export var fx_visual_node_paths: Array[NodePath] = [
+	NodePath("background_texture"),
+	NodePath("card_frame"),
+	NodePath("CardArt"),
+	NodePath("CardBack"),
+	NodePath("CardName"),
+	NodePath("attribute"),
+	NodePath("monster_features"),
+	NodePath("spelltrap_features"),
+	NodePath("guardian_star"),
+	NodePath("TextBox")
+]
 
 # -------------------------
 # Card used/unused
@@ -64,16 +80,16 @@ var active_guardian_star_index: int = 0
 
 var actual_guardian_star: String:
 	get:
-		if guardian_star == null or guardian_star.is_empty():
-			return ""
-		var idx = clamp(active_guardian_star_index, 0, guardian_star.size() - 1)
-		return str(guardian_star[idx])
+		return current_guardian_star()
+
 	set(value):
 		if guardian_star == null or guardian_star.is_empty():
 			return
-		var s := str(value).to_upper()
+
+		var wanted_star := str(value).strip_edges().to_upper()
+
 		for i in range(guardian_star.size()):
-			if str(guardian_star[i]).to_upper() == s:
+			if str(guardian_star[i]).strip_edges().to_upper() == wanted_star:
 				active_guardian_star_index = i
 				_update_guardian_star_label()
 				return
@@ -104,6 +120,7 @@ var fusion_result: bool = false
 func _ready() -> void:
 	_connect_area_signals()
 	_configure_texture_rects()
+	_prepare_guardian_star_bonus_fx()
 	call_deferred("_ensure_usage_dim_overlay")
 	if is_instance_valid(fusion_spiral):
 		_fusion_spiral_original_material = fusion_spiral.material
@@ -705,3 +722,150 @@ func _guess_visual_size_from_anchor() -> Vector2:
 			return spr2.texture.get_size()
 
 	return Vector2(329, 479)
+
+func create_fx_visual_clone() -> Node2D:
+	var proxy := Node2D.new()
+	proxy.name = "CardFxVisualProxy"
+
+	var visual_center := _fx_visual_center_local()
+
+	for node_path in fx_visual_node_paths:
+		var original := get_node_or_null(node_path)
+
+		if not is_instance_valid(original):
+			continue
+
+		var clone := original.duplicate(0)
+
+		if not is_instance_valid(clone):
+			continue
+
+		proxy.add_child(clone)
+		_offset_fx_clone_node(clone, visual_center)
+		_disable_fx_clone_interaction(clone)
+
+	return proxy
+
+func _fx_visual_center_local() -> Vector2:
+	var anchor := get_node_or_null("AnchorCenter") as Node2D
+
+	if is_instance_valid(anchor):
+		return anchor.position
+
+	return _guess_visual_size_from_anchor() * 0.5
+
+func _offset_fx_clone_node(
+	node: Node,
+	visual_center: Vector2
+) -> void:
+	if node is Node2D:
+		var node_2d := node as Node2D
+		node_2d.position -= visual_center
+
+	elif node is Control:
+		var control := node as Control
+		control.position -= visual_center
+
+func _disable_fx_clone_interaction(node: Node) -> void:
+	if node is Control:
+		var control := node as Control
+		control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		control.focus_mode = Control.FOCUS_NONE
+
+	if node is Area2D:
+		var area := node as Area2D
+		area.input_pickable = false
+		area.monitoring = false
+		area.monitorable = false
+
+	if node is CollisionShape2D:
+		var shape := node as CollisionShape2D
+		shape.disabled = true
+
+	if node is CollisionPolygon2D:
+		var polygon := node as CollisionPolygon2D
+		polygon.disabled = true
+
+	for child in node.get_children():
+		_disable_fx_clone_interaction(child)
+
+func _prepare_guardian_star_bonus_fx() -> void:
+	if not is_instance_valid(guardian_star_bonus):
+		return
+
+	guardian_star_bonus.stop()
+	guardian_star_bonus.frame = 0
+	guardian_star_bonus.visible = false
+	guardian_star_bonus.z_as_relative = true
+	guardian_star_bonus.z_index = 150
+
+func current_guardian_star() -> String:
+	if guardian_star == null or guardian_star.is_empty():
+		return ""
+
+	var index = clamp(
+		active_guardian_star_index,
+		0,
+		guardian_star.size() - 1
+	)
+
+	return str(guardian_star[index]).strip_edges().to_upper()
+
+func play_guardian_star_bonus_animation(
+	star_name: String = ""
+) -> void:
+	if not is_instance_valid(guardian_star_bonus):
+		return
+
+	if guardian_star_bonus.sprite_frames == null:
+		return
+
+	var resolved_star := str(star_name).strip_edges().to_upper()
+
+	if resolved_star == "":
+		resolved_star = current_guardian_star()
+
+	if resolved_star == "":
+		return
+
+	var animation_name := StringName(resolved_star)
+
+	if not guardian_star_bonus.sprite_frames.has_animation(
+		animation_name
+	):
+		push_warning(
+			"Card: guardian_star_bonus no contiene la animación '%s' para %s. Animaciones disponibles: %s"
+			% [
+				resolved_star,
+				cardname,
+				str(
+					guardian_star_bonus.sprite_frames.get_animation_names()
+				)
+			]
+		)
+		return
+
+	if guardian_star_bonus.sprite_frames.get_frame_count(
+		animation_name
+	) <= 0:
+		return
+
+	guardian_star_bonus.sprite_frames.set_animation_loop(
+		animation_name,
+		false
+	)
+
+	guardian_star_bonus.stop()
+	guardian_star_bonus.animation = animation_name
+	guardian_star_bonus.frame = 0
+	guardian_star_bonus.visible = true
+	guardian_star_bonus.play(animation_name)
+
+	await guardian_star_bonus.animation_finished
+
+	if not is_instance_valid(guardian_star_bonus):
+		return
+
+	guardian_star_bonus.stop()
+	guardian_star_bonus.frame = 0
+	guardian_star_bonus.visible = false
